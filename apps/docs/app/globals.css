@@ -1,0 +1,391 @@
+@import 'indas-ui/tokens.css';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Prevent bottom nav flash on desktop during page load */
+@media (min-width: 1024px) {
+  #mobile-bottom-nav { display: none !important; }
+}
+
+/* Custom scrollbar styles using semantic tokens */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgb(var(--bg-subtle));
+  border-radius: var(--radius-sm);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--bd-default));
+  border-radius: var(--radius-sm);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--bd-strong));
+}
+
+/* For Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--bd-default)) rgb(var(--bg-subtle));
+}
+
+/* Thin scrollbar utility class for grids */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+  cursor: pointer;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: rgb(var(--bg-subtle));
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgb(var(--bd-default));
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--bd-strong));
+  cursor: pointer;
+}
+
+/* Firefox thin scrollbar */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--bd-default)) rgb(var(--bg-subtle));
+}
+
+/* Hide scrollbar utility — used for horizontally scrollable tabs/chips on mobile */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+
+@layer base {
+
+  html {
+    @apply scroll-smooth;
+    height: 100%;
+  }
+
+  body {
+    @apply bg-bg-app text-fg-default;
+    font-family: var(--font-family-base) !important;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    min-height: 100vh;
+  }
+
+  /* Ensure all text elements inherit font */
+  * {
+    font-family: inherit;
+  }
+
+
+  /* Focus ring utilities */
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-accent/50 focus:ring-offset-2 focus:ring-offset-bg-app;
+  }
+
+  /* Animation utilities */
+  .animate-in {
+    animation: animate-in 0.5s ease-out;
+  }
+
+  @keyframes animate-in {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Pendulum animation for loading states */
+  @keyframes pendulum {
+    0%, 100% {
+      transform: translateX(-50%) rotate(-15deg);
+    }
+    50% {
+      transform: translateX(-50%) rotate(15deg);
+    }
+  }
+}
+
+@layer components {
+  /* Custom component classes */
+  .input-base {
+    @apply flex h-10 w-full rounded-md border border-bd-default bg-bg-surface px-3 py-2 text-sm;
+    @apply placeholder:text-fg-subtle focus-ring;
+    @apply disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .button-base {
+    @apply inline-flex items-center justify-center rounded-md text-sm font-medium;
+    @apply focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200;
+    @apply disabled:opacity-50 disabled:pointer-events-none;
+  }
+
+  .card-base {
+    @apply bg-bg-surface rounded-lg border border-bd-default;
+    @apply shadow-sm hover:shadow-md transition-shadow duration-200;
+  }
+
+  /* Global close button styling - applies everywhere */
+  /*
+    Usage:
+    - Simple: <button className="close-btn"><X /></button>
+    - With positioning: <button className="modal-close-btn"><X /></button>
+    - Sizes: close-btn-sm, close-btn-md (default), close-btn-lg
+    - Auto-applies to any button with aria-label containing "close"
+
+    Features:
+    - Red hover effect (bg-red-50, text-red-600)
+    - Border radius: rounded-xl (matches date picker)
+    - Smooth transitions
+    - Icon sizing handled automatically
+  */
+  .close-btn,
+  .calendar-close-btn,
+  .modal-close-btn,
+  .dialog-close-btn,
+  .dropdown-close-btn,
+  button[aria-label*="close" i],
+  button[aria-label*="Close" i],
+  [role="button"][aria-label*="close" i] {
+    @apply hover:bg-red-50 hover:text-red-600 !important;
+    @apply transition-all duration-200 !important;
+    @apply rounded-md !important; /* Border radius */
+    @apply flex items-center justify-center;
+    @apply text-gray-500;
+  }
+
+  /* Size variants for close buttons */
+  .close-btn-sm {
+    @apply h-6 w-6 p-0;
+  }
+
+  .close-btn-md,
+  .close-btn {
+    @apply h-8 w-8 p-0;
+  }
+
+  .close-btn-lg {
+    @apply h-10 w-10 p-0;
+  }
+
+  /* Icon sizes for close buttons */
+  .close-btn-sm svg {
+    @apply h-3 w-3;
+  }
+
+  .close-btn-md svg,
+  .close-btn svg {
+    @apply h-4 w-4;
+  }
+
+  .close-btn-lg svg {
+    @apply h-5 w-5;
+  }
+
+  /* Positioned close buttons (absolute positioning) */
+  .close-btn-positioned,
+  .calendar-close-btn,
+  .modal-close-btn,
+  .dialog-close-btn {
+    @apply absolute top-2 right-2;
+  }
+
+  /* Tooltip utilities */
+  .tooltip-container {
+    @apply relative;
+  }
+
+  .tooltip {
+    @apply absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1;
+    @apply bg-gray-900 text-white text-xs rounded;
+    @apply opacity-0 pointer-events-none transition-opacity whitespace-nowrap z-50;
+  }
+
+  .tooltip-container:hover .tooltip {
+    @apply opacity-100;
+  }
+
+  /* Tooltip arrow */
+  .tooltip-arrow {
+    @apply absolute top-full left-1/2 -translate-x-1/2 -mt-px;
+    @apply border-4 border-transparent border-t-gray-900;
+  }
+}
+
+@layer utilities {
+  /* Text utilities */
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Layout utilities */
+  .container-full {
+    @apply w-full max-w-none mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .container-xl {
+    @apply w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .container-lg {
+    @apply w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Sidebar hover overlay - critical z-index fix */
+  .sidebar-hover-overlay {
+    z-index: 99999 !important;
+    isolation: isolate !important;
+    transform: translateZ(0) !important;
+    position: absolute !important;
+  }
+
+  /* Remove annoying focus outlines and rings from all interactive elements */
+  *:focus {
+    outline: none !important;
+  }
+
+  *:focus-visible {
+    outline: none !important;
+  }
+
+  /* Remove focus rings specifically but keep other box-shadows like hover effects */
+  input:focus,
+  select:focus,
+  textarea:focus,
+  button:focus,
+  [role="button"]:focus,
+  [role="combobox"]:focus {
+    outline: none !important;
+  }
+
+  /* Remove only focus ring box-shadows, not all box-shadows */
+  .focus\:ring-2:focus,
+  .focus-ring:focus,
+  [class*="focus:ring"]:focus {
+    box-shadow: none !important;
+  }
+}
+
+/* Email content styles */
+.email-content {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.email-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Hide broken images */
+.email-content img[src=""],
+.email-content img:not([src]),
+.email-content img[src*="cid:"] {
+  display: none !important;
+}
+
+/* Handle images that fail to load */
+.email-content img {
+  min-height: 0;
+}
+
+.email-content img::before {
+  content: "";
+  display: block;
+}
+
+.email-content img::after {
+  content: "";
+  display: block;
+}
+
+/* ========================================
+   Synthia Chat Animations
+   ======================================== */
+
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: scale(0.98) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes typingBounce {
+  0%, 80%, 100% {
+    transform: scale(0.2);
+    opacity: 0.55;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ========================================
+   Mobile Touch Optimizations
+   ======================================== */
+
+@media (max-width: 768px) {
+  button,
+  [role="button"],
+  a {
+    min-height: 2.75rem;
+  }
+
+  /* Tab pills opt out of the 44px min-height — they live inside scrollable rails */
+  button.tab-pill {
+    min-height: 0;
+  }
+
+  /* Prevent iOS zoom on input focus */
+  input,
+  select,
+  textarea {
+    font-size: 1rem;
+  }
+}
+
+@media (hover: none) {
+  .hover\:bg-hover {
+    background: transparent;
+  }
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}

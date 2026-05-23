@@ -1,0 +1,8 @@
+node_modules
+.storybook
+storybook-static
+*.stories.tsx
+.github
+.vscode
+.idea
+src/**/*.test.tsx

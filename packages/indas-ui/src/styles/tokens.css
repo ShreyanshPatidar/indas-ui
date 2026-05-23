@@ -1,0 +1,712 @@
+/* ERP Semantic Design Tokens - Tenant-Based Theming System */
+:root {
+    /* ===== SEMANTIC COLOR TOKENS ===== */
+
+    /* Backgrounds */
+    --bg-app: 249 250 251;                    /* Main app background - soft gray */
+    --bg-surface: 255 255 255;                /* Card/panel surfaces */
+    --bg-header: 255 255 255;                 /* Header/navbar background */
+    --bg-sidebar: 248 249 250;                /* Sidebar background */
+    --bg-subtle: 246 247 249;                 /* Subtle backgrounds (table headers, etc.) */
+    --bg-hover: 243 244 246;                  /* Hover states */
+    --bg-selected: 239 246 255;               /* Selected/active states */
+    --bg-overlay: 0 0 0;                      /* Modal overlays */
+    --bg-grid-header: 245 249 252;            /* Very light grid header background */
+
+    /* Foregrounds */
+    --fg-default: 17 24 39;                   /* Default text color */
+    --fg-muted: 107 114 128;                  /* Secondary text */
+    --fg-subtle: 156 163 175;                 /* Tertiary text, placeholders */
+    --fg-inverse: 255 255 255;                /* Text on dark backgrounds */
+    --fg-accent: 0 51 102;                    /* Accent text (links, highlights) #003366 */
+
+    /* Primary Color System (Main brand/accent) - Default #003366 */
+    --color-primary: 0 51 102;               /* Primary brand color #003366 */
+    --color-primary-hover: 0 40 82;          /* Primary hover state - darker #003366 */
+    --color-primary-subtle: 250 251 252;     /* Very light primary backgrounds (0.02 opacity equivalent) */
+    --color-primary-muted: 102 153 204;      /* Muted primary */
+    --color-primary-foreground: 255 255 255; /* Text on primary backgrounds */
+
+    /* Secondary Color System (Supporting actions) */
+    --color-secondary: 107 114 128;          /* Secondary gray */
+    --color-secondary-hover: 75 85 99;       /* Secondary hover state */
+    --color-secondary-subtle: 243 244 246;   /* Light secondary backgrounds */
+    --color-secondary-muted: 156 163 175;    /* Muted secondary */
+    --color-secondary-foreground: 255 255 255; /* Text on secondary backgrounds */
+
+    /* Tertiary Color System (Subtle actions/info) */
+    --color-tertiary: 168 85 247;           /* Purple tertiary */
+    --color-tertiary-hover: 147 51 234;     /* Tertiary hover state */
+    --color-tertiary-subtle: 243 232 255;   /* Light tertiary backgrounds */
+    --color-tertiary-muted: 196 181 253;    /* Muted tertiary */
+    --color-tertiary-foreground: 255 255 255; /* Text on tertiary backgrounds */
+
+    /* Legacy Accent (kept for compatibility) */
+    --color-accent: var(--color-primary);
+    --color-accent-hover: var(--color-primary-hover);
+    --color-accent-subtle: var(--color-primary-subtle);
+    --color-accent-muted: var(--color-primary-muted);
+
+    /* Borders */
+    --bd-default: 229 231 235;                /* Default border color */
+    --bd-medium: 193 197 205;                 /* Medium borders (grid separators) */
+    --bd-strong: 156 163 175;                 /* Stronger borders */
+    --bd-subtle: 243 244 246;                 /* Subtle borders */
+    --bd-accent: 0 51 102;                    /* Accent borders (focus, active) #003366 */
+
+    /* Status Colors */
+    --color-success: 34 197 94;
+    --color-success-hover: 22 163 74;
+    --color-success-subtle: 220 252 231;
+    --color-success-muted: 134 239 172;
+
+    --color-warning: 245 158 11;
+    --color-warning-hover: 217 119 6;
+    --color-warning-subtle: 254 243 199;
+    --color-warning-muted: 253 230 138;
+
+    --color-error: 239 68 68;
+    --color-error-hover: 185 34 33;
+    --color-error-subtle: 254 226 226;
+    --color-error-muted: 252 165 165;
+
+    --color-info: 59 130 246;
+    --color-info-hover: 37 99 235;
+    --color-info-subtle: 219 234 254;
+    --color-info-muted: 147 197 253;
+
+    --color-orange: 249 115 22;
+    --color-orange-hover: 234 88 12;
+    --color-orange-subtle: 255 237 213;
+    --color-orange-muted: 253 186 116;
+
+    --color-purple: 147 51 234;
+    --color-purple-hover: 126 34 206;
+    --color-purple-subtle: 243 232 255;
+    --color-purple-muted: 196 181 253;
+
+    --color-sky: 14 165 233;
+    --color-sky-hover: 2 132 199;
+    --color-sky-subtle: 224 242 254;
+    --color-sky-muted: 125 211 252;
+
+    --color-neutral: 107 114 128;
+    --color-neutral-hover: 75 85 99;
+    --color-neutral-subtle: 243 244 246;
+    --color-neutral-muted: 209 213 219;
+
+    --color-teal: 20 184 166;
+    --color-teal-hover: 13 148 136;
+    --color-teal-subtle: 204 251 241;
+    --color-teal-muted: 94 234 212;
+
+    /* Icons */
+    --color-icon: var(--fg-muted);            /* Default icon color - inherits from text */
+    --color-icon-hover: var(--fg-default);    /* Icon hover state */
+    --color-icon-accent: 0 51 102;            /* Accent icons #003366 */
+
+    /* ===== TYPOGRAPHY TOKENS ===== */
+
+    /* Font Family & Scaling */
+    --font-family-base: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-scale: 1.0;
+
+    /* Font Sizes (with scaling support) */
+    --font-size-xs: calc(0.75rem * var(--font-scale));
+    --font-size-sm: calc(0.875rem * var(--font-scale));
+    --font-size-md: calc(0.875rem * var(--font-scale));  /* Base size */
+    --font-size-lg: calc(1rem * var(--font-scale));
+    --font-size-xl: calc(1.125rem * var(--font-scale));
+    --font-size-2xl: calc(1.375rem * var(--font-scale));
+    --font-size-3xl: calc(1.75rem * var(--font-scale));
+    --font-size-4xl: calc(2.25rem * var(--font-scale));
+
+    /* Line Heights */
+    --line-height-xs: 16px;
+    --line-height-sm: 20px;
+    --line-height-md: 20px;
+    --line-height-lg: 24px;
+    --line-height-xl: 28px;
+    --line-height-2xl: 32px;
+    --line-height-3xl: 36px;
+    --line-height-4xl: 44px;
+
+    /* Font Weights */
+    --font-weight-normal: 400;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+
+    /* ===== SPACING TOKENS ===== */
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-5: 1.25rem;
+    --space-6: 1.5rem;
+    --space-8: 2rem;
+    --space-10: 2.5rem;
+    --space-12: 3rem;
+    --space-16: 4rem;
+
+    /* ===== RADIUS TOKENS ===== */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --radius-full: 9999px;
+
+    /* ===== SHADOW TOKENS ===== */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+
+    /* ===== UTILITY CLASSES FOR TRAFFIC LIGHT COLORS ===== */
+    .text-error { color: rgb(var(--color-error)); }
+    .text-warning { color: rgb(var(--color-warning)); }
+    .text-success { color: rgb(var(--color-success)); }
+    .bg-error { background-color: rgb(var(--color-error)); }
+    .bg-warning { background-color: rgb(var(--color-warning)); }
+    .bg-success { background-color: rgb(var(--color-success)); }
+  }
+
+  /* ===== DARK MODE OVERRIDES ===== */
+  .dark {
+    /* Lighter dark theme backgrounds - easier on eyes */
+    --bg-app: 24 24 27;              /* Zinc-900 #18181b */
+    --bg-surface: 39 39 42;          /* Zinc-800 #27272a */
+    --bg-header: 24 24 27;           /* Header/navbar background */
+    --bg-sidebar: 32 32 35;          /* Between app and surface */
+    --bg-subtle: 50 50 54;           /* Subtle backgrounds */
+    --bg-hover: 58 58 63;            /* Hover states */
+    --bg-selected: 63 63 70;         /* Selected/active states - Zinc-700 */
+    --bg-overlay: 0 0 0;             /* Modal overlays */
+    --bg-grid-header: 44 44 48;      /* Grid header background */
+
+    /* Professional dark mode text colors */
+    --fg-default: 250 250 250;       /* Zinc-50 - brighter text */
+    --fg-muted: 161 161 170;         /* Zinc-400 */
+    --fg-subtle: 113 113 122;        /* Zinc-500 */
+    --fg-inverse: 24 24 27;          /* Dark text for light backgrounds */
+    --fg-accent: var(--color-primary); /* Accent text inherits from theme */
+
+    /* Lighter dark mode borders - more visible */
+    --bd-default: 63 63 70;          /* Zinc-700 */
+    --bd-strong: 82 82 91;           /* Zinc-600 */
+    --bd-subtle: 50 50 54;           /* Subtle borders */
+    --bd-medium: 71 71 80;           /* Medium borders (grid separators) */
+    --bd-accent: var(--color-primary); /* Accent borders inherit from theme */
+
+    /* Note: Primary colors are NOT overridden here - they inherit from theme variants */
+
+    /* Status colors for dark mode */
+    --color-success: 74 222 128;
+    --color-success-hover: 34 197 94;
+    --color-success-subtle: 20 83 45;
+    --color-success-muted: 34 197 94;
+
+    --color-warning: 251 191 36;
+    --color-warning-hover: 245 158 11;
+    --color-warning-subtle: 120 53 15;
+    --color-warning-muted: 245 158 11;
+
+    --color-error: 248 113 113;
+    --color-error-hover: 239 68 68;
+    --color-error-subtle: 127 29 29;
+    --color-error-muted: 239 68 68;
+
+    --color-info: 96 165 250;
+    --color-info-hover: 59 130 246;
+    --color-info-subtle: 30 58 138;
+    --color-info-muted: 37 99 235;
+
+    --color-orange: 251 146 60;
+    --color-orange-hover: 249 115 22;
+    --color-orange-subtle: 124 45 18;
+    --color-orange-muted: 234 88 12;
+
+    --color-purple: 192 132 252;
+    --color-purple-hover: 168 85 247;
+    --color-purple-subtle: 88 28 135;
+    --color-purple-muted: 147 51 234;
+
+    --color-sky: 56 189 248;
+    --color-sky-hover: 14 165 233;
+    --color-sky-subtle: 12 74 110;
+    --color-sky-muted: 2 132 199;
+
+    --color-neutral: 156 163 175;
+    --color-neutral-hover: 107 114 128;
+    --color-neutral-subtle: 55 65 81;
+    --color-neutral-muted: 75 85 99;
+
+    /* Icon colors */
+    --color-icon: var(--fg-muted);
+    --color-icon-hover: var(--fg-default);
+    --color-icon-accent: var(--color-primary);
+  }
+
+  /* ===== THEME VARIANTS ===== */
+
+  /* RED THEME */
+  .theme-red.light {
+    /* Primary colors (red theme) */
+    --color-primary: 185 28 28;               /* Red-700 - Darker */
+    --color-primary-hover: 153 27 27;         /* Red-800 */
+    --color-primary-subtle: 254 226 226;      /* Red-100 */
+    --color-primary-muted: 248 113 113;       /* Red-400 */
+    --color-primary-foreground: 255 255 255;
+
+    /* Secondary colors (rose for harmony) */
+    --color-secondary: 190 18 60;             /* Rose-700 */
+    --color-secondary-hover: 159 18 57;       /* Rose-800 */
+    --color-secondary-subtle: 255 228 230;    /* Rose-100 */
+    --color-secondary-muted: 251 113 133;     /* Rose-400 */
+    --color-secondary-foreground: 255 255 255;
+
+    /* Tertiary colors (amber complement) */
+    --color-tertiary: 180 83 9;               /* Amber-700 */
+    --color-tertiary-hover: 146 64 14;        /* Amber-800 */
+    --color-tertiary-subtle: 254 243 199;     /* Amber-100 */
+    --color-tertiary-muted: 251 191 36;       /* Amber-400 */
+    --color-tertiary-foreground: 255 255 255;
+
+    /* Legacy accent colors (compatibility) */
+    --color-accent: 185 28 28;
+    --color-accent-hover: 153 27 27;
+    --color-accent-subtle: 254 226 226;
+    --color-accent-muted: 248 113 113;
+    --fg-accent: 185 28 28;
+    --bd-accent: 185 28 28;
+    --color-icon-accent: 185 28 28;
+  }
+
+  .theme-red.dark {
+    /* Primary colors (red theme - dark) */
+    --color-primary: 248 113 113;             /* Red-400 */
+    --color-primary-hover: 239 68 68;         /* Red-500 */
+    --color-primary-subtle: 127 29 29;        /* Red-900 */
+    --color-primary-muted: 185 28 28;         /* Red-700 */
+    --color-primary-foreground: 255 255 255;
+
+    /* Secondary colors (rose for harmony - dark) */
+    --color-secondary: 251 113 133;           /* Rose-400 */
+    --color-secondary-hover: 244 63 94;       /* Rose-500 */
+    --color-secondary-subtle: 136 19 55;      /* Rose-900 */
+    --color-secondary-muted: 190 18 60;       /* Rose-700 */
+    --color-secondary-foreground: 255 255 255;
+
+    /* Tertiary colors (amber complement - dark) */
+    --color-tertiary: 251 191 36;             /* Amber-400 */
+    --color-tertiary-hover: 245 158 11;       /* Amber-500 */
+    --color-tertiary-subtle: 120 53 15;       /* Amber-900 */
+    --color-tertiary-muted: 180 83 9;         /* Amber-700 */
+    --color-tertiary-foreground: 255 255 255;
+
+    /* Legacy accent colors (compatibility) */
+    --color-accent: 248 113 113;
+    --color-accent-hover: 239 68 68;
+    --color-accent-subtle: 127 29 29;
+    --color-accent-muted: 185 28 28;
+    --fg-accent: 248 113 113;
+    --bd-accent: 248 113 113;
+    --color-icon-accent: 248 113 113;
+  }
+
+  /* GREEN THEME */
+  .theme-green.light {
+    /* Primary colors (green theme) */
+    --color-primary: 4 120 87;                /* Emerald-700 - Darker */
+    --color-primary-hover: 6 95 70;           /* Emerald-800 */
+    --color-primary-subtle: 209 250 229;      /* Emerald-100 */
+    --color-primary-muted: 52 211 153;        /* Emerald-400 */
+    --color-primary-foreground: 255 255 255;
+
+    /* Secondary colors (blue complement) */
+    --color-secondary: 14 165 233;            /* Sky-500 */
+    --color-secondary-hover: 2 132 199;       /* Sky-600 */
+    --color-secondary-subtle: 224 242 254;    /* Sky-100 */
+    --color-secondary-muted: 56 189 248;      /* Sky-400 */
+    --color-secondary-foreground: 255 255 255;
+
+    /* Tertiary colors (teal complement) */
+    --color-tertiary: 20 184 166;             /* Teal-500 */
+    --color-tertiary-hover: 15 118 110;       /* Teal-600 */
+    --color-tertiary-subtle: 204 251 241;     /* Teal-100 */
+    --color-tertiary-muted: 45 212 191;       /* Teal-400 */
+    --color-tertiary-foreground: 255 255 255;
+
+    /* Legacy accent colors (compatibility) */
+    --color-accent: 4 120 87;
+    --color-accent-hover: 6 95 70;
+    --color-accent-subtle: 209 250 229;
+    --color-accent-muted: 52 211 153;
+    --fg-accent: 4 120 87;
+    --bd-accent: 4 120 87;
+    --color-icon-accent: 4 120 87;
+  }
+
+  .theme-green.dark {
+    /* Primary colors (green theme - dark) */
+    --color-primary: 52 211 153;              /* Emerald-400 */
+    --color-primary-hover: 16 185 129;        /* Emerald-500 */
+    --color-primary-subtle: 6 78 59;          /* Emerald-900 */
+    --color-primary-muted: 4 120 87;          /* Emerald-700 */
+    --color-primary-foreground: 255 255 255;
+
+    /* Secondary colors (blue complement - dark) */
+    --color-secondary: 56 189 248;            /* Sky-400 */
+    --color-secondary-hover: 14 165 233;      /* Sky-500 */
+    --color-secondary-subtle: 12 74 110;      /* Sky-900 */
+    --color-secondary-muted: 2 132 199;       /* Sky-600 */
+    --color-secondary-foreground: 255 255 255;
+
+    /* Tertiary colors (teal complement - dark) */
+    --color-tertiary: 45 212 191;             /* Teal-400 */
+    --color-tertiary-hover: 20 184 166;       /* Teal-500 */
+    --color-tertiary-subtle: 19 78 74;        /* Teal-900 */
+    --color-tertiary-muted: 15 118 110;       /* Teal-600 */
+    --color-tertiary-foreground: 255 255 255;
+
+    /* Legacy accent colors (compatibility) */
+    --color-accent: 52 211 153;
+    --color-accent-hover: 16 185 129;
+    --color-accent-subtle: 6 78 59;
+    --color-accent-muted: 4 120 87;
+    --fg-accent: 52 211 153;
+    --bd-accent: 52 211 153;
+    --color-icon-accent: 52 211 153;
+  }
+
+
+  /* PURPLE THEME */
+  .theme-purple.light {
+    /* Primary colors (purple theme) */
+    --color-primary: 124 58 237;              /* Violet-600 - Darker */
+    --color-primary-hover: 109 40 217;        /* Violet-700 */
+    --color-primary-subtle: 237 233 254;      /* Violet-100 */
+    --color-primary-muted: 167 139 250;       /* Violet-400 */
+    --color-primary-foreground: 255 255 255;
+
+    /* Secondary colors (fuchsia complement) */
+    --color-secondary: 192 38 211;            /* Fuchsia-600 */
+    --color-secondary-hover: 162 28 175;      /* Fuchsia-700 */
+    --color-secondary-subtle: 250 232 255;    /* Fuchsia-100 */
+    --color-secondary-muted: 240 171 252;     /* Fuchsia-400 */
+    --color-secondary-foreground: 255 255 255;
+
+    /* Tertiary colors (indigo complement) */
+    --color-tertiary: 79 70 229;              /* Indigo-600 */
+    --color-tertiary-hover: 67 56 202;        /* Indigo-700 */
+    --color-tertiary-subtle: 224 231 255;     /* Indigo-100 */
+    --color-tertiary-muted: 129 140 248;      /* Indigo-400 */
+    --color-tertiary-foreground: 255 255 255;
+
+    /* Legacy accent colors (compatibility) */
+    --color-accent: 124 58 237;
+    --color-accent-hover: 109 40 217;
+    --color-accent-subtle: 237 233 254;
+    --color-accent-muted: 167 139 250;
+    --fg-accent: 124 58 237;
+    --bd-accent: 124 58 237;
+    --color-icon-accent: 124 58 237;
+  }
+
+  .theme-purple.dark {
+    /* Primary colors (purple theme - dark) */
+    --color-primary: 167 139 250;             /* Violet-400 */
+    --color-primary-hover: 139 92 246;        /* Violet-500 */
+    --color-primary-subtle: 76 29 149;        /* Violet-900 */
+    --color-primary-muted: 124 58 237;        /* Violet-600 */
+    --color-primary-foreground: 255 255 255;
+
+    /* Secondary colors (fuchsia complement - dark) */
+    --color-secondary: 240 171 252;           /* Fuchsia-400 */
+    --color-secondary-hover: 232 121 249;     /* Fuchsia-500 */
+    --color-secondary-subtle: 112 26 117;     /* Fuchsia-900 */
+    --color-secondary-muted: 192 38 211;      /* Fuchsia-600 */
+    --color-secondary-foreground: 255 255 255;
+
+    /* Tertiary colors (indigo complement - dark) */
+    --color-tertiary: 129 140 248;            /* Indigo-400 */
+    --color-tertiary-hover: 99 102 241;       /* Indigo-500 */
+    --color-tertiary-subtle: 49 46 129;       /* Indigo-900 */
+    --color-tertiary-muted: 79 70 229;        /* Indigo-600 */
+    --color-tertiary-foreground: 255 255 255;
+
+    /* Legacy accent colors (compatibility) */
+    --color-accent: 167 139 250;
+    --color-accent-hover: 139 92 246;
+    --color-accent-subtle: 76 29 149;
+    --color-accent-muted: 124 58 237;
+    --fg-accent: 167 139 250;
+    --bd-accent: 167 139 250;
+    --color-icon-accent: 167 139 250;
+  }
+
+  /* ORANGE THEME */
+  .theme-orange.light {
+    /* Primary colors (orange theme) */
+    --color-primary: 194 65 12;               /* Orange-700 - Darker */
+    --color-primary-hover: 154 52 18;         /* Orange-800 */
+    --color-primary-subtle: 255 237 213;      /* Orange-100 */
+    --color-primary-muted: 251 146 60;        /* Orange-400 */
+    --color-primary-foreground: 255 255 255;
+
+    /* Secondary colors (amber complement) */
+    --color-secondary: 180 83 9;              /* Amber-700 */
+    --color-secondary-hover: 146 64 14;       /* Amber-800 */
+    --color-secondary-subtle: 254 243 199;    /* Amber-100 */
+    --color-secondary-muted: 251 191 36;      /* Amber-400 */
+    --color-secondary-foreground: 255 255 255;
+
+    /* Tertiary colors (red complement) */
+    --color-tertiary: 185 28 28;              /* Red-700 */
+    --color-tertiary-hover: 153 27 27;        /* Red-800 */
+    --color-tertiary-subtle: 254 226 226;     /* Red-100 */
+    --color-tertiary-muted: 248 113 113;      /* Red-400 */
+    --color-tertiary-foreground: 255 255 255;
+
+    /* Legacy accent colors (compatibility) */
+    --color-accent: 194 65 12;
+    --color-accent-hover: 154 52 18;
+    --color-accent-subtle: 255 237 213;
+    --color-accent-muted: 251 146 60;
+    --fg-accent: 194 65 12;
+    --bd-accent: 194 65 12;
+    --color-icon-accent: 194 65 12;
+  }
+
+  .theme-orange.dark {
+    /* Primary colors (orange theme - dark) */
+    --color-primary: 251 146 60;              /* Orange-400 */
+    --color-primary-hover: 249 115 22;        /* Orange-500 */
+    --color-primary-subtle: 124 45 18;        /* Orange-900 */
+    --color-primary-muted: 194 65 12;         /* Orange-700 */
+    --color-primary-foreground: 255 255 255;
+
+    /* Secondary colors (amber complement - dark) */
+    --color-secondary: 251 191 36;            /* Amber-400 */
+    --color-secondary-hover: 245 158 11;      /* Amber-500 */
+    --color-secondary-subtle: 120 53 15;      /* Amber-900 */
+    --color-secondary-muted: 180 83 9;        /* Amber-700 */
+    --color-secondary-foreground: 255 255 255;
+
+    /* Tertiary colors (red complement - dark) */
+    --color-tertiary: 248 113 113;            /* Red-400 */
+    --color-tertiary-hover: 239 68 68;        /* Red-500 */
+    --color-tertiary-subtle: 127 29 29;       /* Red-900 */
+    --color-tertiary-muted: 185 28 28;        /* Red-700 */
+    --color-tertiary-foreground: 255 255 255;
+
+    /* Legacy accent colors (compatibility) */
+    --color-accent: 251 146 60;
+    --color-accent-hover: 249 115 22;
+    --color-accent-subtle: 124 45 18;
+    --color-accent-muted: 194 65 12;
+    --fg-accent: 251 146 60;
+    --bd-accent: 251 146 60;
+    --color-icon-accent: 251 146 60;
+  }
+
+  /* BLACK THEME */
+  .theme-black.light {
+    /* Primary colors (black theme) */
+    --color-primary: 0 0 0;                   /* Pure Black */
+    --color-primary-hover: 31 31 31;          /* Gray-900 */
+    --color-primary-subtle: 245 245 245;      /* Gray-100 */
+    --color-primary-muted: 115 115 115;       /* Gray-500 */
+    --color-primary-foreground: 255 255 255;
+
+    /* Secondary colors (dark gray) */
+    --color-secondary: 38 38 38;              /* Gray-800 */
+    --color-secondary-hover: 64 64 64;        /* Gray-700 */
+    --color-secondary-subtle: 250 250 250;    /* Gray-50 */
+    --color-secondary-muted: 163 163 163;     /* Gray-400 */
+    --color-secondary-foreground: 255 255 255;
+
+    /* Tertiary colors (charcoal) */
+    --color-tertiary: 82 82 82;               /* Gray-600 */
+    --color-tertiary-hover: 115 115 115;      /* Gray-500 */
+    --color-tertiary-subtle: 245 245 245;     /* Gray-100 */
+    --color-tertiary-muted: 212 212 212;      /* Gray-300 */
+    --color-tertiary-foreground: 255 255 255;
+
+    /* Legacy accent colors (compatibility) */
+    --color-accent: 0 0 0;
+    --color-accent-hover: 31 31 31;
+    --color-accent-subtle: 245 245 245;
+    --color-accent-muted: 115 115 115;
+    --fg-accent: 0 0 0;
+    --bd-accent: 0 0 0;
+    --color-icon-accent: 0 0 0;
+  }
+
+  .theme-black.dark {
+    /* Primary colors (black theme - dark) */
+    --color-primary: 64 64 64;                /* Gray-700 */
+    --color-primary-hover: 82 82 82;          /* Gray-600 */
+    --color-primary-subtle: 10 10 10;         /* Almost black */
+    --color-primary-muted: 38 38 38;          /* Gray-800 */
+    --color-primary-foreground: 255 255 255;
+
+    /* Secondary colors (dark gray - dark) */
+    --color-secondary: 82 82 82;              /* Gray-600 */
+    --color-secondary-hover: 115 115 115;     /* Gray-500 */
+    --color-secondary-subtle: 23 23 23;       /* Gray-900 */
+    --color-secondary-muted: 64 64 64;        /* Gray-700 */
+    --color-secondary-foreground: 255 255 255;
+
+    /* Tertiary colors (charcoal - dark) */
+    --color-tertiary: 115 115 115;            /* Gray-500 */
+    --color-tertiary-hover: 163 163 163;      /* Gray-400 */
+    --color-tertiary-subtle: 31 31 31;        /* Gray-900 */
+    --color-tertiary-muted: 82 82 82;         /* Gray-600 */
+    --color-tertiary-foreground: 255 255 255;
+
+    /* Legacy accent colors (compatibility) */
+    --color-accent: 64 64 64;
+    --color-accent-hover: 82 82 82;
+    --color-accent-subtle: 10 10 10;
+    --color-accent-muted: 38 38 38;
+    --fg-accent: 64 64 64;
+    --bd-accent: 64 64 64;
+    --color-icon-accent: 64 64 64;
+  }
+
+  /* DEFAULT THEME - Navy Blue #003366 */
+  .theme-default.light {
+    /* Primary colors (default theme) - #003366 navy blue */
+    --color-primary: 0 51 102 !important;               /* #003366 */
+    --color-primary-hover: 0 40 82 !important;          /* Darker #003366 */
+    --color-primary-subtle: 230 240 250 !important;     /* Light navy backgrounds */
+    --color-primary-muted: 102 153 204 !important;      /* Muted navy */
+    --color-primary-foreground: 255 255 255 !important;
+
+    /* Secondary colors (gray for balance) */
+    --color-secondary: 107 114 128 !important;           /* Gray-500 */
+    --color-secondary-hover: 75 85 99 !important;        /* Gray-600 */
+    --color-secondary-subtle: 243 244 246 !important;    /* Gray-100 */
+    --color-secondary-muted: 156 163 175 !important;     /* Gray-400 */
+    --color-secondary-foreground: 255 255 255 !important;
+
+    /* Tertiary colors (complementary blue) */
+    --color-tertiary: 59 130 246 !important;             /* Blue-500 */
+    --color-tertiary-hover: 37 99 235 !important;        /* Blue-600 */
+    --color-tertiary-subtle: 219 234 254 !important;     /* Blue-100 */
+    --color-tertiary-muted: 147 197 253 !important;      /* Blue-300 */
+    --color-tertiary-foreground: 255 255 255 !important;
+
+    /* Legacy accent colors (compatibility) */
+    --color-accent: 0 51 102 !important;
+    --color-accent-hover: 0 40 82 !important;
+    --color-accent-subtle: 230 240 250 !important;
+    --color-accent-muted: 102 153 204 !important;
+    --fg-accent: 0 51 102 !important;
+    --bd-accent: 0 51 102 !important;
+    --color-icon-accent: 0 51 102 !important;
+  }
+
+  .theme-default.dark {
+    /* Primary colors (default theme - dark) - #003366 navy adapted for dark mode */
+    --color-primary: 0 51 102 !important;                /* Your exact #003366 navy blue */
+    --color-primary-hover: 0 40 82 !important;           /* Darker #003366 navy hover */
+    --color-primary-subtle: 0 25 51 !important;         /* Very dark navy backgrounds */
+    --color-primary-muted: 51 102 153 !important;       /* Muted navy */
+    --color-primary-foreground: 255 255 255 !important;
+
+    /* Secondary colors (gray for balance - dark) */
+    --color-secondary: 148 163 184 !important;           /* Gray-400 */
+    --color-secondary-hover: 203 213 225 !important;     /* Gray-300 */
+    --color-secondary-subtle: 51 65 85 !important;       /* Gray-700 */
+    --color-secondary-muted: 71 85 105 !important;       /* Gray-600 */
+    --color-secondary-foreground: 15 23 42 !important;
+
+    /* Tertiary colors (complementary blue - dark) */
+    --color-tertiary: 96 165 250 !important;             /* Blue-400 */
+    --color-tertiary-hover: 59 130 246 !important;       /* Blue-500 */
+    --color-tertiary-subtle: 30 58 138 !important;       /* Blue-900 */
+    --color-tertiary-muted: 37 99 235 !important;        /* Blue-600 */
+    --color-tertiary-foreground: 255 255 255 !important;
+
+    /* Legacy accent colors (compatibility) */
+    --color-accent: 0 51 102 !important;
+    --color-accent-hover: 0 40 82 !important;
+    --color-accent-subtle: 0 25 51 !important;
+    --color-accent-muted: 51 102 153 !important;
+    --fg-accent: 0 51 102 !important;
+    --bd-accent: 0 51 102 !important;
+    --color-icon-accent: 0 51 102 !important;
+  }
+
+  /* ===== ACCESSIBILITY TOKENS ===== */
+
+  /* Focus Ring - WCAG AA compliant */
+  .focus-ring-default {
+    --focus-ring-color: var(--color-accent);
+    --focus-ring-width: 2px;
+    --focus-ring-offset: 2px;
+    --focus-ring-style: solid;
+  }
+
+  /* High Contrast Mode Support */
+  @media (prefers-contrast: high) {
+    :root {
+      --bd-default: 0 0 0;
+      --bd-strong: 0 0 0;
+      --fg-muted: var(--fg-default);
+    }
+  }
+
+  /* Reduced Motion Support */
+  @media (prefers-reduced-motion: reduce) {
+    :root {
+      --transition-duration: 0ms;
+      --animation-duration: 0ms;
+    }
+  }
+
+  /* Floating bubble animation (Next.js-style gentle bob) */
+  @keyframes floating-bubble {
+    0%, 100% {
+      transform: translateY(0px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+    50% {
+      transform: translateY(-8px);
+      box-shadow: 0 12px 28px rgba(0,0,0,0.2);
+    }
+  }
+
+  .animate-floating-bubble {
+    animation: floating-bubble 3s ease-in-out infinite;
+  }
+
+  .animate-floating-bubble:hover {
+    animation-play-state: paused;
+  }
+
+  /* Synthia sparkle logo animation — slow rotate + pulse scale */
+  @keyframes synthia-sparkle {
+    0%, 100% {
+      transform: rotate(0deg) scale(1);
+      filter: drop-shadow(0 0 2px rgba(var(--color-primary), 0.3));
+    }
+    25% {
+      transform: rotate(5deg) scale(1.06);
+      filter: drop-shadow(0 0 6px rgba(var(--color-primary), 0.5));
+    }
+    50% {
+      transform: rotate(0deg) scale(1);
+      filter: drop-shadow(0 0 2px rgba(var(--color-primary), 0.3));
+    }
+    75% {
+      transform: rotate(-5deg) scale(1.06);
+      filter: drop-shadow(0 0 6px rgba(var(--color-primary), 0.5));
+    }
+  }
+
+  .animate-synthia-sparkle {
+    animation: synthia-sparkle 4s ease-in-out infinite;
+  }

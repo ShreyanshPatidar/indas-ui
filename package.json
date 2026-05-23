@@ -1,0 +1,16 @@
+{
+  "name": "indas-ui-monorepo",
+  "version": "0.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace=indas-ui",
+    "dev:lib": "npm run dev --workspace=indas-ui",
+    "dev:docs": "npm run dev --workspace=docs",
+    "build:docs": "npm run build --workspace=indas-ui && npm run build --workspace=docs",
+    "type-check": "npm run type-check --workspaces --if-present"
+  }
+}

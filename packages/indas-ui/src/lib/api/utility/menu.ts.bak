@@ -1,0 +1,107 @@
+// Dynamic Menu API
+// Handles dynamic menu and navigation
+
+import { buildApiUrl, createApiHeaders } from '@/config/api'
+
+export interface DynamicModule {
+  ModuleHeadName: string
+  ModuleDisplayName: string
+  SetGroupIndex: number
+  NumberOfChild: number
+  ModuleName: string
+  ModuleDisplayOrder: number
+}
+
+export interface GroupedModule {
+  groupName: string
+  modules: DynamicModule[]
+  groupIndex: number
+}
+
+/**
+ * Fetch dynamic menu modules from external API
+ */
+export async function fetchDynamicMenuModules(companyId: number, userId: number): Promise<DynamicModule[]> {
+  try {
+    const response = await fetch(buildApiUrl('/api/othermaster/createdynamicmenuwithsubmenu'), {
+      method: 'GET',
+      headers: createApiHeaders(companyId, userId)
+    })
+
+    if (!response.ok) {
+      throw new Error(`API call failed: ${response.status} ${response.statusText}`)
+    }
+
+    const data = await response.json()
+
+    // Handle different response formats
+    let parsedData = data
+
+    // Handle multiple levels of JSON encoding
+    if (typeof data === 'string') {
+      try {
+        parsedData = JSON.parse(data)
+
+        // If still a string, parse again (triple-encoded JSON)
+        if (typeof parsedData === 'string') {
+          parsedData = JSON.parse(parsedData)
+        }
+      } catch (parseError) {
+        return []
+      }
+    }
+
+    // Handle the response structure - might be wrapped in a success object
+    if (Array.isArray(parsedData)) {
+      return parsedData as DynamicModule[]
+    } else if (parsedData.data && Array.isArray(parsedData.data)) {
+      return parsedData.data as DynamicModule[]
+    } else if (parsedData.success && parsedData.data && Array.isArray(parsedData.data)) {
+      return parsedData.data as DynamicModule[]
+    }
+
+    return []
+  } catch (error) {
+    return []
+  }
+}
+
+/**
+ * Group modules by ModuleHeadName and sort by ModuleDisplayOrder
+ */
+export function groupAndSortModules(modules: DynamicModule[]): GroupedModule[] {
+  // Group by ModuleHeadName
+  const grouped = modules.reduce((acc, module) => {
+    const groupName = module.ModuleHeadName
+    if (!acc[groupName]) {
+      acc[groupName] = {
+        modules: [],
+        groupIndex: module.SetGroupIndex
+      }
+    }
+    acc[groupName].modules.push(module)
+    return acc
+  }, {} as Record<string, { modules: DynamicModule[], groupIndex: number }>)
+
+  // Convert to array and sort
+  return Object.entries(grouped)
+    .map(([groupName, { modules, groupIndex }]) => ({
+      groupName,
+      modules: modules.sort((a, b) => a.ModuleDisplayOrder - b.ModuleDisplayOrder),
+      groupIndex
+    }))
+    // Sort groups by SetGroupIndex
+    .sort((a, b) => a.groupIndex - b.groupIndex)
+}
+
+/**
+ * Get dynamic navigation structure for sidebar
+ */
+export async function getDynamicNavigation(companyId?: number, userId?: number): Promise<GroupedModule[]> {
+  if (!companyId || !userId) {
+    console.warn('getDynamicNavigation: companyId or userId is undefined')
+    return []
+  }
+  const modules = await fetchDynamicMenuModules(companyId, userId)
+  return groupAndSortModules(modules)
+}
