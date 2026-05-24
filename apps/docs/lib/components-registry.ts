@@ -66,10 +66,6 @@ export const REGISTRY: ComponentCategory[] = [
       { name: 'Dialog', slug: 'dialog', description: 'Radix Dialog primitive' },
       { name: 'LogoutModal', slug: 'logout-modal' },
       { name: 'ImageModal', slug: 'image-modal' },
-      { name: 'ThreeDModal', slug: 'three-d-modal' },
-      { name: 'APIConfigModal', slug: 'api-config-modal' },
-      { name: 'GlobalAPIConfigModal', slug: 'global-api-config-modal' },
-      { name: 'SearchNewModal', slug: 'search-new-modal' },
     ],
   },
   {
