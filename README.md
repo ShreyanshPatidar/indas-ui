@@ -2,7 +2,7 @@
 
 Reusable React component library extracted from Indas Estimo (ERP). Built with Tailwind CSS, Radix UI primitives, and Lucide icons.
 
-- **Docs site:** https://shreyanshpatidar777.github.io/indas-ui
+- **Docs site:** https://shreyanshpatidar.github.io/indas-ui
 - **npm:** https://www.npmjs.com/package/indas-ui
 
 ---
@@ -62,7 +62,7 @@ Plus the `cn()` utility (clsx + tailwind-merge).
 ## Local Development
 
 ```bash
-git clone https://github.com/shreyanshpatidar777/indas-ui.git
+git clone https://github.com/ShreyanshPatidar/indas-ui.git
 cd indas-ui
 npm install                # installs all workspaces
 npm run dev:docs           # docs site at http://localhost:4000
