@@ -3,7 +3,11 @@
   "version": "0.0.1",
   "description": "Reusable React component library extracted from Indas Estimo (ERP). Tailwind + Radix + Lucide + DataGrid.",
   "license": "MIT",
-  "author": "Shreyansh Patidar",
+  "author": "Indas Analytics Pvt Ltd",
+  "contributors": [
+    "Shreyansh Patidar",
+    "Abhinav"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/shreyanshpatidar777/indas-ui.git",
