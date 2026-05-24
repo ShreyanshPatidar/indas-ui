@@ -10,10 +10,10 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/shreyanshpatidar777/indas-ui.git",
+    "url": "https://github.com/ShreyanshPatidar/indas-ui.git",
     "directory": "packages/indas-ui"
   },
-  "homepage": "https://shreyanshpatidar777.github.io/indas-ui",
+  "homepage": "https://shreyanshpatidar.github.io/indas-ui",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",

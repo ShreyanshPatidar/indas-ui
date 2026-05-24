@@ -73,7 +73,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                                   ))}
                                 </nav>
                                 <div className="mt-8 pt-6 border-t border-[rgb(var(--bd-default))] space-y-2">
-                                  <a href="https://github.com/shreyanshpatidar777/indas-ui" className="block text-xs text-[rgb(var(--fg-muted))] hover:text-[rgb(var(--color-primary))]">GitHub →</a>
+                                  <a href="https://github.com/ShreyanshPatidar/indas-ui" className="block text-xs text-[rgb(var(--fg-muted))] hover:text-[rgb(var(--color-primary))]">GitHub →</a>
                                   <a href="https://www.npmjs.com/package/indas-ui" className="block text-xs text-[rgb(var(--fg-muted))] hover:text-[rgb(var(--color-primary))]">npm →</a>
                                 </div>
                               </aside>
