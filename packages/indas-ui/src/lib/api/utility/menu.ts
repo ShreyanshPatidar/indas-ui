@@ -16,6 +16,7 @@ export interface DynamicModule {
   children?: DynamicModule[] // Nested sub-modules
   MobileSupported?: number | boolean // From ModuleMaster — controls mobile visibility
   IconName?: string // From ModuleMaster — lucide-react icon name (e.g. 'Home', 'FileText')
+  IsIntegrationRequired?: number | boolean // From ModuleMaster — pending backend (see docs/others/modulemaster-integration-required-handoff-2026-06-10.md)
 }
 
 export interface GroupedModule {

@@ -1,6 +1,6 @@
 'use client'
 
-import ReactECharts from 'echarts-for-react'
+import { useState } from 'react'
 import { cn } from '@/lib/utils'
 
 export interface FunnelChartDataItem {
@@ -12,126 +12,91 @@ export interface FunnelChartDataItem {
 export interface FunnelChartProps {
   data: FunnelChartDataItem[]
   height?: number
-  showLegend?: boolean
-  /** Show labels on funnel stages */
-  showLabels?: boolean
-  /** Label position */
-  labelPosition?: 'left' | 'right' | 'inside' | 'center'
-  /** Funnel orientation */
-  orient?: 'vertical' | 'horizontal'
-  /** Sort order */
+  /** Sort order of stages */
   sort?: 'ascending' | 'descending' | 'none'
-  /** Gap between stages */
-  gap?: number
   className?: string
+  /** @deprecated kept for backward-compat; no longer affects rendering */
+  showLegend?: boolean
+  /** @deprecated kept for backward-compat; no longer affects rendering */
+  showLabels?: boolean
+  /** @deprecated kept for backward-compat; no longer affects rendering */
+  labelPosition?: 'left' | 'right' | 'inside' | 'center'
+  /** @deprecated kept for backward-compat; no longer affects rendering */
+  orient?: 'vertical' | 'horizontal'
+  /** @deprecated kept for backward-compat; no longer affects rendering */
+  gap?: number
+  /** @deprecated kept for backward-compat; only the bar style is rendered now */
+  variant?: 'classic' | 'bars'
 }
 
-/**
- * FunnelChart - ECharts Funnel Chart for conversion/process flows
- */
-export function FunnelChart({
-  data,
-  height = 300,
-  showLegend = true,
-  showLabels = true,
-  labelPosition = 'right',
-  orient = 'vertical',
-  sort = 'descending',
-  gap = 2,
-  className
-}: FunnelChartProps) {
-  const colors = ['#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de', '#3ba272', '#fc8452', '#9a60b4']
+const FUNNEL_COLORS = ['#5470c6', '#3ba272', '#fac858', '#ee6666', '#73c0de', '#9a60b4', '#fc8452', '#91cc75']
 
-  const option = {
-    tooltip: {
-      trigger: 'item',
-      backgroundColor: 'rgba(255, 255, 255, 0.95)',
-      borderColor: '#e9ecef',
-      borderWidth: 1,
-      textStyle: {
-        color: '#344767',
-        fontSize: 12
-      },
-      formatter: (params: any) => {
-        const total = data[0]?.value || 1
-        const percentage = ((params.value / total) * 100).toFixed(1)
-        return `${params.name}<br/>Value: ${params.value.toLocaleString()}<br/>Rate: ${percentage}%`
-      }
-    },
-    legend: showLegend ? {
-      bottom: 0,
-      left: 'center',
-      itemWidth: 12,
-      itemHeight: 12,
-      textStyle: {
-        fontSize: 12,
-        color: '#6c757d'
-      }
-    } : undefined,
-    series: [
-      {
-        type: 'funnel',
-        left: '15%',
-        right: '15%',
-        top: 20,
-        bottom: showLegend ? 45 : 20,
-        width: '70%',
-        minSize: '10%',
-        maxSize: '100%',
-        sort: sort,
-        orient: orient,
-        gap: gap,
-        label: {
-          show: showLabels,
-          position: labelPosition,
-          fontSize: 12,
-          color: '#344767',
-          formatter: (params: any) => {
-            const total = data[0]?.value || 1
-            const percentage = ((params.value / total) * 100).toFixed(0)
-            return `${params.name}: ${percentage}%`
-          }
-        },
-        labelLine: {
-          show: showLabels && (labelPosition === 'left' || labelPosition === 'right'),
-          length: 15,
-          lineStyle: {
-            color: '#dee2e6'
-          }
-        },
-        itemStyle: {
-          borderColor: '#fff',
-          borderWidth: 1
-        },
-        emphasis: {
-          label: {
-            fontSize: 14,
-            fontWeight: 600
-          },
-          itemStyle: {
-            shadowBlur: 10,
-            shadowOffsetX: 0,
-            shadowColor: 'rgba(0, 0, 0, 0.2)'
-          }
-        },
-        data: data.map((item, index) => ({
-          name: item.name,
-          value: item.value,
-          itemStyle: {
-            color: item.color || colors[index % colors.length]
-          }
-        }))
-      }
-    ]
-  }
+/**
+ * FunnelChart — centered, tapering stage-bar funnel for conversion/process flows.
+ * Each stage shows a % badge, a width-proportional centered bar (truthful to value) with
+ * name + value, and the stage-to-stage drop-off. Bars lift on hover.
+ */
+export function FunnelChart({ data, height = 300, sort = 'descending', className }: FunnelChartProps) {
+  const [hovered, setHovered] = useState<number | null>(null)
+
+  const rows = sort === 'ascending'
+    ? [...data].sort((a, b) => a.value - b.value)
+    : sort === 'descending'
+      ? [...data].sort((a, b) => b.value - a.value)
+      : data
+  const top = rows[0]?.value || 1
 
   return (
-    <div className={cn('w-full', className)}>
-      <ReactECharts
-        option={option}
-        style={{ height, width: '100%' }}
-        opts={{ renderer: 'canvas' }}
-      />
+    <div
+      className={cn('w-full flex flex-col justify-center', className)}
+      style={{ minHeight: height }}
+    >
+      {rows.map((item, index) => {
+        const pct = (item.value / top) * 100
+        const color = item.color || FUNNEL_COLORS[index % FUNNEL_COLORS.length]
+        const barWidth = Math.max(pct, 16)
+        const isHover = hovered === index
+
+        return (
+          <div
+            key={item.name}
+            className="flex items-center gap-3 py-1"
+            onMouseEnter={() => setHovered(index)}
+            onMouseLeave={() => setHovered(null)}
+          >
+            {/* Percentage badge */}
+            <div
+              className="shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-[0.7rem] font-semibold tabular-nums transition-transform"
+              style={{
+                backgroundColor: `${color}1f`,
+                color,
+                transform: isHover ? 'scale(1.08)' : 'scale(1)',
+              }}
+            >
+              {pct.toFixed(0)}%
+            </div>
+
+            {/* Centered, width-proportional bar */}
+            <div className="flex-1 min-w-0 flex justify-center">
+              <div
+                className="rounded-md px-3 py-2.5 flex items-baseline justify-between gap-2 transition-all duration-300"
+                style={{
+                  width: `${barWidth}%`,
+                  background: `linear-gradient(90deg, ${color}, ${color}cc)`,
+                  transform: isHover ? 'translateY(-1px)' : 'none',
+                  boxShadow: isHover ? `0 4px 14px ${color}55` : `0 1px 2px rgba(0,0,0,0.06)`,
+                }}
+                title={`${item.name}: ${item.value.toLocaleString()} (${pct.toFixed(1)}%)`}
+              >
+                <span className="text-sm font-semibold text-white truncate">{item.name}</span>
+                <span className="text-xs font-medium text-white/90 tabular-nums shrink-0">
+                  {item.value.toLocaleString()}
+                </span>
+              </div>
+            </div>
+          </div>
+        )
+      })}
     </div>
   )
 }

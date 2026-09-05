@@ -31,11 +31,17 @@ export class RateSettingsAPI {
    */
   static async getDistinctField(
     itemGroupId: number,
-    fieldName: 'InkColour' | 'ItemType' | 'SizeW' | 'Thickness' | 'Quality' | 'Manufecturer',
-    sessionData?: any
+    fieldName: 'InkColour' | 'ItemType' | 'SizeW' | 'Thickness' | 'Quality' | 'Manufecturer' | 'BF' | 'BoardBrand' | 'Finish' | 'ItemName' | 'SubGroup',
+    sessionData?: any,
+    quality?: string,
+    subGroup?: string
   ): Promise<APIResponse> {
+    const qs = new URLSearchParams()
+    if (quality) qs.set('quality', quality)
+    if (subGroup) qs.set('subGroup', subGroup)
+    const suffix = qs.toString() ? `?${qs.toString()}` : ''
     return APIClient.get(
-      `api/othermaster/getdistinctfield/${itemGroupId}/${fieldName}`,
+      `api/othermaster/getdistinctfield/${itemGroupId}/${fieldName}${suffix}`,
       sessionData
     )
   }
@@ -96,12 +102,27 @@ export class RateSettingsAPI {
       // LAMINATION FILM
       SizeW?: string
       Thickness?: string
+      ItemName?: string
+      // REEL
+      BF?: string
+      BFFrom?: string
+      BFTo?: string
+      // BOARD
+      BoardBrand?: string
+      Finish?: string
+      // SUB GROUP (Ink/Varnish/Lamination/Foil/Shipper/Other)
+      ItemSubGroupName?: string
     },
     sessionData?: any
   ): Promise<APIResponse> {
     const requestBody: Record<string, any> = {
       ItemGroupID: filters.ItemGroupID,
       PlantID: filters.PlantID,
+      BF: filters.BF || '',
+      BFFrom: filters.BFFrom || '',
+      BFTo: filters.BFTo || '',
+      BoardBrand: filters.BoardBrand || '',
+      Finish: filters.Finish || '',
       Quality: filters.Quality || '',
       GSMFrom: filters.GSMFrom || '',
       GSMTo: filters.GSMTo || '',
@@ -110,6 +131,8 @@ export class RateSettingsAPI {
       ItemType: filters.ItemType || '',
       SizeW: filters.SizeW || '',
       Thickness: filters.Thickness || '',
+      ItemName: filters.ItemName || '',
+      ItemSubGroupName: filters.ItemSubGroupName || '',
     }
 
     return APIClient.post(
@@ -132,6 +155,11 @@ export class RateSettingsAPI {
       GSMFrom?: string
       GSMTo?: string
       Mill?: string
+      BF?: string
+      BFFrom?: string
+      BFTo?: string
+      BoardBrand?: string
+      Finish?: string
       LedgerID?: string | number
       RateType?: string
     },
@@ -144,6 +172,11 @@ export class RateSettingsAPI {
       GSMFrom: filters.GSMFrom || '',
       GSMTo: filters.GSMTo || '',
       Mill: filters.Mill || '',
+      BF: filters.BF || '',
+      BFFrom: filters.BFFrom || '',
+      BFTo: filters.BFTo || '',
+      BoardBrand: filters.BoardBrand || '',
+      Finish: filters.Finish || '',
       LedgerID: filters.LedgerID || '',
       RateType: filters.RateType || ''
     }

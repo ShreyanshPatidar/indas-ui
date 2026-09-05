@@ -38,6 +38,7 @@ export interface UserMasterData {
   ProfilePicHref: string | null
   SignPicHref: string | null
   UserWiseOperatorsIDStr: string
+  EmployeeId: number | string | null
   EmailMessage: string
   HeaderText: string
   FooterText: string

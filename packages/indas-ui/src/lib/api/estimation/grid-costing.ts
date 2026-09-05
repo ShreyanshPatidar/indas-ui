@@ -3,10 +3,8 @@
 // Uses APIClient for JSON endpoints (save/load)
 
 import APIClient, { handleSessionExpired } from '../core/client'
+import { buildAPIURL } from '../core/config'
 import type { APIResponse } from '../core/types'
-
-const getBaseURL = () =>
-  process.env.NEXT_PUBLIC_API_BASE_URL_NEW || ''
 
 // ─── Types (match backend JSON — Newtonsoft camelCase serialization) ───
 
@@ -59,14 +57,21 @@ export interface GridCostingRowDto {
   length: string
   width: string
   height: string
+  sheetSizeL?: string
+  sheetSizeW?: string
   noOfUps: string
   opening: string
   pasting: string
   bottom: string
+  bottomFlapPer?: string
+  tongueHeight?: string
+  flapHeight?: string
   corrugation: string
   paperQuality: PaperQualityDto[]
   frontColors: string
   backColors: string
+  specialFrontColor?: string
+  specialBackColor?: string
   machine: string
   asPerBid: string
   variants: string
@@ -75,7 +80,32 @@ export interface GridCostingRowDto {
   materials: Record<string, string>
   revisedMOQ: string
   remark: string
+  /**
+   * Process matrix from the import template: header (process name) → cell value
+   * (Yes/No). A process applies to this job when its value is Yes/1/true.
+   * Resolved to selectedProcesses on map.
+   */
+  processMatrix?: Record<string, string>
+  /**
+   * Material matrix from the import template: header "Process :: Material" →
+   * cell value (Yes/No). A material is pre-ticked under its process when the
+   * value is Yes/1/true. Resolved to selectedProcesses[].Items on map.
+   */
+  materialMatrix?: Record<string, string>
+  /**
+   * Corrugation spec from the import template: ply count + ONE shared flute spec
+   * + ONE shared liner spec (top sheet = the main paper). The page expands this
+   * into the full alternating ply array → CorrugationPlyData JSON at cost time.
+   */
+  corrugationSpec?: CorrugationSpecDto
   remarks: TransformerRemarkDto[]
+}
+
+/** Shared corrugation spec: ply count + one flute + one liner spec. */
+export interface CorrugationSpecDto {
+  noOfPly: number
+  flute: { fluteName: string; quality: string; gsm: number; bf: number }
+  liner: { quality: string; gsm: number; bf: number }
 }
 
 export interface PaperQualityDto {
@@ -84,6 +114,9 @@ export interface PaperQualityDto {
   gsm: string
   mill: string
   rate: string
+  finish?: string
+  brand?: string
+  bf?: string
 }
 
 export interface MaterialColumnDto {
@@ -108,8 +141,10 @@ export async function importGridCostingExcel(
     const formData = new FormData()
     formData.append('file', file)
 
-    const baseURL = getBaseURL()
-    const url = `${baseURL}/api/grid-costing/import`
+    const url = buildAPIURL('/api/grid-costing/import')
+    if (!url) {
+      return { success: false, error: 'API configuration not set. Please configure the API connection.' }
+    }
 
     // Build auth headers (same as APIClient)
     const headers: Record<string, string> = {}
@@ -173,8 +208,7 @@ export async function saveGridCosting(
   payload: { Rows: any[]; MaterialColumns: any[]; Name?: string },
   session: any
 ): Promise<APIResponse<{ Message: string; GridCostingID: number; RowCount: number }>> {
-  const baseURL = getBaseURL()
-  return APIClient.post('/api/grid-costing/save', payload, session, baseURL)
+  return APIClient.post('/api/grid-costing/save', payload, session)
 }
 
 // ─── Load list: JSON via APIClient ────────────────────────────────────
@@ -182,8 +216,7 @@ export async function saveGridCosting(
 export async function getGridCostingList(
   session: any
 ): Promise<APIResponse<any[]>> {
-  const baseURL = getBaseURL()
-  return APIClient.get('/api/grid-costing', session, baseURL)
+  return APIClient.get('/api/grid-costing', session)
 }
 
 // ─── Load by ID: JSON via APIClient ───────────────────────────────────
@@ -192,8 +225,7 @@ export async function getGridCostingById(
   id: number,
   session: any
 ): Promise<APIResponse<any>> {
-  const baseURL = getBaseURL()
-  return APIClient.get(`/api/grid-costing/${id}`, session, baseURL)
+  return APIClient.get(`/api/grid-costing/${id}`, session)
 }
 
 // ─── Calculate ────────────────────────────────────────────────────────
@@ -227,8 +259,7 @@ export async function calculateGridCosting(
   payload: Record<string, any>,
   session: any
 ): Promise<APIResponse<GridCostResult>> {
-  const baseURL = getBaseURL()
-  return APIClient.post('/api/grid-costing/calculate', { payload }, session, baseURL)
+  return APIClient.post('/api/grid-costing/calculate', { payload }, session)
 }
 
 /** Calculate costing for multiple rows in parallel (backend batches up to 10 concurrent) */
@@ -236,8 +267,7 @@ export async function calculateGridCostingBatch(
   rows: Record<string, any>[],
   session: any
 ): Promise<APIResponse<BatchResultItem[]>> {
-  const baseURL = getBaseURL()
-  return APIClient.post('/api/grid-costing/calculate-batch', { rows }, session, baseURL)
+  return APIClient.post('/api/grid-costing/calculate-batch', { rows }, session)
 }
 
 // ─── BulkShirinJob API (planwindow) ──────────────────────────────────
@@ -301,6 +331,9 @@ export interface BulkCostingSummaryRow {
   FOB: number
   SheetSize: string
   NoOfSheets: number
+  NoOfUps: number
+  WastagePercent?: number
+  CutSize?: string
   TotalRMC: number
   RMCPercent: number
   ConversionCost: number
@@ -313,6 +346,33 @@ export interface BulkCostingSummaryRow {
   TotalPriceDcr: number
   RevisedRate: number
   PercentOfDiff: number
+  ProcessCosts?: BulkCostingProcessCost[]
+  // Raw amounts (NOT per-1000); grid scales by TypeOfCost using CostQuantity.
+  PlateAmount?: number
+  PrintingAmount?: number
+  MakeReadyAmount?: number
+  CostQuantity?: number
+  // Printing impression detail from the winning plan row (same source as
+  // estimation's Cost Breakdown "Printing Imp'n" row). Raw values, not scaled.
+  ImpressionsToBeCharged?: number
+  PrintingRate?: number
+  /** Rate per plate from the winning plan row. */
+  PlateRate?: number
+  // Costing Rates (ShivOffset detail-costing sheet), both per 1000:
+  // FirstRate = grand total w/ development charges; SecondRate = TotalCost per 1000.
+  FirstRate?: number
+  SecondRate?: number
+}
+
+// Per-process cost from the costing result (TblOperations), pivoted into one grid
+// column per process when the company config opts into "ProcessBreakup".
+export interface BulkCostingProcessCost {
+  ProcessID: number
+  ProcessName: string
+  DepartmentID: number
+  ProcessCost: number
+  /** Process rate from TblOperations (first non-zero row). */
+  Rate?: number
 }
 
 export interface BulkCostingStatusResponse {
@@ -337,6 +397,37 @@ export async function getBulkCostingStatus(
   session: any,
 ): Promise<APIResponse<BulkCostingStatusResponse>> {
   return APIClient.get(`api/BulkCosting/${jobId}/status`, session)
+}
+
+// ─── Preview (full per-job detail) ────────────────────────────────────
+// Returns the complete Shirin_Job result blob for each job (paginated), used
+// to render the full estimation cost-breakdown for a single job on demand.
+
+export interface BulkCostingPreviewRow {
+  JobIndex: number
+  Status: 'Success' | 'Error'
+  /** Full Shirin_Job result — TblPlanning, TblOperations, CostingData, etc. */
+  Result?: Record<string, any>
+  Error?: string
+}
+
+export interface BulkCostingPreviewResponse {
+  page: number
+  pageSize: number
+  total: number
+  rows: BulkCostingPreviewRow[]
+}
+
+export async function getBulkCostingPreview(
+  jobId: string,
+  session: any,
+  page = 1,
+  pageSize = 20,
+): Promise<APIResponse<BulkCostingPreviewResponse>> {
+  return APIClient.get(
+    `api/BulkCosting/${jobId}/preview?page=${page}&pageSize=${pageSize}`,
+    session,
+  )
 }
 
 export interface BulkCostingCombinationItem {
@@ -463,8 +554,7 @@ export async function validateBatchAPI(
   rows: ValidateBatchRowInput[],
   session: any,
 ): Promise<APIResponse<ValidateBatchResponse>> {
-  const baseURL = getBaseURL()
-  return APIClient.post('/api/grid-costing/validate-batch', { rows }, session, baseURL)
+  return APIClient.post('/api/grid-costing/validate-batch', { rows }, session)
 }
 
 /** Delete a saved grid costing session */
@@ -472,6 +562,5 @@ export async function deleteGridCosting(
   id: number,
   session: any
 ): Promise<APIResponse<{ Message: string }>> {
-  const baseURL = getBaseURL()
-  return APIClient.post('/api/grid-costing/delete', { sessionID: id }, session, baseURL)
+  return APIClient.post('/api/grid-costing/delete', { sessionID: id }, session)
 }

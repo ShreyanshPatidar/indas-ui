@@ -190,9 +190,6 @@ interface BackendCallParams {
 }
 
 async function callBackendVision(p: BackendCallParams): Promise<any> {
-  const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL_NEW
-  if (!baseURL) throw new Error('NEXT_PUBLIC_API_BASE_URL_NEW is not set in env')
-
   const resp = await APIClient.post<any>(
     '/api/vision/extract-dieline',
     {
@@ -201,7 +198,6 @@ async function callBackendVision(p: BackendCallParams): Promise<any> {
       userPrompt: p.userPrompt,
     },
     p.session,
-    baseURL,
   )
 
   if (!resp.success) throw new Error(resp.error || 'Backend vision call failed')

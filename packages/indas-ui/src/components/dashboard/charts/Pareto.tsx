@@ -62,17 +62,17 @@ export function ParetoChart({
       }
     },
     legend: showLegend ? {
-      bottom: 0,
+      top: 0,
       left: 'center',
       itemWidth: 12,
       itemHeight: 12,
       textStyle: { fontSize: 12, color: '#6c757d' }
     } : undefined,
     grid: {
-      top: 40,
-      right: 50,
-      bottom: showLegend ? 50 : 30,
-      left: 50,
+      top: showLegend ? 44 : 24,
+      right: 44,
+      bottom: 8,
+      left: 8,
       containLabel: true
     },
     xAxis: {

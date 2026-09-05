@@ -37,6 +37,32 @@ export class QuotationAPI {
   }
 
   /**
+   * Get booking data expanded to one row per content × quantity slab.
+   * Same filters as getBookingData; each quote fans out into its per-content,
+   * per-quantity rows (ContentName / ContentQuantity / ContentUnitPrice / ...).
+   */
+  static async getBookingDataWithContent(
+    filters?: {
+      ApprovalType?: string
+      FilterSTR?: string
+      FromDate?: string
+      ToDate?: string
+    },
+    sessionData?: any
+  ): Promise<APIResponse> {
+    const requestBody = {
+      ApprovalType: filters?.ApprovalType || '',
+      FilterSTR: filters?.FilterSTR || 'All',
+      FromDate: filters?.FromDate || '01/01/2020',
+      ToDate: filters?.ToDate || '31/12/2030',
+    }
+
+    const response = await APIClient.post('api/planwindow/getbookingdata-content', requestBody, sessionData)
+
+    return response
+  }
+
+  /**
    * Get all quotations with optional filters
    * @param filters - Optional filter parameters
    * @param sessionData - Session data (REQUIRED for authentication)

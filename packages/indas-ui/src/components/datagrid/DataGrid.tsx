@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   flexRender,
@@ -24,6 +25,7 @@ import {
 import { useIntelligentColumnSizing, COLUMN_SIZING_PRESETS } from '@/hooks/useIntelligentColumnSizing'
 import { useDebouncedValue } from '@/hooks/useDebounce'
 import { useDevice } from '@/contexts/DeviceContext'
+import { naturalCompare } from '@/lib/utils'
 // Import new pagination and selection components
 import { PaginationControls, DEFAULT_PAGE_SIZE, DEFAULT_PAGE_SIZE_OPTIONS } from './controls/PaginationControls'
 import { SelectionCell as SelectionCheckbox } from './cells/SelectionCell'
@@ -79,6 +81,7 @@ import {
   GripVertical,
   XCircle,
   Layers,
+  RefreshCw,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui'
@@ -95,6 +98,7 @@ import {
 } from '@/components/ui'
 import { Dropdown } from '@/components'
 import { Badge } from '@/components/ui'
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui'
 import { Skeleton } from '@/components/ui/feedback/skeleton'
@@ -129,6 +133,93 @@ import { SummaryRow } from './rows/SummaryRow'
 // Filter Row Component
 import { FilterRow } from './rows/FilterRow'
 
+// ─── Advanced filter evaluation ────────────────────────────────
+// A single advanced condition. `connector` is how this condition joins the PREVIOUS
+// one ('AND'/'OR'); the first condition's connector is ignored.
+export interface AdvancedCondition {
+  id: string
+  column: string
+  operator: string
+  value: any
+  type?: string
+  connector?: 'AND' | 'OR'
+}
+
+const VALUELESS_OPERATORS = new Set([
+  'is_empty', 'is_not_empty', 'is_true', 'is_false',
+  'last_7_days', 'last_30_days', 'this_month', 'this_year',
+])
+
+function conditionHasValue(v: any): boolean {
+  if (v === '' || v === null || v === undefined) return false
+  if (Array.isArray(v)) return v.length > 0
+  if (typeof v === 'object') return Object.values(v).some(x => x !== '' && x !== null && x !== undefined)
+  return true
+}
+
+/**
+ * Whether a cell value is worth attempting date parsing on.
+ *
+ * `new Date(297)` is a valid Date (297ms after the epoch), so passing plain numbers
+ * to the date matcher made every numeric cell resolve to 01/01/1970 — and since that
+ * string contains 0, 1, 7 and 9, filtering a number column by any of those digits
+ * matched every row. Only Date objects and date-shaped strings qualify.
+ */
+function looksLikeDate(value: any): boolean {
+  if (value instanceof Date) return true
+  if (typeof value !== 'string') return false
+  const s = value.trim()
+  if (s === '') return false
+  // A bare number as a string ("297") is a number, not a date.
+  if (/^-?\d+(\.\d+)?$/.test(s)) return false
+  // Needs a date separator or a month name to be plausibly a date.
+  return /[/-]/.test(s) || /\d{1,2}:\d{2}/.test(s) ||
+    /\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/i.test(s)
+}
+
+/** Evaluate one condition against a row's cell value. Mirrors the inline advancedFilterFn operators. */
+function evaluateCondition(cellValue: any, operator: string, value: any): boolean {
+  const cellString = String(cellValue ?? '')
+  const lc = (s: any) => String(s ?? '').toLowerCase()
+  switch (operator) {
+    case 'contains': return lc(cellString).includes(lc(value))
+    case 'not_contains': return !lc(cellString).includes(lc(value))
+    case 'equals': return cellValue == value
+    case 'not_equals': return cellValue != value
+    case 'starts_with': return lc(cellString).startsWith(lc(value))
+    case 'ends_with': return lc(cellString).endsWith(lc(value))
+    case 'is_empty': return !cellValue || cellString.trim() === ''
+    case 'is_not_empty': return !!cellValue && cellString.trim() !== ''
+    case 'greater_than': return Number(cellValue) > Number(value)
+    case 'greater_than_equal': return Number(cellValue) >= Number(value)
+    case 'less_than': return Number(cellValue) < Number(value)
+    case 'less_than_equal': return Number(cellValue) <= Number(value)
+    case 'between': return Number(cellValue) >= Number(value?.min ?? value?.[0]) && Number(cellValue) <= Number(value?.max ?? value?.[1])
+    case 'not_between': return Number(cellValue) < Number(value?.min ?? value?.[0]) || Number(cellValue) > Number(value?.max ?? value?.[1])
+    case 'is_true': return cellValue === true || cellValue === 'true' || cellValue === 1
+    case 'is_false': return cellValue === false || cellValue === 'false' || cellValue === 0
+    default: return true
+  }
+}
+
+/**
+ * Evaluate all advanced conditions against a row, honoring per-condition AND/OR connectors.
+ * Left-to-right evaluation (AND binds the same as OR — no precedence), which matches how
+ * users read a stacked condition list top to bottom.
+ */
+function evaluateConditions<TData>(row: TData, conditions: AdvancedCondition[]): boolean {
+  const active = conditions.filter(c => c.column && (VALUELESS_OPERATORS.has(c.operator) || conditionHasValue(c.value)))
+  if (active.length === 0) return true
+
+  let result = evaluateCondition((row as any)[active[0].column], active[0].operator, active[0].value)
+  for (let i = 1; i < active.length; i++) {
+    const c = active[i]
+    const matches = evaluateCondition((row as any)[c.column], c.operator, c.value)
+    result = c.connector === 'OR' ? (result || matches) : (result && matches)
+  }
+  return result
+}
+
 export interface DataGridProps<TData> {
   data: TData[]
   columns: ColumnDef<TData>[]
@@ -161,16 +252,30 @@ export interface DataGridProps<TData> {
   defaultSortBy?: string // Column ID to sort by initially (e.g., "DepartmentSequenceNo")
   defaultSortOrder?: 'asc' | 'desc' // Sort order for initial sort (default: 'asc')
   initialColumnVisibility?: Record<string, boolean> // Initial column visibility state (e.g., { DepartmentSequenceNo: false })
+  persistKey?: string // When set, view prefs (column show/hide, order, width, sort) persist to localStorage under this key
   enableSearch?: boolean
   enableFiltering?: boolean
   enableColumnVisibility?: boolean
   pageSize?: number
   stickyHeader?: boolean
   className?: string
-  title?: string
+  title?: React.ReactNode
   description?: string
   headerActions?: React.ReactNode
   headerActionsRight?: React.ReactNode
+  /**
+   * Icon actions rendered inside the search pill, right of the actions (sliders) menu.
+   * Only rendered when searchType resolves to 'advanced' (the default) — the pill
+   * does not exist in the other search layouts.
+   */
+  toolbarActions?: React.ReactNode
+  /**
+   * Reload handler. When provided, a refresh icon appears in the search pill next to
+   * the actions menu. May return a promise — the icon spins until it settles.
+   */
+  onRefresh?: () => void | Promise<unknown>
+  /** External loading flag for the refresh icon (e.g. a React Query isFetching). */
+  isRefreshing?: boolean
   preToggleActions?: React.ReactNode
   loading?: boolean
   hideHeader?: boolean
@@ -269,6 +374,7 @@ export function DataGrid<TData>({
   defaultSortBy,
   defaultSortOrder = 'asc',
   initialColumnVisibility,
+  persistKey,
   enableSearch = true,
   enableFiltering = true,
   enableColumnVisibility = true,
@@ -279,6 +385,9 @@ export function DataGrid<TData>({
   description,
   headerActions,
   headerActionsRight,
+  toolbarActions,
+  onRefresh,
+  isRefreshing: isRefreshingProp,
   preToggleActions,
   loading = false,
   hideHeader = false,
@@ -334,6 +443,34 @@ export function DataGrid<TData>({
   enableFilterRow = false,
   initialColumnFilters,
 }: DataGridProps<TData>) {
+  // Persisted view prefs (show/hide, order, width, sort). Falls back to an auto key
+  // (route + column-id fingerprint) so every grid persists without an explicit persistKey.
+  const pathname = usePathname()
+  const autoPersistKey = useMemo(() => {
+    const ids = initialColumns
+      .map((c, i) => (c as any).id || (c as any).accessorKey || `col-${i}`)
+      .join('|')
+    // Cheap stable hash of the column-id list (djb2).
+    let hash = 5381
+    for (let i = 0; i < ids.length; i++) hash = ((hash << 5) + hash + ids.charCodeAt(i)) | 0
+    return `${pathname || 'route'}:${(hash >>> 0).toString(36)}`
+  }, [initialColumns, pathname])
+  const persistStorageKey = `datagrid-view:${persistKey || autoPersistKey}`
+  const savedView = useMemo(() => {
+    if (!persistStorageKey || typeof window === 'undefined') return null
+    try {
+      const raw = window.localStorage.getItem(persistStorageKey)
+      return raw ? JSON.parse(raw) as {
+        columnVisibility?: VisibilityState
+        columnSizing?: ColumnSizingState
+        sorting?: SortingState
+        columnOrder?: string[]
+      } : null
+    } catch {
+      return null
+    }
+  }, [persistStorageKey])
+
   // Device detection for mobile-specific column behaviour
   const { isMobile } = useDevice()
 
@@ -367,10 +504,15 @@ export function DataGrid<TData>({
         normalized = { ...normalized, size: 30, minSize: 30, maxSize: 30 }
       }
 
-      // Auto-apply date sorting for columns with "Date" in accessor key
+      // Auto-apply date sorting for columns with "Date" in accessor key;
+      // otherwise default to numeric-aware natural sort so "10" sorts after "9".
       const accessorKey = (normalized as any).accessorKey as string | undefined
-      if (accessorKey && /date/i.test(accessorKey) && !(normalized as any).sortingFn) {
-        normalized = { ...normalized, sortingFn: 'dateSort' as any }
+      if (!(normalized as any).sortingFn) {
+        if (accessorKey && /date/i.test(accessorKey)) {
+          normalized = { ...normalized, sortingFn: 'dateSort' as any }
+        } else {
+          normalized = { ...normalized, sortingFn: 'naturalSort' as any }
+        }
       }
 
       return normalized
@@ -442,14 +584,23 @@ export function DataGrid<TData>({
   // Row Expansion state — defaultExpandAll expands every row on mount
   const [expanded, setExpanded] = useState<ExpandedState>(defaultExpandAll ? true : {})
 
+  // Advanced filter conditions (from the Filters modal). Evaluated together with per-condition
+  // AND/OR connectors in `filteredData` — kept separate from column/search filters so OR works.
+  const [advancedConditions, setAdvancedConditions] = useState<AdvancedCondition[]>([])
+
   // Filter data based on view mode if view toggle is enabled
   const filteredData = useMemo(() => {
     // Use reordered data if available and reordering is enabled (in selected view OR when viewToggle is disabled)
     const useReorderedData = enableRowReordering && (viewMode === 'selected' || !enableViewToggle) && reorderedData
     const baseData = useReorderedData ? reorderedData : data
 
+    // Advanced filter pass: evaluate all conditions with their AND/OR connectors.
+    // Applied before view-toggle so it composes with both 'all' and 'selected' views.
+    const applyAdvanced = (rows: TData[]) =>
+      advancedConditions.length > 0 ? rows.filter(r => evaluateConditions(r, advancedConditions)) : rows
+
     if (!enableViewToggle || viewMode === 'all') {
-      return baseData
+      return applyAdvanced(baseData)
     }
 
     // If in 'selected' mode, filter to only show selected rows
@@ -464,8 +615,8 @@ export function DataGrid<TData>({
       return selectedIdsSet.has(itemId)
     })
 
-    return filtered
-  }, [enableViewToggle, viewMode, data, selectedRowIds, getRowId, enableRowReordering, reorderedData])
+    return applyAdvanced(filtered)
+  }, [enableViewToggle, viewMode, data, selectedRowIds, getRowId, enableRowReordering, reorderedData, advancedConditions])
 
   // Intelligent column sizing based on cell content only
   const { enhancedColumns: intelligentColumns, autoResizeAllColumns } = useIntelligentColumnSizing(
@@ -476,6 +627,9 @@ export function DataGrid<TData>({
 
   // State management
   const [sorting, setSorting] = useState<SortingState>(() => {
+    if (savedView?.sorting) {
+      return savedView.sorting
+    }
     // Initialize with default sort if provided
     if (defaultSortBy) {
       return [{ id: defaultSortBy, desc: defaultSortOrder === 'desc' }]
@@ -483,7 +637,6 @@ export function DataGrid<TData>({
     return []
   })
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(initialColumnFilters || [])
-
   // Re-seed column filters when the caller passes a new initialColumnFilters reference
   // (e.g. modal reopening for a different row). Identity-based check: skip when undefined.
   useEffect(() => {
@@ -492,7 +645,7 @@ export function DataGrid<TData>({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialColumnFilters])
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(initialColumnVisibility || {})
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(savedView?.columnVisibility || initialColumnVisibility || {})
   const [rowSelection, setRowSelection] = useState(initialRowSelection)
   const [globalFilter, setGlobalFilter] = useState('')
   const [frozenColumnsState, setFrozenColumnsState] = useState<Set<string>>(new Set(frozenColumns))
@@ -635,22 +788,42 @@ export function DataGrid<TData>({
     return count
   }, [selectedRowIds])
 
-  // Note: selectedRowIds sync is disabled to allow internal selection state management
-  // If external control is needed, this logic can be re-enabled with proper conflict resolution
+  // Note: full selectedRowIds sync is disabled to allow internal selection state
+  // management. Removal-only sync below: when the external selectedRowIds shrink
+  // (parent removed rows), delete ONLY those keys — never rebuild or blanket-clear.
+  const prevSelectedRowIdsRef = React.useRef<string[]>(selectedRowIds)
+  React.useEffect(() => {
+    if (!enableRowSelection) { prevSelectedRowIdsRef.current = selectedRowIds; return }
+    const prev = prevSelectedRowIdsRef.current
+    prevSelectedRowIdsRef.current = selectedRowIds
+    const removed = prev.filter(id => !selectedRowIds.includes(id))
+    if (removed.length === 0) return
+    setRowSelection(current => {
+      const next = { ...current }
+      let changed = false
+      for (const id of removed) {
+        if (next[id]) { delete next[id]; changed = true }
+      }
+      return changed ? next : current
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedRowIds])
 
   // Preserve row selection state during view mode transitions
   const stableRowSelection = useMemo(() => {
     if (!enableViewToggle) return rowSelection
 
-    // In 'selected' mode, ensure selection state remains consistent
+    // In 'selected' mode, ensure selection state remains consistent.
+    // MUST be keyed by rowId (the table registers rows via getRowId) — keying by
+    // index made getSelectedRowModel() return [] and any internal state change
+    // fired onRowSelect([]), wiping the parent's selection.
     if (viewMode === 'selected' && selectedRowIds.length > 0) {
       const preservedSelection: Record<string, boolean> = {}
 
-      // Map selected IDs to their indices in filtered data
-      filteredData.forEach((item, index) => {
-        const itemId = getRowId ? getRowId(item) : (item as any).id || data.indexOf(item).toString()
+      filteredData.forEach((item) => {
+        const itemId = getRowId ? getRowId(item) : ((item as any).id || data.indexOf(item).toString())
         if (selectedRowIds.includes(itemId)) {
-          preservedSelection[index.toString()] = true
+          preservedSelection[itemId] = true
         }
       })
 
@@ -804,11 +977,27 @@ export function DataGrid<TData>({
     return [expandColumn, ...enhancedColumns]
   }, [enhancedColumns, getRowCanExpand])
 
-  // For column reordering, we need mutable state - but keep it simple
-  const [reorderedColumns, setReorderedColumns] = useState<typeof enhancedColumns | null>(null)
+  // For column reordering, we need mutable state - but keep it simple.
+  // Lazily seed from a persisted column order (by id) when persistKey is set.
+  // Store only the ORDER (string ids), never a snapshot of column objects — otherwise
+  // the frozen snapshot keeps stale `cell` closures (over old state/props), which made
+  // edited cells render/write stale data (e.g. corrugation flute stuck "Loading", reel
+  // wiped on edit). `columns` is re-derived from the FRESH columnsWithExpand every render.
+  const colId = (col: any) => col.id || col.accessorKey
+  const [columnOrderState, setColumnOrderState] = useState<string[] | null>(() => {
+    const order = savedView?.columnOrder
+    return order && order.length > 0 ? order : null
+  })
 
-  // Use reordered columns if available, otherwise use enhanced columns (with expand if applicable)
-  const columns = reorderedColumns || columnsWithExpand
+  const columns = useMemo(() => {
+    if (!columnOrderState || columnOrderState.length === 0) return columnsWithExpand
+    const currentIds = columnsWithExpand.map(colId)
+    // Only apply a saved order that matches the current column set exactly.
+    if (columnOrderState.length !== currentIds.length || !columnOrderState.every((id) => currentIds.includes(id))) {
+      return columnsWithExpand
+    }
+    return [...columnsWithExpand].sort((a, b) => columnOrderState.indexOf(colId(a)) - columnOrderState.indexOf(colId(b)))
+  }, [columnsWithExpand, columnOrderState])
 
   // Search hook - handles all search state and logic (must be after columns definition)
   const {
@@ -818,7 +1007,8 @@ export function DataGrid<TData>({
     selectedDuringSearch,
     debouncedSearchValue,
     handleGlobalSearchChange,
-    handleRowSelectionChange
+    handleRowSelectionChange,
+    clearSearch
   } = advancedSearch({
     data,
     columns,
@@ -833,13 +1023,7 @@ export function DataGrid<TData>({
   // Keep voice search handler ref in sync
   searchHandlerRef.current = handleGlobalSearchChange
 
-  // Reset reordered columns when data changes (simple trigger)
-  const columnsLength = enhancedColumns.length
-  useEffect(() => {
-    if (reorderedColumns && reorderedColumns.length !== columnsLength) {
-      setReorderedColumns(null)
-    }
-  }, [columnsLength, reorderedColumns])
+  // (Column order is re-derived from fresh columns each render; no snapshot to reset.)
   const [showAdvancedFilter, setShowAdvancedFilter] = useState(false)
   const [settingsInitialTab, setSettingsInitialTab] = useState<'filters' | 'columns' | 'sort'>('filters')
   const [currentView, setCurrentView] = useState<'grid' | 'chart' | 'cards'>('grid')
@@ -857,8 +1041,27 @@ export function DataGrid<TData>({
         initialSizing[col.id] = col.size
       }
     })
-    return initialSizing
+    return { ...initialSizing, ...(savedView?.columnSizing || {}) }
   })
+
+  // Persist view preferences (show/hide, order, width, sort) to localStorage when persistKey is set
+  const columnOrderIds = useMemo(
+    () => columns.map((col: any) => col.id || col.accessorKey).filter(Boolean),
+    [columns]
+  )
+  useEffect(() => {
+    if (!persistStorageKey || typeof window === 'undefined') return
+    try {
+      window.localStorage.setItem(persistStorageKey, JSON.stringify({
+        columnVisibility,
+        columnSizing,
+        sorting,
+        columnOrder: columnOrderIds,
+      }))
+    } catch {
+      // localStorage unavailable (private mode / quota) — view just won't persist
+    }
+  }, [persistStorageKey, columnVisibility, columnSizing, sorting, columnOrderIds])
 
   // Track selected rows during search - now handled by useDataGridSearch hook
 
@@ -973,7 +1176,11 @@ export function DataGrid<TData>({
 
       // Date-aware matching: try to parse cell value as date and match against common formats
       // This handles cases where raw value is "2026-02-14T00:00:00" but user types "14 Feb" or "Feb 2026"
-      if (cellValue) {
+      //
+      // Only attempt this on values that actually look like dates. new Date(297) is a VALID
+      // date (297ms after epoch → 01/01/1970), so feeding plain numbers here made every
+      // numeric cell match any digit the user typed — filtering a number column did nothing.
+      if (cellValue && looksLikeDate(cellValue)) {
         const dateObj = new Date(cellValue)
         if (!isNaN(dateObj.getTime())) {
           const day = dateObj.getDate()
@@ -1092,6 +1299,9 @@ export function DataGrid<TData>({
       advancedFilter: advancedFilterFn,
     },
     sortingFns: {
+      // Numeric-aware text sort so "10" sorts after "9", not after "1".
+      naturalSort: (rowA: any, rowB: any, columnId: string) =>
+        naturalCompare(rowA.getValue(columnId), rowB.getValue(columnId)),
       // Date-aware sort: parses DD/MM/YYYY, ISO, and other common date formats
       dateSort: (rowA: any, rowB: any, columnId: string) => {
         const parseDate = (val: any): number => {
@@ -1246,12 +1456,11 @@ export function DataGrid<TData>({
     )
 
     if (activeIndex !== overIndex && activeIndex !== -1 && overIndex !== -1) {
-      setReorderedColumns((prevColumns) => {
-        const currentColumns = prevColumns || enhancedColumns
-        return arrayMove(currentColumns, activeIndex, overIndex)
-      })
+      // Persist the new ORDER (ids), not the column objects.
+      const currentIds = columns.map(colId)
+      setColumnOrderState(arrayMove(currentIds, activeIndex, overIndex))
     }
-  }, [columns, enhancedColumns])
+  }, [columns])
 
   // Row reordering handler
   const handleRowReorder = useCallback((event: DragEndEvent) => {
@@ -1289,6 +1498,26 @@ export function DataGrid<TData>({
   const processedData = useMemo(() => {
     return table.getFilteredRowModel().rows.map(row => row.original)
   }, [table])
+
+  // Export rows: mirror what's on screen — only visible columns, in display order,
+  // keyed by their header label, over the filtered + sorted rows.
+  const exportRows = useMemo(() => {
+    const exportable = table.getVisibleLeafColumns().filter(
+      (col) => col.id !== 'select' && col.id !== 'actions' && col.id !== 'expand'
+    )
+    const headerOf = (col: any): string => {
+      const h = col.columnDef?.header
+      return typeof h === 'string' && h.trim() ? h : col.id
+    }
+    return table.getSortedRowModel().rows.map((row) => {
+      const out: Record<string, any> = {}
+      exportable.forEach((col) => {
+        out[headerOf(col)] = row.getValue(col.id)
+      })
+      return out
+    })
+    // Recompute when filters, sorting, visibility, order, or data change
+  }, [table, columnFilters, sorting, columnVisibility, columnSizing, globalFilter, data, columnOrderState])
 
   const handleExport = (format: 'csv' | 'excel' | 'pdf' | 'json') => {
     // Export functionality will be implemented in ExportImportButtons
@@ -1418,18 +1647,10 @@ export function DataGrid<TData>({
     }
   }, [table])
 
-  const handleAdvancedFilter = (filters: any) => {
-    // Apply advanced filters by converting to column filters
-    const newColumnFilters: ColumnFiltersState = filters.map((filter: any) => ({
-      id: filter.column,
-      value: {
-        operator: filter.operator,
-        value: filter.value,
-        type: filter.type
-      }
-    }))
-
-    setColumnFilters(newColumnFilters)
+  const handleAdvancedFilter = (conditions: AdvancedCondition[]) => {
+    // Conditions are evaluated together in filteredData with their AND/OR connectors,
+    // so OR actually works (TanStack's columnFilters can only AND independent columns).
+    setAdvancedConditions(conditions)
     setShowAdvancedFilter(false)
   }
 
@@ -1452,6 +1673,24 @@ export function DataGrid<TData>({
     }
   }, [table])
 
+  // Spin the refresh icon while the caller's handler is in flight. Callers that
+  // already track their own loading state can drive it via the isRefreshing prop.
+  const [isRefreshingInternal, setIsRefreshingInternal] = useState(false)
+  const refreshSpinning = isRefreshingProp || isRefreshingInternal
+
+  const handleRefreshClick = useCallback(async () => {
+    if (!onRefresh || refreshSpinning) return
+    try {
+      const result = onRefresh()
+      if (result && typeof (result as any).then === 'function') {
+        setIsRefreshingInternal(true)
+        await result
+      }
+    } finally {
+      setIsRefreshingInternal(false)
+    }
+  }, [onRefresh, refreshSpinning])
+
   const handleClearColumnSearch = useCallback((columnId: string) => {
     setColumnSearches(prev => {
       const newSearches = { ...prev }
@@ -1472,19 +1711,24 @@ export function DataGrid<TData>({
   }, [table])
 
   // Clear ALL filters (global search + column filters)
+  // Total active filters for the badge / clear-all visibility: column filters + advanced conditions.
+  const totalActiveFilters = columnFilters.length + advancedConditions.length
+
   const handleClearAllFilters = useCallback(() => {
-    // Clear global filter/search
-    setGlobalFilter('')
-    setSearchValue('')
-    clearNavigation()
+    // Clear global filter/search (clearSearch also resets the debounced value,
+    // which otherwise re-applies the old filter 300ms later)
+    clearSearch()
 
     // Clear all column filters
     setColumnFilters([])
 
+    // Clear advanced filter conditions
+    setAdvancedConditions([])
+
     // Clear column search states
     setColumnSearches({})
     setIsColumnSearchActive({})
-  }, [setGlobalFilter, clearNavigation])
+  }, [clearSearch])
 
   // Navigation handlers
   const handleSearchNavigation = useCallback((direction: 'up' | 'down') => {
@@ -1534,7 +1778,7 @@ export function DataGrid<TData>({
       {/* Header Row - 20% more height for better balance */}
       {!hideHeader && (
         <div
-          className={`flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0 py-2 sm:py-1.5 px-2 sm:px-3 border-b border-bd-default bg-bg-subtle transition-colors ${enableGrouping ? 'group-drop-zone' : ''}`}
+          className={`flex flex-row items-center justify-between gap-1.5 sm:gap-0 py-2 sm:py-1.5 px-2 sm:px-3 border-b border-bd-default bg-bg-subtle transition-colors ${enableGrouping ? 'group-drop-zone' : ''}`}
           onDragOver={enableGrouping ? (e) => {
             e.preventDefault()
             e.currentTarget.classList.add('bg-[rgb(var(--color-primary))]/5', 'border-[rgb(var(--color-primary))]')
@@ -1552,7 +1796,7 @@ export function DataGrid<TData>({
           } : undefined}
         >
           {/* Left side - Title, Grouped Columns, and Pre-toggle Actions */}
-          <div className="flex flex-wrap items-center gap-2 sm:gap-4 min-w-0 flex-1">
+          <div className="flex flex-nowrap sm:flex-wrap items-center gap-1.5 sm:gap-4 min-w-0 shrink sm:flex-1">
             {title && (
               <h3 className="text-sm sm:text-base font-medium text-fg-default truncate">
                 {title}
@@ -1603,7 +1847,7 @@ export function DataGrid<TData>({
             )}
             {/* Pre-toggle Actions - Moved to left side */}
             {preToggleActions && (
-              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 sm:ml-0 ml-auto">
+              <div className="flex flex-nowrap sm:flex-wrap items-center gap-1.5 sm:gap-2 min-w-0 shrink">
                 {preToggleActions}
               </div>
             )}
@@ -1634,6 +1878,9 @@ export function DataGrid<TData>({
                 <button
                   onClick={() => {
                     try {
+                      // Clear search/filters so the Selected view shows every selected
+                      // row, not just those matching a leftover filter
+                      handleClearAllFilters()
                       // Always allow switching to selected mode, even with 0 selections
                       // This prevents the toggle from becoming unresponsive
                       onViewModeChange?.('selected')
@@ -1661,7 +1908,8 @@ export function DataGrid<TData>({
                 <div className="min-w-0 flex-1">
                   {effectiveSearchType === 'advanced' ? (
                     <>
-                      {/* Unified pill: 🔍 Search... [grows] | divider | 📅 Date | divider | ≡ Filters */}
+                      {/* Unified pill: 🔍 Search... [grows] | 📅 Date | ≡ Filters | ⚙ Options | toolbarActions */}
+                      <TooltipProvider delayDuration={100}>
                       <div className="flex items-center h-8 rounded-full border border-[rgb(var(--bd-default))] bg-[rgb(var(--bg-surface))] px-3 focus-within:border-[rgb(var(--color-primary))] focus-within:ring-1 focus-within:ring-[rgb(var(--color-primary)/0.2)] transition-all">
                         {/* Search section — grows to fill */}
                         <div className="flex items-center gap-1.5 flex-1 min-w-0">
@@ -1700,54 +1948,94 @@ export function DataGrid<TData>({
                             />
                           )}
                           {enableDateFilter && <div className="w-px h-4 bg-[rgb(var(--bd-default))]" />}
-                          <button
-                            onClick={() => { setSettingsInitialTab('filters'); setShowAdvancedFilter(true) }}
-                            className="relative flex items-center gap-1 text-[rgb(var(--fg-muted))] hover:text-[rgb(var(--fg-default))] transition-colors"
-                          >
-                            <ListFilter className="h-3.5 w-3.5" />
-                            <span className="hidden sm:inline text-xs">Filters</span>
-                            {columnFilters.length > 0 && (
-                              <div className="absolute -top-1 -right-1 h-3 w-3 bg-[rgb(var(--color-primary))] rounded-full flex items-center justify-center">
-                                <span className="text-[8px] text-white font-bold">{columnFilters.length}</span>
-                              </div>
-                            )}
-                          </button>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                onClick={() => { setSettingsInitialTab('filters'); setShowAdvancedFilter(true) }}
+                                className="relative flex items-center gap-1 text-[rgb(var(--fg-muted))] hover:text-[rgb(var(--fg-default))] transition-colors"
+                              >
+                                <ListFilter className="h-3.5 w-3.5" />
+                                <span className="hidden sm:inline text-xs">Filters</span>
+                                {totalActiveFilters > 0 && (
+                                  <div className="absolute -top-1 -right-1 h-3 w-3 bg-[rgb(var(--color-primary))] rounded-full flex items-center justify-center">
+                                    <span className="text-[8px] text-white font-bold">{totalActiveFilters}</span>
+                                  </div>
+                                )}
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {totalActiveFilters > 0 ? `Filters (${totalActiveFilters} active)` : 'Filters'}
+                            </TooltipContent>
+                          </Tooltip>
                           {compactHeader && (
                             <>
                               <div className="w-px h-4 bg-[rgb(var(--bd-default))]" />
-                              <ActionsMenu
-                                enableVisualization={enableVisualization}
-                                currentView={currentView}
-                                onViewChange={handleViewChange}
-                                enableExport={enableExport && pageAccess.canExport}
-                                enableImport={enableImport}
-                                data={filteredData}
-                                filename="data-export"
-                                onImportComplete={(importedData) => { if (onImport) onImport(importedData) }}
-                                enableColumnVisibility={enableColumnVisibility}
-                                onOpenColumnChooser={() => { setSettingsInitialTab('columns'); setShowAdvancedFilter(true) }}
-                                enableAutoResize={enableAutoResize}
-                                onAutoResize={() => { if (autoResizeAllColumns) autoResizeAllColumns(table) }}
-                                enableDateFilter={enableDateFilter}
-                                dateFrom={dateFrom}
-                                dateTo={dateTo}
-                                onDateFromChange={onDateFromChange}
-                                onDateToChange={onDateToChange}
-                                enableFiltering={enableFiltering}
-                                onOpenAdvancedFilter={() => { setSettingsInitialTab('filters'); setShowAdvancedFilter(true) }}
-                                activeFiltersCount={columnFilters.length}
-                                enableGrouping={enableGrouping}
-                                columns={table.getAllColumns()}
-                                grouping={grouping}
-                                onGroupingChange={(columnId) => {
-                                  setGrouping((prev) => prev.includes(columnId) ? prev.filter((id) => id !== columnId) : [...prev, columnId])
-                                }}
-                                onClearGrouping={() => setGrouping([])}
-                              />
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span className="inline-flex">
+                                    <ActionsMenu
+                                      enableVisualization={enableVisualization}
+                                      currentView={currentView}
+                                      onViewChange={handleViewChange}
+                                      enableExport={enableExport && pageAccess.canExport}
+                                      enableImport={enableImport}
+                                      data={exportRows as any}
+                                      filename={typeof title === 'string' && title ? title : 'data-export'}
+                                      onImportComplete={(importedData) => { if (onImport) onImport(importedData) }}
+                                      enableColumnVisibility={enableColumnVisibility}
+                                      onOpenColumnChooser={() => { setSettingsInitialTab('columns'); setShowAdvancedFilter(true) }}
+                                      enableAutoResize={enableAutoResize}
+                                      onAutoResize={() => { if (autoResizeAllColumns) autoResizeAllColumns(table) }}
+                                      enableDateFilter={enableDateFilter}
+                                      dateFrom={dateFrom}
+                                      dateTo={dateTo}
+                                      onDateFromChange={onDateFromChange}
+                                      onDateToChange={onDateToChange}
+                                      enableFiltering={enableFiltering}
+                                      onOpenAdvancedFilter={() => { setSettingsInitialTab('filters'); setShowAdvancedFilter(true) }}
+                                      activeFiltersCount={totalActiveFilters}
+                                      enableGrouping={enableGrouping}
+                                      columns={table.getAllColumns()}
+                                      grouping={grouping}
+                                      onGroupingChange={(columnId) => {
+                                        setGrouping((prev) => prev.includes(columnId) ? prev.filter((id) => id !== columnId) : [...prev, columnId])
+                                      }}
+                                      onClearGrouping={() => setGrouping([])}
+                                    />
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent>Options</TooltipContent>
+                              </Tooltip>
+                            </>
+                          )}
+                          {onRefresh && (
+                            <>
+                              <div className="w-px h-4 bg-[rgb(var(--bd-default))]" />
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    type="button"
+                                    onClick={handleRefreshClick}
+                                    disabled={refreshSpinning}
+                                    aria-label="Refresh"
+                                    className="flex items-center text-[rgb(var(--fg-muted))] hover:text-[rgb(var(--fg-default))] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                  >
+                                    <RefreshCw className={`h-3.5 w-3.5 ${refreshSpinning ? 'animate-spin' : ''}`} />
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent>Refresh</TooltipContent>
+                              </Tooltip>
+                            </>
+                          )}
+                          {toolbarActions && (
+                            <>
+                              <div className="w-px h-4 bg-[rgb(var(--bd-default))]" />
+                              {toolbarActions}
                             </>
                           )}
                         </div>
                       </div>
+                      </TooltipProvider>
 
                     {/* Search Navigator */}
                     <SearchNavigator
@@ -1773,16 +2061,15 @@ export function DataGrid<TData>({
               </div>
 
               {/* Clear All Filters Button */}
-              {(globalFilter || columnFilters.length > 0) && (
+              {(globalFilter || totalActiveFilters > 0) && (
                 <Button
-                  variant="outline"
-                  size="sm"
+                  variant="action-cancel"
+                  size="xs"
                   onClick={handleClearAllFilters}
-                  className="h-7 sm:h-8 px-2 sm:px-3 text-xs whitespace-nowrap"
+                  className="h-8 rounded-full whitespace-nowrap"
                   aria-label="Clear all filters"
                 >
-                  <XCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                  Clear All
+                  Clear
                 </Button>
               )}
             </div>
@@ -2140,7 +2427,7 @@ export function DataGrid<TData>({
                                               position: 'sticky',
                                               right: `${rightPosition}px`,
                                               zIndex: 12,
-                                              backgroundColor: 'color-mix(in srgb, rgb(var(--color-primary)) 10%, white)',
+                                              backgroundColor: 'color-mix(in srgb, rgb(var(--color-primary)) 10%, rgb(var(--bg-surface)))',
                                               transform: 'translateZ(0)',
                                               willChange: 'transform'
                                             })
@@ -2228,7 +2515,7 @@ export function DataGrid<TData>({
                                                 position: 'sticky',
                                                 right: `${rightPosition}px`,
                                                 zIndex: 12,
-                                                backgroundColor: 'color-mix(in srgb, rgb(var(--color-primary)) 10%, white)',
+                                                backgroundColor: 'color-mix(in srgb, rgb(var(--color-primary)) 10%, rgb(var(--bg-surface)))',
                                                 transform: 'translateZ(0)',
                                                 willChange: 'transform'
                                               })
@@ -2345,6 +2632,8 @@ export function DataGrid<TData>({
                                             onClearColumnSearch={handleClearColumnSearch}
                                             SearchHighlighter={SearchHighlighter}
                                             InlineSearchCell={InlineSearchCell}
+                                            className={getRowProps?.(row.original)?.className}
+                                            rowStyle={getRowProps?.(row.original)?.style}
                                           />
                                         )
                                       })}
@@ -2380,7 +2669,7 @@ export function DataGrid<TData>({
                                                 expandMode={expandMode}
                                                 subData={getSubData && !globalFilter && columnFilters.length === 0 ? getSubData(row.original) : undefined}
                                                 subColumns={columns as any}
-                                                getSubRowId={getSubRowId}
+                                                getSubRowId={getSubRowId} getSubRowProps={getRowProps}
                                                 onSubRowClick={onSubRowClick}
                                                 onSubRowSelect={onSubRowSelect}
                                                 onRowClick={(e) => handleRowClick(row, rowIndex, e)}
@@ -2391,6 +2680,7 @@ export function DataGrid<TData>({
                                                     onRowContextMenu(row.original, e)
                                                   }
                                                 }}
+                                                style={getRowProps?.(row.original)?.style}
                                                 className={`
                                   cursor-pointer group
                                   transition-colors duration-150 ease-out
@@ -2400,6 +2690,7 @@ export function DataGrid<TData>({
                                                       ? 'bg-[color-mix(in_srgb,rgb(var(--color-primary))_8%,rgb(var(--bg-surface)))] shadow-sm hover:bg-[color-mix(in_srgb,rgb(var(--color-primary))_15%,rgb(var(--bg-surface)))]'
                                                       : 'hover:bg-[color-mix(in_srgb,rgb(var(--color-primary))_5%,rgb(var(--bg-surface)))]'
                                                   }
+                                  ${getRowProps?.(row.original)?.className ?? ''}
                                 `}
                                               >
                                                 {row.getVisibleCells().map((cell, cellIndex) => (
@@ -2454,7 +2745,7 @@ export function DataGrid<TData>({
                                               expandMode={expandMode}
                                               subData={getSubData && !globalFilter && columnFilters.length === 0 ? getSubData(row.original) : undefined}
                                               subColumns={columns as any}
-                                              getSubRowId={getSubRowId}
+                                              getSubRowId={getSubRowId} getSubRowProps={getRowProps}
                                               onSubRowClick={onSubRowClick}
                                               onSubRowSelect={onSubRowSelect}
                                               onRowClick={(e) => handleRowClick(row, rowIndex, e)}
@@ -2466,6 +2757,7 @@ export function DataGrid<TData>({
                                                 }
                                               }}
                                               rowHeight={rowHeight}
+                                              style={getRowProps?.(row.original)?.style}
                                               className={`
                                       cursor-pointer group
                                       transition-colors duration-150 ease-out
@@ -2475,6 +2767,7 @@ export function DataGrid<TData>({
                                                     ? 'bg-[rgb(var(--bg-selected))] shadow-sm hover:bg-[rgb(var(--bg-hover))]'
                                                     : 'hover:bg-[rgb(var(--bg-hover))]'
                                                 }
+                                      ${getRowProps?.(row.original)?.className ?? ''}
                                     `}
                                             >
                                               {row.getVisibleCells().map((cell, cellIndex) => (
@@ -2550,6 +2843,7 @@ export function DataGrid<TData>({
                 selectedRows={selectedRows}
                 cardSize="compact"
                 circularCheckboxes={circularCheckboxes}
+                getCardClassName={getRowProps ? (item) => getRowProps(item).className : undefined}
                 onRowSelect={(item, selected) => {
                   const rowIndex = table.getFilteredRowModel().rows.findIndex(row => row.original === item)
                   if (rowIndex !== -1) {
@@ -2600,6 +2894,7 @@ export function DataGrid<TData>({
       {contextMenu.column && (
         <ColumnContextMenu
           column={contextMenu.column}
+          table={table}
           data={data}
           isVisible={contextMenu.isVisible}
           position={contextMenu.position}

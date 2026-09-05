@@ -295,7 +295,7 @@ export function ModalAlert({
                   className={cn(
                     ALERT_TOKENS.typography.description,
                     colors.description,
-                    'break-words'
+                    'break-words whitespace-pre-line'
                   )}
                 >
                   {description}

@@ -56,3 +56,10 @@ export function getModuleRoutePath(moduleName: string): string {
   if (['rapid estimation', 'rapid-estimation', 'rapid', 'estimation-steps', 'estimation steps', 'step estimation', 'estimation-mobile', 'estimation mobile', 'dynamic fill', 'dynamic fill costing'].includes(normalizedModuleName)) return '/costing/estimation/rapid'
   return `/${moduleName.toLowerCase().trim().replace(/\s+/g, '-')}`
 }
+
+const naturalCollator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' })
+
+// Numeric-aware string compare so "10" sorts after "9", not after "1".
+export function naturalCompare(a: unknown, b: unknown): number {
+  return naturalCollator.compare(String(a ?? ''), String(b ?? ''))
+}

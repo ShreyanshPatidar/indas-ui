@@ -5,7 +5,7 @@
 export { getCategoriesAPI, getClientsAPI, getSalesPersonsAPI, getSalesPersonForClientAPI } from './categories'
 
 // Export quality APIs
-export { getQualitiesAPI, getGSMAPI, getMillAPI, getFinishAPI, getCoatingAPI, getBFAPI, getBoardBrandAPI, getCertificationTypesAPI, getQuoteDefaultsAPI, type BFData, type CertificationType, type QuoteDefaults } from './qualities'
+export { getQualitiesAPI, getGSMAPI, getMillAPI, getFinishAPI, getCoatingAPI, getBFAPI, getBoardBrandAPI, getPaperCombinationsAPI, getCertificationTypesAPI, getQuoteDefaultsAPI, getMaterialRateAPI, type BFData, type PaperCombinationRow, type CertificationType, type QuoteDefaults } from './qualities'
 
 // Export machine APIs
 export { getMachineGridAPI } from './machines'

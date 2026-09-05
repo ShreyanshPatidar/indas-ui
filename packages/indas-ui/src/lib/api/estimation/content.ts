@@ -172,17 +172,19 @@ export class ContentAPI {
    * @returns CSS color class
    */
   static getDisplayColor(domainType: string): string {
+    // Spelled out per case — a template literal inside a class name would not
+    // survive the Tailwind build.
     switch (domainType?.toLowerCase()) {
       case 'flexo':
-        return 'bg-blue-500'
+        return 'bg-[rgb(var(--color-info))]'
       case 'offset':
-        return 'bg-green-500'
+        return 'bg-[rgb(var(--color-success))]'
       case 'digital':
-        return 'bg-purple-500'
+        return 'bg-[rgb(var(--color-purple))]'
       case 'finishing':
-        return 'bg-orange-500'
+        return 'bg-[rgb(var(--color-orange))]'
       default:
-        return 'bg-gray-500'
+        return 'bg-[rgb(var(--color-neutral))]'
     }
   }
 

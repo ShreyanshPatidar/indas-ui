@@ -62,6 +62,7 @@ export interface ProcessMasterItem extends BaseMasterItem {
   MinimumQuantityToBeCharged?: number
   ProcessModuleType: string
   IsOnlineProcess: boolean
+  IsExcludeFromProfit?: boolean
   ProcessCategory: string
   DisplayName?: string
   PerHourCostingParameter?: string

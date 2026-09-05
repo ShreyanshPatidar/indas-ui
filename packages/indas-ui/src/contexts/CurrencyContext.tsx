@@ -17,7 +17,7 @@ export interface ExchangeRates {
 }
 
 // Resolve symbol from Intl API — no hardcoding
-function getSymbolForCode(code: string): string {
+export function getSymbolForCode(code: string): string {
   try {
     const parts = new Intl.NumberFormat('en', { style: 'currency', currency: code, currencyDisplay: 'narrowSymbol' }).formatToParts(0)
     return parts.find(p => p.type === 'currency')?.value || code
@@ -90,7 +90,7 @@ class ExchangeRateService {
 
   private async fetchFromAPI(base: string): Promise<ExchangeRates | null> {
     try {
-      const response = await fetch(`https://api.frankfurter.app/latest?base=${base}`, {
+      const response = await fetch(`https://api.frankfurter.dev/v1/latest?base=${base}`, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
@@ -180,7 +180,7 @@ export function CurrencyProvider({ children, baseCurrencyCode }: { children: Rea
     let cancelled = false
     async function fetchCurrencies() {
       try {
-        const res = await fetch('https://api.frankfurter.app/currencies')
+        const res = await fetch('https://api.frankfurter.dev/v1/currencies')
         if (!res.ok) return
         const data: Record<string, string> = await res.json()
         if (cancelled) return

@@ -55,6 +55,8 @@ export interface ShipperPlan {
 export interface ContainerPlan {
   ContainerID: number
   ContainerName: string
+  /** 'Container' | 'Truck' — from ContainerMaster.Category */
+  Category?: string
   LengthMM: number
   WidthMM: number
   HeightMM: number
@@ -80,6 +82,8 @@ export interface ContainerPlan {
   PalletsPerContainer?: number | null
   TotalPalletsRequired?: number | null
   BoxesPerPallet?: number | null
+  /** Overflow shippers riding loose (de-palletized) in the kept containers' free space */
+  LooseBoxes?: number
   ShippingRatePerCBM?: number
 }
 
@@ -149,6 +153,19 @@ export interface ShipperCalculationRequest {
   NoOfPly?: number
   GapMM?: number   // backend field (mm) — frontend uses Tol.% separately
   QtyPerBundle?: number
+  // Nestable cartons (clamshells) stack inside one another: a run of N occupies
+  // unit + (N-1)*NestPitch, not N*unit. Read from the NestingPitch/NestingAxis
+  // keys inside ContentMaster.ShipperPlanningDimensionFormula.
+  NestPitch?: number
+  NestAxis?: string   // 'L' | 'W' | 'H'
+  // Client-mandated shipper carton: when set, box search is skipped and this exact
+  // carton + units-per-carton drives the plan. QtyPerShipper must be even.
+  ClientBox?: {
+    SizeL: number
+    SizeW: number
+    SizeH: number
+    QtyPerShipper: number
+  } | null
 }
 
 // Container Calculation Request — matches SP_ContainerPlanningRequest

@@ -382,6 +382,7 @@ export const CheckboxButton = React.forwardRef<HTMLButtonElement, CheckboxButton
         onClick={() => onChange?.(!checked)}
         className={cn(
           'inline-flex items-center rounded-full border font-medium transition-all duration-200',
+          'disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[rgb(var(--bg-surface))]',
           sizeClasses[size],
           checked
             ? 'bg-[rgb(var(--color-primary))]/10 hover:bg-[rgb(var(--color-primary))]/20 text-[rgb(var(--color-primary))] border-[rgb(var(--color-primary))]/20'

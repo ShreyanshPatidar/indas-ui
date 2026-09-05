@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react'
+import React, { createContext, useContext, useReducer, useEffect, useCallback, useMemo } from 'react'
 import { useSession } from 'next-auth/react'
 import { createEmailAPI, type EmailAPI, DEFAULT_FOLDERS, DEFAULT_CATEGORIES } from '@/lib/api/activity/email'
 import type {
@@ -347,7 +347,10 @@ const EmailContext = createContext<EmailContextValue | undefined>(undefined)
 export function EmailProvider({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession()
   const [state, dispatch] = useReducer(emailReducer, initialState)
-  const api = createEmailAPI(session)
+  // Memoize on stable identity — useSession() returns a new object each render, so an
+  // unmemoized api would churn every useCallback([api]) and trigger repeated fetches.
+  const sessionIdentity = `${(session?.user as any)?.CompanyID ?? ''}:${(session?.user as any)?.UserID ?? ''}`
+  const api = useMemo(() => createEmailAPI(session), [sessionIdentity]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Initialize email system when session is available
   // NOTE: Initialization is now manual - call actions.fetchEmails() when needed
@@ -882,41 +885,44 @@ export function EmailProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: 'RESET_STATE' })
   }, [])
 
-  // Context value
-  const value: EmailContextValue = {
-    state,
-    api,
-    actions: {
-      fetchAllFolders,
-      fetchEmails,
-      fetchPage,
-      fetchMoreEmails,
-      fetchEmailById,
-      fetchThread,
-      fetchFolders,
-      fetchCategories,
-      fetchTemplates,
-      fetchDrafts,
-      fetchContacts,
-      fetchUnreadCount,
-      sendEmail,
-      saveDraft,
-      updateEmailStatus,
-      deleteEmail,
-      openCompose,
-      closeCompose,
-      selectEmail,
-      selectFolder,
-      selectCategory,
-      setCurrentView,
-      setSearchQuery,
-      setSearchFilters,
-      performSearch,
-      refreshEmails,
-      clearError,
-      resetState
-    }
-  }
+  const actions = useMemo(() => ({
+    fetchAllFolders,
+    fetchEmails,
+    fetchPage,
+    fetchMoreEmails,
+    fetchEmailById,
+    fetchThread,
+    fetchFolders,
+    fetchCategories,
+    fetchTemplates,
+    fetchDrafts,
+    fetchContacts,
+    fetchUnreadCount,
+    sendEmail,
+    saveDraft,
+    updateEmailStatus,
+    deleteEmail,
+    openCompose,
+    closeCompose,
+    selectEmail,
+    selectFolder,
+    selectCategory,
+    setCurrentView,
+    setSearchQuery,
+    setSearchFilters,
+    performSearch,
+    refreshEmails,
+    clearError,
+    resetState
+  }), [
+    fetchAllFolders, fetchEmails, fetchPage, fetchMoreEmails, fetchEmailById, fetchThread,
+    fetchFolders, fetchCategories, fetchTemplates, fetchDrafts, fetchContacts, fetchUnreadCount,
+    sendEmail, saveDraft, updateEmailStatus, deleteEmail, openCompose, closeCompose, selectEmail,
+    selectFolder, selectCategory, setCurrentView, setSearchQuery, setSearchFilters, performSearch,
+    refreshEmails, clearError, resetState
+  ])
+
+  const value = useMemo<EmailContextValue>(() => ({ state, api, actions }), [state, api, actions])
 
   // Auto-fetch ALL folders on mount — populates cache + counts for instant switching
   useEffect(() => {

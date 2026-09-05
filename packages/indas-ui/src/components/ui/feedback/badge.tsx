@@ -187,7 +187,7 @@ function FilterBadgeGroup({ items, selected, onSelect, className }: FilterBadgeG
 
     return (
       <div
-        className={cn('rounded-full overflow-hidden [&_button]:!bg-transparent [&_button]:!border-transparent [&_button]:!text-white [&_button]:!shadow-none [&_svg]:!text-white', className)}
+        className={cn('rounded-full overflow-hidden min-w-0 [&_button]:!bg-transparent [&_button]:!border-transparent [&_button]:!text-white [&_button]:!shadow-none [&_svg]:!text-white [&_button]:!min-h-0 [&_[role=button]]:!min-h-0 [&_button]:!h-7 [&_[role=button]]:!h-7', className)}
         style={{ backgroundColor: `rgb(var(${cssVar}))` }}
       >
         <Dropdown

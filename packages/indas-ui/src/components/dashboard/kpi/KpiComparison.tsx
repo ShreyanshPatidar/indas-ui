@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 import { cn } from '@/lib/utils'
+import { KpiCardSkeleton } from './kpi-shell'
 
 export interface ComparisonBar {
   /** Label for this bar */
@@ -28,6 +29,8 @@ export interface KpiComparisonProps {
   }
   /** Comparison bars to display */
   bars: ComparisonBar[]
+  /** Show a skeleton placeholder while data loads */
+  loading?: boolean
   /** Additional class names */
   className?: string
 }
@@ -43,8 +46,10 @@ export function KpiComparison({
   target,
   status,
   bars,
+  loading,
   className
 }: KpiComparisonProps) {
+  if (loading) return <KpiCardSkeleton className={className} />
   const getBarColor = (color?: string) => {
     switch (color) {
       case 'success':

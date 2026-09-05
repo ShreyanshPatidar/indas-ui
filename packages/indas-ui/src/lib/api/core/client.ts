@@ -73,7 +73,7 @@ class APIClient {
         }
       }
 
-      // Build complete URL (use override if provided, e.g. NEXT_PUBLIC_API_BASE_URL_NEW)
+      // Build complete URL (use override if provided)
       let url: string | null
       if (baseURLOverride) {
         const base = baseURLOverride.endsWith('/') ? baseURLOverride : `${baseURLOverride}/`
@@ -176,12 +176,15 @@ class APIClient {
       const signal = externalSignal
         ? (AbortSignal as any).any?.([timeoutSignal, externalSignal]) ?? timeoutSignal
         : timeoutSignal
+      const startedAt = Date.now()
       const response = await fetch(url, {
         ...options,
         headers,
         signal,
         cache: 'no-store' // Disable HTTP caching - always fetch fresh data
       })
+      // Feeds the app-wide "weak connection" banner (NetworkStatusProvider).
+      ;(globalThis as any).__reportRequestMs?.(Date.now() - startedAt)
 
       // Handle non-OK responses
       if (!response.ok) {
@@ -260,7 +263,10 @@ class APIClient {
       let errorMessage = 'Unable to complete request. Please try again.'
 
       if (error instanceof Error) {
-        if (error.name === 'AbortError') {
+        // AbortSignal.timeout() throws a TimeoutError (not AbortError); a caller-cancelled
+        // request throws AbortError. Both land here — distinguish by the external signal.
+        const isTimeout = error.name === 'TimeoutError' || error.message.toLowerCase().includes('timed out')
+        if (error.name === 'AbortError' || isTimeout) {
           // If the caller's own signal fired, surface a clean "aborted" signal so callers can detect user cancel.
           if (externalSignal?.aborted) {
             return { success: false, error: 'aborted', aborted: true } as APIResponse<T>

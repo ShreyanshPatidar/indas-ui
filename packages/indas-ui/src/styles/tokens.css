@@ -173,16 +173,17 @@
 
   /* ===== DARK MODE OVERRIDES ===== */
   .dark {
-    /* Lighter dark theme backgrounds - easier on eyes */
-    --bg-app: 24 24 27;              /* Zinc-900 #18181b */
-    --bg-surface: 39 39 42;          /* Zinc-800 #27272a */
-    --bg-header: 24 24 27;           /* Header/navbar background */
-    --bg-sidebar: 32 32 35;          /* Between app and surface */
-    --bg-subtle: 50 50 54;           /* Subtle backgrounds */
-    --bg-hover: 58 58 63;            /* Hover states */
-    --bg-selected: 63 63 70;         /* Selected/active states - Zinc-700 */
-    --bg-overlay: 0 0 0;             /* Modal overlays */
-    --bg-grid-header: 44 44 48;      /* Grid header background */
+    /* Layered dark surfaces — cooler slate base with clearer elevation steps so
+       panels/cards/headers separate instead of blending into one slab. */
+    --bg-app: 15 18 25;             /* Deep slate base #0f1219 */
+    --bg-surface: 30 35 46;         /* Card/panel surface #1e232e — clearly above app */
+    --bg-header: 18 22 31;          /* Header/navbar — between app and surface */
+    --bg-sidebar: 22 26 36;         /* Sidebar — its own layer */
+    --bg-subtle: 38 44 57;          /* Subtle fills (chips, inputs) */
+    --bg-hover: 46 53 68;           /* Hover states */
+    --bg-selected: 54 62 80;        /* Selected/active rows */
+    --bg-overlay: 0 0 0;            /* Modal overlays */
+    --bg-grid-header: 34 40 52;     /* Grid header — above surface */
 
     /* Professional dark mode text colors */
     --fg-default: 250 250 250;       /* Zinc-50 - brighter text */
@@ -191,11 +192,11 @@
     --fg-inverse: 24 24 27;          /* Dark text for light backgrounds */
     --fg-accent: var(--color-primary); /* Accent text inherits from theme */
 
-    /* Lighter dark mode borders - more visible */
-    --bd-default: 63 63 70;          /* Zinc-700 */
-    --bd-strong: 82 82 91;           /* Zinc-600 */
-    --bd-subtle: 50 50 54;           /* Subtle borders */
-    --bd-medium: 71 71 80;           /* Medium borders (grid separators) */
+    /* Borders tuned for the new slate surfaces — visible but not harsh */
+    --bd-default: 55 63 80;          /* Slate-ish, reads on surface */
+    --bd-strong: 75 85 105;          /* Stronger dividers */
+    --bd-subtle: 40 46 59;           /* Subtle borders */
+    --bd-medium: 64 73 92;           /* Grid separators */
     --bd-accent: var(--color-primary); /* Accent borders inherit from theme */
 
     /* Note: Primary colors are NOT overridden here - they inherit from theme variants */

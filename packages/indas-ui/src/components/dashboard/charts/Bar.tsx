@@ -21,7 +21,11 @@ export interface BarChartProps {
   showLegend?: boolean
   showGrid?: boolean
   horizontal?: boolean
-  stacked?: boolean
+  /**
+   * Bullet mode: with `horizontal`, supply a data key holding each row's target.
+   * Renders a KPI-vs-target bullet (track + actual fill + target marker + achievement %).
+   */
+  targetKey?: string
   className?: string
 }
 
@@ -36,27 +40,81 @@ export function BarChart({
   showLegend = true,
   showGrid = true,
   horizontal = false,
-  stacked = false,
+  targetKey,
   className
 }: BarChartProps) {
+  // Bullet mode: horizontal KPI-vs-target rows (CSS-rendered, not ECharts).
+  if (horizontal && targetKey) {
+    const actualKey = series[0]?.key
+    const actualColor = series[0]?.color
+    return (
+      <div
+        className={cn('w-full flex flex-col justify-center gap-3', className)}
+        style={height ? { minHeight: height } : undefined}
+      >
+        {data.map((item, idx) => {
+          const name = String(item[xKey])
+          const actual = Number(item[actualKey]) || 0
+          const target = Number(item[targetKey]) || 0
+          const scaleMax = Math.max(actual, target) * 1.05 || 1
+          const actualPct = Math.min((actual / scaleMax) * 100, 100)
+          const targetPct = Math.min((target / scaleMax) * 100, 100)
+          const achievement = target > 0 ? (actual / target) * 100 : 0
+          const met = actual >= target
+          const barColor = actualColor || (met ? '#10b981' : '#f59e0b')
+          const barGradient = actualColor
+            ? actualColor
+            : met
+              ? 'linear-gradient(90deg, #34d399 0%, #10b981 100%)'
+              : 'linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%)'
+          return (
+            <div key={`${name}-${idx}`} className="flex flex-col gap-1">
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="text-xs font-medium text-[rgb(var(--fg-default))] truncate">{name}</span>
+                <span className="text-xs font-semibold tabular-nums shrink-0" style={{ color: barColor }}>
+                  {achievement.toFixed(0)}%
+                </span>
+              </div>
+              <div className="relative h-2.5 rounded-full bg-[rgb(var(--bg-subtle))] overflow-visible">
+                <div
+                  className="absolute inset-y-0 left-0 rounded-full transition-all duration-300"
+                  style={{ width: `${actualPct}%`, background: barGradient }}
+                />
+                <div
+                  className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-4 rounded-full ring-2 ring-[rgb(var(--bg-surface))]"
+                  style={{ left: `${targetPct}%`, backgroundColor: '#475569' }}
+                  title={`Target: ${target.toLocaleString()}`}
+                />
+              </div>
+              <div className="flex items-baseline justify-between gap-2 text-[0.65rem] text-[rgb(var(--fg-muted))] tabular-nums">
+                <span>{actual.toLocaleString()}</span>
+                <span>{`Target ${target.toLocaleString()}`}</span>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    )
+  }
+
   const categoryData = data.map(item => item[xKey])
 
   const option = {
     tooltip: {
-      trigger: 'axis',
-      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      trigger: 'item',
+      backgroundColor: 'rgba(255, 255, 255, 0.98)',
       borderColor: '#e9ecef',
       borderWidth: 1,
+      borderRadius: 8,
+      padding: [8, 12],
+      extraCssText: 'box-shadow: 0 4px 16px rgba(0,0,0,0.12);',
       textStyle: {
         color: '#344767',
         fontSize: 12
-      },
-      axisPointer: {
-        type: 'shadow'
       }
     },
     legend: showLegend ? {
-      bottom: 0,
+      top: 0,
       left: 'center',
       itemWidth: 12,
       itemHeight: 12,
@@ -66,10 +124,10 @@ export function BarChart({
       }
     } : undefined,
     grid: {
-      top: 20,
-      right: 20,
-      bottom: showLegend ? 40 : 20,
-      left: 40,
+      top: showLegend ? 36 : 12,
+      right: 12,
+      bottom: 4,
+      left: 4,
       containLabel: true
     },
     xAxis: {
@@ -98,12 +156,11 @@ export function BarChart({
       return {
         name: s.name,
         type: 'bar',
-        stack: stacked ? 'total' : undefined,
         barMaxWidth: 40,
         barGap: '10%',
         itemStyle: {
           color: color,
-          borderRadius: stacked ? 0 : [4, 4, 0, 0]
+          borderRadius: [4, 4, 0, 0]
         },
         emphasis: {
           itemStyle: {

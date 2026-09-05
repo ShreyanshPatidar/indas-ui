@@ -247,7 +247,7 @@ export interface PaperCaliperResponse {
  * "no match".
  */
 export async function getPaperCaliper(
-  filters: { quality: string; gsm: number; mill: string; finish: string },
+  filters: { quality: string; gsm: number; mill: string; finish: string; bf?: string; boardBrand?: string },
   session: any,
 ): Promise<APIResponse<PaperCaliperResponse | null>> {
   try {
@@ -256,6 +256,8 @@ export async function getPaperCaliper(
       gsm: String(filters.gsm),
       mill: filters.mill,
       finish: filters.finish,
+      bf: filters.bf ?? '',
+      boardBrand: filters.boardBrand ?? '',
     })
     const response = await APIClient.get<PaperCaliperResponse | null>(
       `/api/ShipperPlanning/paper/caliper?${params.toString()}`,

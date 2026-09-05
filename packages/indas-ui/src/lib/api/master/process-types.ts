@@ -24,6 +24,7 @@ export interface CostingDataProcessDetailMaster {
   ProcessProductionType?: string
   ProcessPurpose?: string
   IsOnlineProcess?: boolean
+  IsExcludeFromProfit?: boolean | number
   IsFabricationWastageCal?: boolean
   ProcessModuleType?: string
   MinimumQuantityToBeCharged?: number

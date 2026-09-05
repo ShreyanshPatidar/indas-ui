@@ -129,6 +129,23 @@ export interface MachineData {
   MachineType?: string
   MachineSpeed?: number
   MachinePerHourCost?: number
+  MachineGroupID?: number | null
+  MachineGroupName?: string | null
+}
+
+/**
+ * Machine with capability specs + a server-computed compatibility verdict for a given
+ * job spec, from the `compatiblemachines` endpoint. Used by Production Unit Re-Costing.
+ */
+export interface CompatMachineData extends MachineData {
+  Colors: number
+  MaxSheetL: number
+  MaxSheetW: number
+  MaxReelSize: number
+  WebCutOffSize: number
+  MinSheet: number
+  IsCompatible: boolean
+  FailReasons: string[]
 }
 
 /**
@@ -173,6 +190,7 @@ export interface UserData {
   // Role
   RoleID?: number
   RoleName?: string
+  DepartmentID?: number
   // SMTP Settings
   smtpUserName?: string
   smtpUserPassword?: string

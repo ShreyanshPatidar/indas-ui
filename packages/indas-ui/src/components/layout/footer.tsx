@@ -80,9 +80,11 @@ export function Footer({
         !gradient && "bg-[rgb(var(--bg-surface))]",
         // Shadow
         !isModal && "shadow-lg",
-        // Positioning with left margin for collapsed sidebar
-        sticky && "fixed bottom-0 right-0 z-[25]",
-        sticky && !isModal && "left-14",
+        // Mobile (< lg): sit ABOVE the fixed bottom nav (h-16, lg:hidden) and span the
+        // full width — there is no sidebar, so no left offset. Desktop: bottom edge,
+        // left margin for the collapsed sidebar.
+        sticky && "fixed right-0 z-[25] bottom-16 lg:bottom-0",
+        sticky && !isModal && "left-0 lg:left-14",
         // Shrink behavior for modal
         isModal && "flex-shrink-0",
         className

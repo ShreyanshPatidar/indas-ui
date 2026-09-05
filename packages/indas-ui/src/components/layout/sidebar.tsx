@@ -776,7 +776,7 @@ export function DynamicSidebar({
             {/* Version info - only when expanded */}
             {!isCollapsed && (
               <div className="text-xs text-[rgb(var(--fg-muted))] ml-3">
-                Estimo v3.0.17
+                Estimo v3.0.18
               </div>
             )}
           </div>

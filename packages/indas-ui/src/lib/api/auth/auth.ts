@@ -131,6 +131,7 @@ export async function authenticateUser(credentials: LoginRequest): Promise<Login
           // Role
           RoleID: userData.RoleID || userData.roleID || 0,
           RoleName: userData.RoleName || userData.roleName || '',
+          DepartmentID: Number(userData.DepartmentID ?? userData.departmentID ?? 0),
           // SMTP Settings (handle various casing from API)
           smtpUserName: userData.smtpUserName || userData.SmtpUserName || userData.SMTPUserName,
           smtpUserPassword: userData.smtpUserPassword || userData.SmtpUserPassword || userData.SMTPUserPassword,

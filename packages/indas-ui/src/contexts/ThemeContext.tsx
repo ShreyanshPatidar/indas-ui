@@ -136,7 +136,12 @@ export function ThemeScript({
     })()
   `
 
-  return <script dangerouslySetInnerHTML={{ __html: script }} />
+  // suppressHydrationWarning: this inline head script is a known target for
+  // browser extensions (e.g. ad/popup blockers) that overwrite its content or
+  // src before React hydrates, producing a false-positive hydration mismatch.
+  // The script itself is identical server/client; suppressing the warning here
+  // is the React-recommended fix for unavoidable head-script tampering.
+  return <script suppressHydrationWarning dangerouslySetInnerHTML={{ __html: script }} />
 }
 
 /**

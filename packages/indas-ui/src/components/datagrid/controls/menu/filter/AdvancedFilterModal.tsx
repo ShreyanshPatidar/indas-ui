@@ -4,10 +4,29 @@ import React, { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import {
   X, Plus, Trash2, ListFilter, Eye, EyeOff,
-  ArrowUpDown, ChevronUp, ChevronDown, Layers,
+  ArrowUpDown, GripVertical, Layers,
   Check, XCircle,
 } from 'lucide-react'
 import { ColumnDef, Table, SortingState, Column } from '@tanstack/react-table'
+import type { LucideIcon } from 'lucide-react'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  rectSortingStrategy,
+  useSortable,
+  arrayMove,
+} from '@dnd-kit/sortable'
+import { restrictToParentElement } from '@dnd-kit/modifiers'
+import { CSS } from '@dnd-kit/utilities'
 
 import {
   Dialog,
@@ -15,10 +34,10 @@ import {
   DialogTitle,
 } from '@/components/ui'
 import { Button } from '@/components/ui'
+import { Tabs } from '@/components/ui'
 import { Input } from '@/components/ui'
 import { Label } from '@/components/ui'
 import { Dropdown } from '@/components'
-import { Badge } from '@/components/ui'
 import { Separator } from '@/components/ui'
 import { DatePicker, DateRange } from '@/components/forms/date-picker/DatePicker'
 import { Footer } from '@/components/layout/footer'
@@ -32,9 +51,14 @@ export interface FilterCondition {
   operator: string
   value: any
   type: 'string' | 'number' | 'date' | 'boolean' | 'multi-select'
+  /** How this condition joins the previous one. Ignored for the first condition. */
+  connector?: 'AND' | 'OR'
 }
 
 type TabId = 'filters' | 'columns' | 'sort'
+
+// UI-only columns that must never appear as filterable / sortable data fields.
+const NON_DATA_COLUMN_IDS = new Set(['select', 'selection', 'actions', 'expand', 'drag'])
 
 interface AdvancedFilterModalProps<TData> {
   isOpen: boolean
@@ -99,7 +123,7 @@ const BOOLEAN_OPERATORS = [
 
 // ─── Tab definitions ───────────────────────────────────────────
 
-const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
+const TABS: { id: TabId; label: string; icon: LucideIcon }[] = [
   { id: 'filters', label: 'Filters', icon: ListFilter },
   { id: 'columns', label: 'Columns', icon: Eye },
   { id: 'sort', label: 'Sort', icon: ArrowUpDown },
@@ -138,7 +162,13 @@ export function AdvancedFilterModal<TData>({
 
   const filterableColumns = useMemo(() => {
     return columns
-      .filter((col) => (col as any).accessorKey || col.id)
+      .filter((col) => {
+        // Exclude UI-only columns (selection checkbox, actions, expand toggle) — they
+        // hold no data to filter on and shouldn't appear as filterable fields.
+        const id = (col as any).accessorKey || col.id
+        if (NON_DATA_COLUMN_IDS.has(id)) return false
+        return !!id
+      })
       .map((col) => {
         const key = (col as any).accessorKey as string || col.id!
         const sampleValues = data.slice(0, 100).map(row => (row as any)[key]).filter(val => val != null)
@@ -164,7 +194,7 @@ export function AdvancedFilterModal<TData>({
   const sortableColumns = useMemo(() => {
     if (!table) return filterableColumns.map(c => ({ id: c.key, label: c.label }))
     return table.getAllColumns()
-      .filter(col => col.getCanSort() && col.id !== 'select' && col.id !== 'actions')
+      .filter(col => col.getCanSort() && !NON_DATA_COLUMN_IDS.has(col.id))
       .map(col => {
         let label = col.id
         if (typeof col.columnDef.header === 'string') label = col.columnDef.header
@@ -177,7 +207,7 @@ export function AdvancedFilterModal<TData>({
   const hideableColumns = useMemo(() => {
     if (!table) return []
     return table.getAllColumns()
-      .filter(col => col.getCanHide() && col.id !== 'select')
+      .filter(col => col.getCanHide() && !NON_DATA_COLUMN_IDS.has(col.id))
       .map(col => {
         let label = col.id
         if (typeof col.columnDef.header === 'string') label = col.columnDef.header
@@ -190,7 +220,7 @@ export function AdvancedFilterModal<TData>({
   const groupableColumns = useMemo(() => {
     if (!table || !enableGrouping) return []
     return table.getAllColumns()
-      .filter(col => col.id !== 'select' && col.id !== 'actions' && col.id !== 'expand' && col.getCanGroup?.() !== false)
+      .filter(col => !NON_DATA_COLUMN_IDS.has(col.id) && col.getCanGroup?.() !== false)
       .map(col => {
         let label = col.id
         if (typeof col.columnDef.header === 'string') label = col.columnDef.header
@@ -236,12 +266,17 @@ export function AdvancedFilterModal<TData>({
         onSortingChange(sorting.map(s => s.id === columnId ? { ...s, desc: true } : s))
       }
     } else {
-      // add asc
-      onSortingChange([{ id: columnId, desc: false }])
+      // append so the drag-ordered sort priority is preserved
+      onSortingChange([...sorting, { id: columnId, desc: false }])
     }
   }
 
   const clearSort = () => onSortingChange?.([])
+
+  const reorderSorting = (from: number, to: number) => {
+    if (!onSortingChange) return
+    onSortingChange(arrayMove(sorting, from, to))
+  }
 
   // ─── Render value input ───────────────────────────────────────
 
@@ -300,43 +335,29 @@ export function AdvancedFilterModal<TData>({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[85vh] sm:max-h-[85vh] h-[100dvh] sm:h-auto flex flex-col p-0 bg-[rgb(var(--bg-surface))] overflow-hidden border-0 shadow-2xl" hideCloseButton>
+      <DialogContent className="max-w-4xl h-[100dvh] sm:h-[80vh] sm:max-h-[720px] flex flex-col p-0 bg-[rgb(var(--bg-surface))] overflow-hidden border-0 shadow-2xl" hideCloseButton>
         {/* Hidden title for accessibility */}
         <DialogTitle className="sr-only">{t('Table Settings')}</DialogTitle>
 
         {/* ─── Tab Bar with close button ──────────────────────── */}
-        <div className="flex-shrink-0 border-b border-[rgb(var(--bd-default))] bg-[rgb(var(--bg-surface))] flex items-center justify-between pr-2">
-          <div className="flex px-2 sm:px-4 gap-0 flex-1">
-            {TABS.map(tab => {
-              const Icon = tab.icon
-              const isActive = activeTab === tab.id
-              const badge = tab.id === 'filters' && filters.length > 0 ? filters.length
-                : tab.id === 'sort' && sorting.length > 0 ? sorting.length
-                : tab.id === 'columns' && hideableColumns.filter(c => !c.visible).length > 0 ? hideableColumns.filter(c => !c.visible).length
+        <div className="flex-shrink-0 border-b border-[rgb(var(--bd-default))] bg-[rgb(var(--bg-surface))] flex items-center justify-between gap-3 px-3 sm:px-4 py-2.5">
+          <Tabs
+            tabs={TABS.map(tab => {
+              const count = tab.id === 'filters' ? filters.length
+                : tab.id === 'sort' ? sorting.length
+                : tab.id === 'columns' ? hideableColumns.filter(c => !c.visible).length
                 : 0
-
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-1.5 px-3 sm:px-4 py-2.5 text-xs sm:text-sm font-medium border-b-2 transition-colors ${
-                    isActive
-                      ? 'border-[rgb(var(--color-primary))] text-[rgb(var(--color-primary))]'
-                      : 'border-transparent text-[rgb(var(--fg-muted))] hover:text-[rgb(var(--fg-default))]'
-                  }`}
-                >
-                  <Icon className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">{t(tab.label)}</span>
-                  <span className="sm:hidden">{t(tab.label)}</span>
-                  {badge > 0 && (
-                    <span className="h-4 min-w-[1rem] px-1 flex items-center justify-center text-[10px] font-bold rounded-full bg-[rgb(var(--color-primary))] text-white">
-                      {badge}
-                    </span>
-                  )}
-                </button>
-              )
+              return {
+                id: tab.id,
+                label: count > 0 ? `${t(tab.label)} (${count})` : t(tab.label),
+                icon: tab.icon,
+              }
             })}
-          </div>
+            activeTab={activeTab}
+            onTabChange={(id) => setActiveTab(id as TabId)}
+            variant="pill"
+            size="md"
+          />
           <button onClick={onClose} className="close-btn-md flex-shrink-0" aria-label={t('Close')}>
             <X className="h-5 w-5" />
           </button>
@@ -379,6 +400,7 @@ export function AdvancedFilterModal<TData>({
               sorting={sorting}
               handleSort={handleSort}
               clearSort={clearSort}
+              reorderSorting={reorderSorting}
               t={t}
             />
           )}
@@ -398,7 +420,11 @@ export function AdvancedFilterModal<TData>({
                 <Button
                   variant="action-apply"
                   icon={Check}
-                  onClick={() => onApply(filters)}
+                  onClick={() => onApply(filters.map((f, i) => ({
+                    ...f,
+                    // First condition has no connector; the rest default to the global match type.
+                    connector: i === 0 ? undefined : (f.connector || (matchType === 'any' ? 'OR' : 'AND')),
+                  })))}
                   disabled={filters.length === 0}
                 >
                   {t('Apply Filters')} ({filters.length})
@@ -409,13 +435,15 @@ export function AdvancedFilterModal<TData>({
         )}
 
         {activeTab !== 'filters' && (
-          <div className="flex-shrink-0 px-4 sm:px-6 py-3 border-t border-[rgb(var(--bd-default))] bg-[rgb(var(--bg-subtle))]">
-            <div className="flex justify-end">
-              <Button variant="primary" size="sm" onClick={onClose}>
-                {t('Done')}
+          <Footer
+            variant="modal"
+            gradient={true}
+            actions={
+              <Button variant="action-apply" icon={Check} onClick={onClose}>
+                {t('Apply')}
               </Button>
-            </div>
-          </div>
+            }
+          />
         )}
       </DialogContent>
     </Dialog>
@@ -470,32 +498,63 @@ function FiltersTab({
 
       <Separator />
 
-      {/* Match Type */}
-      <div className="flex items-center gap-3 py-1">
-        <span className="text-xs font-semibold text-[rgb(var(--fg-muted))] uppercase tracking-wider">{t('Match')}:</span>
-        <Dropdown
-          options={[
-            { value: 'all', label: 'ALL (AND)' },
-            { value: 'any', label: 'ANY (OR)' },
-          ]}
-          value={matchType}
-          onValueChange={(value: any) => setMatchType(value as 'all' | 'any')}
-        />
-        <span className="text-xs text-[rgb(var(--fg-subtle))]">
-          {matchType === 'all' ? t('All must match') : t('At least one')}
-        </span>
-      </div>
-
-      <Separator />
-
       {/* Filter Conditions */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="text-xs font-semibold text-[rgb(var(--fg-muted))] uppercase tracking-wider">{t('Conditions')}</h3>
-          <Button onClick={addFilter} size="sm" variant="outline" className="h-8 text-xs font-medium">
-            <Plus className="h-4 w-4 mr-1" />
-            {t('Add')}
-          </Button>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2.5">
+            <h3 className="text-xs font-semibold text-[rgb(var(--fg-muted))] uppercase tracking-wider">
+              {t('Conditions')}{filters.length > 0 ? ` (${filters.length})` : ''}
+            </h3>
+            {/* Match Conditions — compact ALL/ANY toggle, sets the connector for every condition */}
+            {filters.length > 1 && (
+              <div className="inline-flex items-center gap-1.5">
+                <span className="text-[10px] font-medium text-[rgb(var(--fg-subtle))] uppercase">{t('Match')}</span>
+                <div className="inline-flex rounded-md border border-[rgb(var(--bd-default))] overflow-hidden text-[10px] font-bold">
+                  {([
+                    { id: 'all', label: t('ALL'), connector: 'AND' },
+                    { id: 'any', label: t('ANY'), connector: 'OR' },
+                  ] as const).map((opt) => {
+                    const isActive = matchType === opt.id
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => {
+                          setMatchType(opt.id)
+                          setFilters(filters.map((f: FilterCondition) => ({ ...f, connector: opt.connector })))
+                        }}
+                        aria-pressed={isActive}
+                        className={`px-2 py-0.5 transition-colors ${
+                          isActive
+                            ? 'bg-[rgb(var(--color-primary))] text-white'
+                            : 'bg-[rgb(var(--bg-surface))] text-[rgb(var(--fg-muted))] hover:bg-[rgb(var(--bg-subtle))]'
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {filters.length > 0 && (
+              <Button
+                onClick={() => setFilters([])}
+                size="sm"
+                variant="ghost"
+                className="h-8 text-xs font-medium text-[rgb(var(--color-error))] hover:bg-[rgb(var(--color-error))]/10"
+              >
+                <Trash2 className="h-3.5 w-3.5 mr-1" />
+                {t('Clear all')}
+              </Button>
+            )}
+            <Button onClick={addFilter} size="sm" variant="outline" className="h-8 text-xs font-medium">
+              <Plus className="h-4 w-4 mr-1" />
+              {t('Add')}
+            </Button>
+          </div>
         </div>
         <div className="space-y-2.5">
           {filters.length === 0 ? (
@@ -513,21 +572,27 @@ function FiltersTab({
                 transition={{ duration: 0.2 }}
                 className="flex flex-col sm:grid sm:grid-cols-12 gap-2 sm:gap-2.5 p-3 border border-[rgb(var(--bd-default))] rounded-md bg-[rgb(var(--bg-surface))] hover:border-[rgb(var(--bd-hover))] transition-all"
               >
-                {/* AND/OR Connector */}
+                {/* AND/OR Connector — per-condition, clickable toggle */}
                 <div className="hidden sm:flex col-span-1 items-center justify-center">
                   {index > 0 ? (
-                    <Badge variant="outline" className="text-[10px] font-bold px-1.5 py-0.5">
-                      {matchType.toUpperCase()}
-                    </Badge>
-                  ) : null}
+                    <ConnectorToggle
+                      value={filter.connector || (matchType === 'any' ? 'OR' : 'AND')}
+                      onChange={(c) => updateFilter(filter.id, { connector: c })}
+                      t={t}
+                    />
+                  ) : (
+                    <span className="text-[10px] font-medium text-[rgb(var(--fg-subtle))] uppercase">{t('Where')}</span>
+                  )}
                 </div>
 
-                {/* Mobile: connector badge inline */}
+                {/* Mobile: connector toggle inline */}
                 {index > 0 && (
                   <div className="sm:hidden">
-                    <Badge variant="outline" className="text-[10px] font-bold px-1.5 py-0.5">
-                      {matchType.toUpperCase()}
-                    </Badge>
+                    <ConnectorToggle
+                      value={filter.connector || (matchType === 'any' ? 'OR' : 'AND')}
+                      onChange={(c) => updateFilter(filter.id, { connector: c })}
+                      t={t}
+                    />
                   </div>
                 )}
 
@@ -584,6 +649,28 @@ function FiltersTab({
   )
 }
 
+// Per-condition AND/OR toggle: a tiny two-segment pill.
+function ConnectorToggle({ value, onChange, t }: { value: 'AND' | 'OR'; onChange: (c: 'AND' | 'OR') => void; t: (k: string) => string }) {
+  return (
+    <div className="inline-flex rounded-md border border-[rgb(var(--bd-default))] overflow-hidden text-[10px] font-bold">
+      {(['AND', 'OR'] as const).map((c) => (
+        <button
+          key={c}
+          type="button"
+          onClick={() => onChange(c)}
+          className={`px-1.5 py-0.5 transition-colors ${
+            value === c
+              ? 'bg-[rgb(var(--color-primary))] text-white'
+              : 'bg-[rgb(var(--bg-surface))] text-[rgb(var(--fg-muted))] hover:bg-[rgb(var(--bg-subtle))]'
+          }`}
+        >
+          {t(c)}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 // ═══════════════════════════════════════════════════════════════
 // COLUMNS TAB (Parkbuddy-inspired)
 // ═══════════════════════════════════════════════════════════════
@@ -594,14 +681,17 @@ function ColumnsTab({
 }: any) {
   return (
     <div className="px-4 sm:px-6 pt-3 pb-4 space-y-4">
-      {/* Show / Hide Columns */}
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-xs font-semibold text-[rgb(var(--fg-muted))] uppercase tracking-wider flex items-center gap-2">
-            <Eye className="h-3.5 w-3.5" />
-            {t('Show / Hide Columns')}
-          </h3>
-          {table && (
+      {/* Columns — order (drag) + visibility (eye) in one list */}
+      {table && (
+        <div>
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <h3 className="text-xs font-semibold text-[rgb(var(--fg-muted))] uppercase tracking-wider flex items-center gap-2">
+              <Eye className="h-3.5 w-3.5" />
+              {t('Columns')}
+              <span className="text-[10px] font-bold bg-[rgb(var(--bg-subtle))] text-[rgb(var(--fg-muted))] px-1.5 py-0.5 rounded-full normal-case tracking-normal">
+                {hideableColumns.filter((c: any) => c.visible).length}/{hideableColumns.length}
+              </span>
+            </h3>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => table.toggleAllColumnsVisible(true)}
@@ -617,41 +707,12 @@ function ColumnsTab({
                 {t('Hide All')}
               </button>
             </div>
-          )}
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          {hideableColumns.map((col: any) => {
-            const isVisible = col.visible
-            return (
-              <button
-                key={col.id}
-                onClick={() => table?.getColumn(col.id)?.toggleVisibility()}
-                className={`px-3 py-2 text-xs rounded-md border flex items-center gap-2 transition-colors ${
-                  isVisible
-                    ? 'bg-[rgb(var(--color-success))]/10 text-[rgb(var(--color-success))] border-[rgb(var(--color-success))]/30'
-                    : 'bg-[rgb(var(--bg-subtle))] text-[rgb(var(--fg-muted))] border-[rgb(var(--bd-default))]'
-                }`}
-              >
-                {isVisible ? <Eye className="h-3 w-3 flex-shrink-0" /> : <EyeOff className="h-3 w-3 flex-shrink-0" />}
-                <span className="truncate">{col.label}</span>
-              </button>
-            )
-          })}
-        </div>
-      </div>
-
-      {/* Column Reorder */}
-      {table && (
-        <>
-          <Separator />
-          <div>
-            <h3 className="text-xs font-semibold text-[rgb(var(--fg-muted))] uppercase tracking-wider flex items-center gap-2 mb-2">
-              <ArrowUpDown className="h-3.5 w-3.5" />
-              {t('Rearrange Columns')}
-            </h3>
-            <ColumnReorderList table={table} t={t} />
           </div>
-        </>
+          <p className="text-[11px] text-[rgb(var(--fg-muted))] mb-2">
+            {t('Drag to reorder. The number is the column sequence in the grid.')}
+          </p>
+          <ColumnOrderVisibilityList table={table} hideableColumns={hideableColumns} t={t} />
+        </div>
       )}
 
       {/* Grouping */}
@@ -700,76 +761,134 @@ function ColumnsTab({
   )
 }
 
-// ─── Column Reorder List ────────────────────────────────────────
+// ─── Merged column order + visibility list ─────────────────────
 
-function ColumnReorderList({ table, t }: { table: any; t: (key: string) => string }) {
+function ColumnOrderVisibilityList({ table, hideableColumns, t }: { table: any; hideableColumns: any[]; t: (key: string) => string }) {
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  )
+
   const columnOrder = table.getState().columnOrder as string[]
   const allColumns = table.getAllColumns()
+  const hideableIds = useMemo(() => new Set(hideableColumns.map((c: any) => c.id)), [hideableColumns])
 
-  // Use columnOrder if set, otherwise use natural column order
-  const orderedIds = columnOrder.length > 0
-    ? columnOrder.filter((id: string) => id !== 'select' && id !== 'actions')
-    : allColumns.filter((c: any) => c.id !== 'select' && c.id !== 'actions').map((c: any) => c.id)
+  const orderedIds: string[] = useMemo(() => {
+    const base = columnOrder.length > 0 ? columnOrder : allColumns.map((c: any) => c.id)
+    const dataIds = base.filter((id: string) => !NON_DATA_COLUMN_IDS.has(id))
+    // A column missing from a stale columnOrder would otherwise be unreachable in this list.
+    const missing = allColumns
+      .map((c: any) => c.id)
+      .filter((id: string) => !NON_DATA_COLUMN_IDS.has(id) && !dataIds.includes(id))
+    return [...dataIds, ...missing]
+  }, [columnOrder, allColumns])
 
-  const moveColumn = (index: number, direction: 'up' | 'down') => {
-    const newOrder = [...(columnOrder.length > 0 ? columnOrder : allColumns.map((c: any) => c.id))]
-    // Find actual positions in the full order (including select/actions)
-    const filteredOrder = newOrder.filter(id => id !== 'select' && id !== 'actions')
-    const targetIndex = direction === 'up' ? index - 1 : index + 1
-    if (targetIndex < 0 || targetIndex >= filteredOrder.length) return
+  const commitOrder = (nextDataIds: string[]) => {
+    const base = columnOrder.length > 0 ? columnOrder : allColumns.map((c: any) => c.id)
+    const leading = base.filter((id: string) => NON_DATA_COLUMN_IDS.has(id) && id !== 'actions')
+    const trailing = base.filter((id: string) => id === 'actions')
+    table.setColumnOrder([...leading, ...nextDataIds, ...trailing])
+  }
 
-    ;[filteredOrder[index], filteredOrder[targetIndex]] = [filteredOrder[targetIndex], filteredOrder[index]]
-
-    // Rebuild full order preserving select/actions positions
-    const fullOrder = newOrder.filter(id => id === 'select' || id === 'actions')
-    // Insert select at start if present
-    const result: string[] = []
-    if (newOrder.includes('select')) result.push('select')
-    result.push(...filteredOrder)
-    if (newOrder.includes('actions')) result.push('actions')
-
-    table.setColumnOrder(result)
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    const from = orderedIds.indexOf(active.id as string)
+    const to = orderedIds.indexOf(over.id as string)
+    if (from === -1 || to === -1) return
+    commitOrder(arrayMove(orderedIds, from, to))
   }
 
   return (
-    <div className="border border-[rgb(var(--bd-default))] rounded-md overflow-hidden max-h-[200px] overflow-y-auto">
-      {orderedIds.map((columnId: string, index: number) => {
-        const col = allColumns.find((c: any) => c.id === columnId)
-        if (!col) return null
-        let label = col.id
-        if (typeof col.columnDef.header === 'string') label = col.columnDef.header
-        const isVisible = col.getIsVisible()
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      modifiers={[restrictToParentElement]}
+      onDragEnd={handleDragEnd}
+    >
+      <SortableContext items={orderedIds} strategy={rectSortingStrategy}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 content-start">
+          {orderedIds.map((columnId, index) => {
+            const col = allColumns.find((c: any) => c.id === columnId)
+            if (!col) return null
+            let label = col.id
+            if (typeof col.columnDef.header === 'string') label = col.columnDef.header
+            return (
+              <SortableColumnRow
+                key={columnId}
+                id={columnId}
+                label={label}
+                seq={index + 1}
+                isVisible={col.getIsVisible()}
+                canHide={hideableIds.has(columnId)}
+                onToggleVisibility={() => col.toggleVisibility()}
+                t={t}
+              />
+            )
+          })}
+        </div>
+      </SortableContext>
+    </DndContext>
+  )
+}
 
-        return (
-          <div
-            key={columnId}
-            className={`flex items-center justify-between px-3 py-2 text-xs ${
-              index !== orderedIds.length - 1 ? 'border-b border-[rgb(var(--bd-default))]' : ''
-            } ${isVisible ? 'bg-[rgb(var(--bg-surface))]' : 'bg-[rgb(var(--bg-subtle))]'}`}
-          >
-            <span className={`truncate ${isVisible ? 'text-[rgb(var(--fg-default))]' : 'text-[rgb(var(--fg-muted))]'}`}>
-              {label}
-            </span>
-            <div className="flex items-center gap-0.5 flex-shrink-0">
-              <button
-                onClick={() => moveColumn(index, 'up')}
-                disabled={index === 0}
-                className={`p-1 rounded hover:bg-[rgb(var(--bg-hover))] ${index === 0 ? 'opacity-30 cursor-not-allowed' : 'text-[rgb(var(--fg-muted))] hover:text-[rgb(var(--fg-default))]'}`}
-              >
-                <ChevronUp className="h-3.5 w-3.5" />
-              </button>
-              <button
-                onClick={() => moveColumn(index, 'down')}
-                disabled={index === orderedIds.length - 1}
-                className={`p-1 rounded hover:bg-[rgb(var(--bg-hover))] ${index === orderedIds.length - 1 ? 'opacity-30 cursor-not-allowed' : 'text-[rgb(var(--fg-muted))] hover:text-[rgb(var(--fg-default))]'}`}
-              >
-                <ChevronDown className="h-3.5 w-3.5" />
-              </button>
-              <span className="text-[rgb(var(--fg-subtle))] w-5 text-right tabular-nums">{index + 1}</span>
-            </div>
-          </div>
-        )
-      })}
+function SortableColumnRow({
+  id, label, seq, isVisible, canHide, onToggleVisibility, t,
+}: {
+  id: string
+  label: string
+  seq: number
+  isVisible: boolean
+  canHide: boolean
+  onToggleVisibility: () => void
+  t: (key: string) => string
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      className={`flex items-center gap-1.5 px-2 py-2 text-xs rounded-md border transition-colors ${
+        isDragging
+          ? 'relative z-10 shadow-lg border-[rgb(var(--color-primary))] bg-[rgb(var(--bg-surface))]'
+          : isVisible
+          ? 'bg-[rgb(var(--bg-surface))] border-[rgb(var(--bd-default))]'
+          : 'bg-[rgb(var(--bg-subtle))] border-[rgb(var(--bd-default))]'
+      }`}
+    >
+      <button
+        type="button"
+        className="p-1 rounded cursor-grab active:cursor-grabbing text-[rgb(var(--fg-subtle))] hover:text-[rgb(var(--fg-default))] hover:bg-[rgb(var(--bg-hover))] touch-none flex-shrink-0"
+        aria-label={t('Drag to reorder')}
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical className="h-3.5 w-3.5" />
+      </button>
+
+      <span className="w-5 text-right tabular-nums text-[rgb(var(--fg-subtle))] flex-shrink-0">{seq}</span>
+
+      <span className={`truncate flex-1 ${isVisible ? 'text-[rgb(var(--fg-default))]' : 'text-[rgb(var(--fg-muted))]'}`}>
+        {label}
+      </span>
+
+      <button
+        type="button"
+        onClick={onToggleVisibility}
+        disabled={!canHide}
+        aria-pressed={isVisible}
+        aria-label={isVisible ? t('Hide column') : t('Show column')}
+        className={`p-1.5 rounded transition-colors flex-shrink-0 ${
+          !canHide
+            ? 'opacity-30 cursor-not-allowed text-[rgb(var(--fg-muted))]'
+            : isVisible
+            ? 'text-[rgb(var(--color-success))] hover:bg-[rgb(var(--color-success))]/10'
+            : 'text-[rgb(var(--fg-muted))] hover:bg-[rgb(var(--bg-hover))]'
+        }`}
+      >
+        {isVisible ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+      </button>
     </div>
   )
 }
@@ -778,50 +897,152 @@ function ColumnReorderList({ table, t }: { table: any; t: (key: string) => strin
 // SORT TAB (Parkbuddy-inspired)
 // ═══════════════════════════════════════════════════════════════
 
-function SortTab({ sortableColumns, sorting, handleSort, clearSort, t }: any) {
+function SortTab({ sortableColumns, sorting, handleSort, clearSort, reorderSorting, t }: any) {
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  )
+
+  const activeIds = sorting.map((s: any) => s.id)
+  const inactiveColumns = sortableColumns.filter((c: any) => !activeIds.includes(c.id))
+  const labelFor = (id: string) => sortableColumns.find((c: any) => c.id === id)?.label || id
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    const from = activeIds.indexOf(active.id as string)
+    const to = activeIds.indexOf(over.id as string)
+    if (from === -1 || to === -1) return
+    reorderSorting(from, to)
+  }
+
   return (
-    <div className="px-4 sm:px-6 pt-3 pb-4 space-y-3">
-      <div className="flex items-center justify-between">
-        <h3 className="text-xs font-semibold text-[rgb(var(--fg-muted))] uppercase tracking-wider flex items-center gap-2">
-          <ArrowUpDown className="h-3.5 w-3.5" />
-          {t('Sort By')}
-        </h3>
-        {sorting.length > 0 && (
-          <button onClick={clearSort} className="text-xs text-[rgb(var(--color-error))] hover:underline font-medium">
-            {t('Clear')}
-          </button>
+    <div className="px-4 sm:px-6 pt-3 pb-4 space-y-4">
+      <div>
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <h3 className="text-xs font-semibold text-[rgb(var(--fg-muted))] uppercase tracking-wider flex items-center gap-2">
+            <ArrowUpDown className="h-3.5 w-3.5" />
+            {t('Sort By')}
+            {sorting.length > 0 && (
+              <span className="text-[10px] font-bold bg-[rgb(var(--color-primary))] text-white px-1.5 py-0.5 rounded-full normal-case tracking-normal">
+                {sorting.length}
+              </span>
+            )}
+          </h3>
+          {sorting.length > 0 && (
+            <button onClick={clearSort} className="text-xs text-[rgb(var(--color-error))] hover:underline font-medium">
+              {t('Clear')}
+            </button>
+          )}
+        </div>
+
+        {sorting.length > 0 ? (
+          <>
+            <p className="text-[11px] text-[rgb(var(--fg-muted))] mb-2">
+              {t('Drag to reorder. The number is the sort priority.')}
+            </p>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              modifiers={[restrictToParentElement]}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext items={activeIds} strategy={rectSortingStrategy}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 content-start">
+                  {sorting.map((s: any, index: number) => (
+                    <SortableSortRow
+                      key={s.id}
+                      id={s.id}
+                      label={labelFor(s.id)}
+                      seq={index + 1}
+                      desc={s.desc}
+                      onToggleDirection={() => handleSort(s.id)}
+                      t={t}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
+          </>
+        ) : (
+          <div className="text-center py-6 border-2 border-dashed border-[rgb(var(--bd-default))] rounded-lg bg-[rgb(var(--bg-subtle))]">
+            <p className="text-sm text-[rgb(var(--fg-muted))]">{t('No sorting applied')}</p>
+            <p className="text-xs text-[rgb(var(--fg-subtle))] mt-1">{t('Tap a column to sort')}</p>
+          </div>
         )}
       </div>
-      <div className="grid grid-cols-2 gap-2">
-        {sortableColumns.map((col: any) => {
-          const sortState = sorting.find((s: any) => s.id === col.id)
-          const isActive = !!sortState
-          return (
-            <button
-              key={col.id}
-              onClick={() => handleSort(col.id)}
-              className={`px-3 py-2.5 text-xs rounded-md border text-left flex items-center justify-between transition-colors ${
-                isActive
-                  ? 'bg-[rgb(var(--color-primary))]/10 text-[rgb(var(--color-primary))] border-[rgb(var(--color-primary))]/30 font-semibold'
-                  : 'bg-[rgb(var(--bg-surface))] text-[rgb(var(--fg-default))] border-[rgb(var(--bd-default))] hover:border-[rgb(var(--color-primary))] hover:bg-[rgb(var(--color-primary))]/5'
-              }`}
-            >
-              <span className="truncate">{col.label}</span>
-              {isActive && (
-                <span className="text-[10px] font-bold ml-1.5 flex-shrink-0">
-                  {sortState.desc ? '↓ Z-A' : '↑ A-Z'}
-                </span>
-              )}
-            </button>
-          )
-        })}
-      </div>
-      {sorting.length === 0 && (
-        <div className="text-center py-6 border-2 border-dashed border-[rgb(var(--bd-default))] rounded-lg bg-[rgb(var(--bg-subtle))]">
-          <p className="text-sm text-[rgb(var(--fg-muted))]">{t('No sorting applied')}</p>
-          <p className="text-xs text-[rgb(var(--fg-subtle))] mt-1">{t('Tap a column to sort')}</p>
-        </div>
+
+      {inactiveColumns.length > 0 && (
+        <>
+          <Separator />
+          <div>
+            <h3 className="text-xs font-semibold text-[rgb(var(--fg-muted))] uppercase tracking-wider flex items-center gap-2 mb-2">
+              <Plus className="h-3.5 w-3.5" />
+              {t('Add Sort Column')}
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 content-start">
+              {inactiveColumns.map((col: any) => (
+                <button
+                  key={col.id}
+                  onClick={() => handleSort(col.id)}
+                  className="px-3 py-2 text-xs rounded-md border text-left flex items-center gap-1.5 transition-colors bg-[rgb(var(--bg-surface))] text-[rgb(var(--fg-default))] border-[rgb(var(--bd-default))] hover:border-[rgb(var(--color-primary))] hover:bg-[rgb(var(--color-primary))]/5"
+                >
+                  <Plus className="h-3 w-3 flex-shrink-0 text-[rgb(var(--fg-subtle))]" />
+                  <span className="truncate">{col.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </>
       )}
+    </div>
+  )
+}
+
+function SortableSortRow({
+  id, label, seq, desc, onToggleDirection, t,
+}: {
+  id: string
+  label: string
+  seq: number
+  desc: boolean
+  onToggleDirection: () => void
+  t: (key: string) => string
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      className={`flex items-center gap-1.5 px-2 py-2 text-xs rounded-md border transition-colors ${
+        isDragging
+          ? 'relative z-10 shadow-lg border-[rgb(var(--color-primary))] bg-[rgb(var(--bg-surface))]'
+          : 'bg-[rgb(var(--color-primary))]/10 border-[rgb(var(--color-primary))]/30'
+      }`}
+    >
+      <button
+        type="button"
+        className="p-1 rounded cursor-grab active:cursor-grabbing text-[rgb(var(--fg-subtle))] hover:text-[rgb(var(--fg-default))] hover:bg-[rgb(var(--bg-hover))] touch-none flex-shrink-0"
+        aria-label={t('Drag to reorder')}
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical className="h-3.5 w-3.5" />
+      </button>
+
+      <span className="w-5 text-right tabular-nums text-[rgb(var(--fg-subtle))] flex-shrink-0">{seq}</span>
+
+      <span className="truncate flex-1 font-semibold text-[rgb(var(--color-primary))]">{label}</span>
+
+      <button
+        type="button"
+        onClick={onToggleDirection}
+        aria-label={desc ? t('Sort descending') : t('Sort ascending')}
+        className="px-1.5 py-1 rounded text-[10px] font-bold flex-shrink-0 text-[rgb(var(--color-primary))] hover:bg-[rgb(var(--color-primary))]/15 transition-colors"
+      >
+        {desc ? '↓ Z-A' : '↑ A-Z'}
+      </button>
     </div>
   )
 }

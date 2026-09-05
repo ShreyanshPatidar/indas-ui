@@ -107,6 +107,34 @@ function fireAudit(
   }
 }
 
+/**
+ * Generic audit log — for any module/action not covered by a named helper.
+ * Fire-and-forget. Use via `notifyAndLog` for the standard notify+audit combo.
+ */
+export function logAction(
+  params: {
+    module: AuditModule | string
+    action: AuditAction | string
+    documentName: string
+    documentId?: number
+    comments?: string
+    metadata?: Record<string, any>
+  },
+  session: any
+) {
+  fireAudit(
+    {
+      module: String(params.module),
+      action: String(params.action),
+      documentName: params.documentName,
+      documentId: params.documentId,
+      comments: params.comments,
+      metadata: params.metadata,
+    },
+    session
+  )
+}
+
 // ─── Estimation ──────────────────────────────────────────────────────────
 
 interface EstimationParams {
@@ -285,6 +313,17 @@ export function logEnquiryUpdated(params: EnquiryParams, session: any) {
     documentId: params.enquiryId,
     metadata: { enquiryNo: params.enquiryNo, jobName: params.jobName, clientName: params.clientName },
     comments: `Updated enquiry ${params.enquiryNo}`
+  }, session)
+}
+
+export function logEnquirySavedAs(params: EnquiryParams, session: any) {
+  fireAudit({
+    module: 'Enquiry',
+    action: AuditAction.SAVE_AS,
+    documentName: 'Enquiry',
+    documentId: params.enquiryId,
+    metadata: { enquiryNo: params.enquiryNo, jobName: params.jobName, clientName: params.clientName },
+    comments: `Saved as new enquiry ${params.enquiryNo} — ${params.jobName || ''}`
   }, session)
 }
 

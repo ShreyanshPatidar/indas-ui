@@ -97,8 +97,9 @@ export class ProcessMasterAPI {
   /**
    * Get allocated machines list for a specific process
    */
-  static async getAllocatedMachinesList(processId: number, sessionData?: any): Promise<APIResponse> {
-    return APIClient.get(`api/processmaster/getallocatedmachineslist/${processId}`, sessionData)
+  static async getAllocatedMachinesList(processId: number, sessionData?: any, productionUnitId?: number): Promise<APIResponse> {
+    const qs = productionUnitId && productionUnitId > 0 ? `?ProductionUnitID=${productionUnitId}` : ''
+    return APIClient.get(`api/processmaster/getallocatedmachineslist/${processId}${qs}`, sessionData)
   }
 
   /**

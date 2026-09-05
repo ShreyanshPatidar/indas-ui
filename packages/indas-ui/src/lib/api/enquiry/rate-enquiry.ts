@@ -25,6 +25,8 @@ export interface RateQueryItem {
   Status: string            // Pending | InProgress | Completed | Cancelled
   CreatedAt?: string
   UpdatedAt?: string
+  RefEnquiryID?: number      // originating sales enquiry
+  RefEnquiryNo?: string
 }
 
 // Parsed JSON helpers
@@ -62,6 +64,7 @@ export class RateEnquiryAPI {
       AssignedToUserId?: number
       AssignedToEmail?: string
       SLAHours?: number
+      RefEnquiryID?: number       // originating sales enquiry (when raised from estimation)
     },
     session: any
   ): Promise<APIResponse> {
@@ -70,6 +73,10 @@ export class RateEnquiryAPI {
 
   static async provideRate(requestId: number, userId: number, rate: string, remarks?: string, session?: any): Promise<APIResponse> {
     return APIClient.post('api/RateEnquiry/rate-request/provide-rate', { RequestId: requestId, UserId: userId, Rate: rate, Remarks: remarks }, session)
+  }
+
+  static async deleteRateRequest(requestId: number, session?: any): Promise<APIResponse> {
+    return APIClient.post(`api/RateEnquiry/rate-request/delete/${requestId}`, {}, session)
   }
 
   static async getAllRateRequests(
@@ -91,6 +98,10 @@ export class RateEnquiryAPI {
     return APIClient.get(`api/RateEnquiry/rate-request/user/${userId}${qs}`, session)
   }
 
+  static async getEscalateTarget(requestId: number, session: any): Promise<APIResponse<{ targetName: string; canEscalate: boolean }>> {
+    return APIClient.get(`api/RateEnquiry/rate-request/escalate-target/${requestId}`, session)
+  }
+
   static async escalateRequest(requestId: number, session: any): Promise<APIResponse> {
     return APIClient.post('api/RateEnquiry/rate-request/escalate', { RequestId: requestId }, session)
   }
@@ -101,11 +112,11 @@ export class RateEnquiryAPI {
     return APIClient.post('api/RateEnquiry/mail/send', data, session)
   }
 
-  static async sendRateRequestEmail(data: { ToEmail: string; ToName?: string; RequestNumber?: string; RequestMessage?: string; ItemName?: string; ActionLink?: string }, session: any): Promise<APIResponse> {
+  static async sendRateRequestEmail(data: { ToEmail: string; ToName?: string; RequestNumber?: string; RefEnquiryNo?: string; RequestMessage?: string; Remark?: string; ItemName?: string; ItemLines?: { group: string; productionUnit: string; specs: string }[]; ActionLink?: string }, session: any): Promise<APIResponse> {
     return APIClient.post('api/RateEnquiry/mail/send-rate-request', data, session)
   }
 
-  static async sendRateProvidedEmail(data: { ToEmail: string; ToName?: string; RequestNumber?: string; Rate?: string; RateProviderName?: string }, session: any): Promise<APIResponse> {
+  static async sendRateProvidedEmail(data: { ToEmail: string; ToName?: string; RequestNumber?: string; Rate?: string; RateProviderName?: string; RateRows?: { item: string; l1: string; l2: string }[]; Remark?: string }, session: any): Promise<APIResponse> {
     return APIClient.post('api/RateEnquiry/mail/send-rate-provided', data, session)
   }
 }

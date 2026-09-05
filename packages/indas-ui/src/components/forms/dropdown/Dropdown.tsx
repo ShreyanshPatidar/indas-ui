@@ -224,7 +224,7 @@ export const dropdownSharedStyles = {
 
   // Content (popup) styles
   content: {
-    base: "relative z-[350] max-h-60 w-auto max-w-80 overflow-hidden rounded-xl border border-[rgb(var(--bd-default))] bg-[rgb(var(--bg-surface))] text-[rgb(var(--fg-default))] shadow-xl",
+    base: "relative z-[350] w-auto max-w-80 overflow-hidden rounded-xl border border-[rgb(var(--bd-default))] bg-[rgb(var(--bg-surface))] text-[rgb(var(--fg-default))] shadow-xl",
     animations: {
       open: "data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-98 data-[state=open]:duration-75",
       close: "data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-98 data-[state=closed]:duration-50",
@@ -288,9 +288,12 @@ interface DropdownSearchProps {
   resultCount?: number
   /** Ref to imperatively focus the search input */
   inputRef?: React.RefObject<HTMLInputElement | null>
+  /** When provided, fully owns keydown (used by single-select so Enter commits the
+   *  highlighted option — Radix can't, since focus is trapped in this input). */
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void
 }
 
-export function DropdownSearch({ searchTerm, setSearchTerm, placeholder = "Type to search...", stopAllKeyPropagation = false, resultCount, inputRef }: DropdownSearchProps) {
+export function DropdownSearch({ searchTerm, setSearchTerm, placeholder = "Type to search...", stopAllKeyPropagation = false, resultCount, inputRef, onKeyDown }: DropdownSearchProps) {
   const internalRef = React.useRef<HTMLInputElement>(null)
   const searchInputRef = inputRef || internalRef
 
@@ -323,6 +326,8 @@ export function DropdownSearch({ searchTerm, setSearchTerm, placeholder = "Type 
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           onKeyDown={(e) => {
+            // When the consumer owns keydown (single-select), let it drive nav + commit.
+            if (onKeyDown) { onKeyDown(e); return }
             if (stopAllKeyPropagation) {
               // In multi-select: stop all propagation except Escape (to close the dropdown)
               if (e.key !== 'Escape') {
@@ -381,6 +386,8 @@ interface DropdownTriggerProps {
   onRemoveTag: (value: string | number) => void
   variant?: 'default' | 'compact' | 'detailed'
   size?: 'sm' | 'md' | 'lg'
+  trailingAction?: React.ReactNode
+  formatSelectedCount?: (count: number) => string
 }
 
 export function DropdownTrigger({
@@ -400,7 +407,9 @@ export function DropdownTrigger({
   onClear,
   onRemoveTag,
   variant = 'default',
-  size = 'md'
+  size = 'md',
+  trailingAction,
+  formatSelectedCount
 }: DropdownTriggerProps) {
   return (
     <div className="relative">
@@ -468,7 +477,7 @@ export function DropdownTrigger({
                   className={cn(dropdownSharedStyles.tag.base, "cursor-default")}
                   title={selectedOptions.map(opt => opt.label).join(', ')}
                 >
-                  <span>{selectedValues.length} selected</span>
+                  <span>{formatSelectedCount ? formatSelectedCount(selectedValues.length) : `${selectedValues.length} selected`}</span>
                   <ClearButton
                     onClear={onClear}
                     disabled={disabled}
@@ -483,7 +492,7 @@ export function DropdownTrigger({
             // Always show count for multi-select
             selectedValues.length > 0 ? (
               <span className="text-xs truncate text-fg-default">
-                {`${selectedValues.length} selected`}
+                {formatSelectedCount ? formatSelectedCount(selectedValues.length) : `${selectedValues.length} selected`}
               </span>
             ) : (
               <span className="text-xs truncate text-[rgb(var(--fg-muted))]">
@@ -495,6 +504,17 @@ export function DropdownTrigger({
         <div className="flex items-center gap-0.5 pr-2 pl-1 flex-shrink-0">
           {clearable && selectedValues.length > 0 && !disabled && (
             <ClearButton onClear={onClear} disabled={disabled} />
+          )}
+          {trailingAction && (
+            // Stop click/keydown bubbling so interacting with the trailing action
+            // (e.g. opening a side popover) doesn't toggle the dropdown itself.
+            <div
+              className="flex items-center"
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => e.stopPropagation()}
+            >
+              {trailingAction}
+            </div>
           )}
           <div
             onClick={(e) => {
@@ -548,8 +568,12 @@ export function Dropdown({
   size = 'md',
   contentClassName,
   selectAllLabel,
+  hideSelectAll = false,
   showOnlyButton = false,
-  customTrigger
+  customTrigger,
+  trailingAction,
+  formatSelectedCount,
+  preserveOrder = false
 }: DropdownProps) {
   const [open, setOpen] = React.useState(false)
   const [searchTerm, setSearchTerm] = React.useState('')
@@ -573,10 +597,20 @@ export function Dropdown({
     selectedOption
   } = useDropdownState(value, multiSelect, options, createdOptions)
 
+  // Multiselect: selected options render at the top of the list. The selected set
+  // is frozen at the moment the list OPENS, so ticking doesn't reorder rows
+  // mid-interaction — the new order applies on the next open.
+  const [pinSnapshot, setPinSnapshot] = React.useState<string[] | undefined>(undefined)
+  React.useEffect(() => {
+    if (!multiSelect) return
+    if (open) setPinSnapshot(selectedValues.map(String))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, multiSelect])
+
   const {
     filteredOptions,
     showCreateOption
-  } = useDropdownFiltering(allOptions, searchTerm, enableTextInput)
+  } = useDropdownFiltering(allOptions, searchTerm, enableTextInput, multiSelect ? pinSnapshot : undefined, preserveOrder)
 
   // Smart positioning to prevent modal overflow
   const [dropdownAlign, setDropdownAlign] = React.useState<'left' | 'right'>('left')
@@ -721,6 +755,8 @@ export function Dropdown({
                   onRemoveTag={handleRemoveTag}
                   variant={variant}
                   size={size}
+                  trailingAction={trailingAction}
+                  formatSelectedCount={formatSelectedCount}
                 />
               )}
             </div>
@@ -731,7 +767,7 @@ export function Dropdown({
               ref={dropdownContentRef}
               className={cn(
                 getDropdownClassName.content(),
-                "flex flex-col max-h-60"
+                "flex flex-col"
               )}
               side="bottom"
               align="start"
@@ -758,6 +794,7 @@ export function Dropdown({
                 handleToggleOption={handleToggleOption}
                 customFooter={customFooter}
                 selectAllLabel={selectAllLabel}
+                hideSelectAll={hideSelectAll}
                 showOnlyButton={showOnlyButton}
                 onClose={() => setOpen(false)}
               />
@@ -795,6 +832,9 @@ export function Dropdown({
           customFooter={customFooter}
           variant={variant}
           size={size}
+          trailingAction={trailingAction}
+          customTrigger={customTrigger}
+          contentClassName={contentClassName}
         />
       )}
     </div>

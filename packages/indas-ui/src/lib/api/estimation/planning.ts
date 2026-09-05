@@ -75,6 +75,8 @@ export class PlanWindowAPI {
       Job_Change_Over_Time: number
       Gbl_Content_Domain_Type: string
       GblOperId: string
+      Printing_Impressions: number
+      Make_Readies: number
     }>,
     options?: {
       isDefault?: boolean
@@ -285,6 +287,43 @@ export async function getProcessAllocatedItemList(
     return {
       success: false,
       error: `Failed to fetch process allocated items: ${error instanceof Error ? error.message : 'Unknown error'}`
+    }
+  }
+}
+
+/** One material/item allocated to a process (from ProcessAllocatedMaterialMaster). */
+export interface ProcessWiseMaterial {
+  ProcessID: number
+  ProcessName: string
+  ItemID: number
+  ItemName: string
+  ItemGroupID: number
+  ItemGroupName: string
+  ItemSubGroupID: number
+  ItemSubGroupName: string
+  EstimationRate?: number
+  PurchaseRate?: number
+}
+
+/**
+ * Get ALL materials/items allocated to one or more processes (by ProcessID only,
+ * no category/content/machine needed). Returns the actual allocated items — not
+ * just material sub-group names. `processIds` are joined comma-separated for the
+ * IN(...) clause, so one call covers every chosen process.
+ */
+export async function getProcessWiseMaterials(
+  processIds: number[],
+  sessionData?: any
+): Promise<APIResponse<ProcessWiseMaterial[]>> {
+  try {
+    const ids = processIds.filter(n => Number(n) > 0).join(',')
+    if (!ids) return { success: true, data: [] }
+    const endpoint = `api/planwindow/processmaterials/${encodeURIComponent(ids)}`
+    return await APIClient.get<ProcessWiseMaterial[]>(endpoint, sessionData)
+  } catch (error) {
+    return {
+      success: false,
+      error: `Failed to fetch process-wise materials: ${error instanceof Error ? error.message : 'Unknown error'}`
     }
   }
 }
@@ -638,6 +677,7 @@ export interface TblPlanningItem {
   GrainDirection: string
   MachineID: number
   MachineName: string
+  MachineGroupName?: string
   MachineSpeed?: number
   MakeReadyTime?: number
   // Roll-based fields

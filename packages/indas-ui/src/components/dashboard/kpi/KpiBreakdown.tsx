@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 import { cn } from '@/lib/utils'
+import { KpiCardSkeleton } from './kpi-shell'
 
 export interface BreakdownItem {
   /** Label for this item */
@@ -21,6 +22,10 @@ export interface KpiBreakdownProps {
   items: BreakdownItem[]
   /** Show percentage next to values */
   showPercentage?: boolean
+  /** Show a skeleton placeholder while data loads */
+  loading?: boolean
+  /** Tighter padding + row spacing (for dense KPI rows) */
+  compact?: boolean
   /** Additional class names */
   className?: string
 }
@@ -35,8 +40,11 @@ export function KpiBreakdown({
   total,
   items,
   showPercentage = false,
+  loading,
+  compact,
   className
 }: KpiBreakdownProps) {
+  if (loading) return <KpiCardSkeleton className={className} />
   const getColorClass = (color?: string) => {
     switch (color) {
       case 'success':
@@ -61,12 +69,13 @@ export function KpiBreakdown({
   return (
     <div
       className={cn(
-        'bg-[rgb(var(--bg-surface))] rounded-xl p-5 border border-[rgb(var(--bd-default))] shadow-sm',
+        'bg-[rgb(var(--bg-surface))] rounded-xl border border-[rgb(var(--bd-default))] shadow-sm',
+        compact ? 'p-4' : 'p-5',
         className
       )}
     >
       {/* Header */}
-      <div className="flex items-center justify-between mb-3">
+      <div className={cn('flex items-center justify-between', compact ? 'mb-2' : 'mb-3')}>
         <p className="text-sm text-[rgb(var(--fg-muted))]">{title}</p>
         {total !== undefined && (
           <p className="text-lg font-bold text-[rgb(var(--fg-default))]">
@@ -76,7 +85,7 @@ export function KpiBreakdown({
       </div>
 
       {/* Items */}
-      <div className="space-y-2">
+      <div className={compact ? 'space-y-1' : 'space-y-2'}>
         {items.map((item, index) => {
           const colorClass = getColorClass(item.color)
           const isCustomColor = item.color?.startsWith('#') || item.color?.startsWith('rgb')

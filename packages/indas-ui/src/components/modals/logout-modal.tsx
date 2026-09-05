@@ -122,10 +122,10 @@ export function LogoutModal({
               </div>
               <div className="flex-1 min-w-0">
                 <p className={cn("text-sm font-semibold", sessionData.tasks.overdue > 0 ? "text-[rgb(var(--color-error))]" : "text-[rgb(var(--color-warning))]")}>
-                  {pendingCount} {sessionData.tasks.overdue > 0 ? t('overdue approval') : t('pending approval')}
+                  {pendingCount} {sessionData.tasks.overdue > 0 ? t('overdue task') : t('pending task')}
                   {pendingCount !== 1 ? 's' : ''}
                 </p>
-                <p className="text-xs text-[rgb(var(--fg-muted))] mt-0.5">{t('View in Quote Panel')}</p>
+                <p className="text-xs text-[rgb(var(--fg-muted))] mt-0.5">{t('View notifications')}</p>
               </div>
               <ArrowRight className="h-3.5 w-3.5 text-[rgb(var(--fg-muted))] group-hover:translate-x-0.5 transition-transform flex-shrink-0" />
             </button>

@@ -167,6 +167,8 @@ export interface ActionsColumnConfig<TData = any> {
   mode?: 'buttons' | 'dropdown' | 'mixed'
   primaryActions?: ActionType[]
   maxVisibleActions?: number
+  // Optional per-action icon override (e.g. use a Send icon for the 'share' action).
+  icons?: Partial<Record<ActionType, React.ElementType>>
   confirmDelete?: boolean // Default: true
   confirmArchive?: boolean // Default: true
   showStatusBadges?: boolean // Default: false (status badges can increase row height)
@@ -238,6 +240,9 @@ export function ActionsColumn<TData>({
   const { isMobile } = useDevice()
   const data = row.original
 
+  // Copy feedback: the copy button's icon flips to a check for 2s after copying.
+  const [justCopied, setJustCopied] = useState(false)
+
   const {
     mode: configMode = 'buttons',
     primaryActions = ['edit', 'delete'],
@@ -274,6 +279,8 @@ export function ActionsColumn<TData>({
     const rowText = JSON.stringify(data, null, 2)
     navigator.clipboard.writeText(rowText)
     config.onCopy?.(data)
+    setJustCopied(true)
+    window.setTimeout(() => setJustCopied(false), 2000)
   }, [data, config])
 
   /**
@@ -495,7 +502,9 @@ export function ActionsColumn<TData>({
         requiresConfirmation: confirmDelete,
         isDestructive: true,
       },
-    ].filter(action => action.show)
+    ]
+      .map(action => config.icons?.[action.id] ? { ...action, icon: config.icons[action.id]! } : action)
+      .filter(action => action.show)
   }, [config, data, labels, shouldShow, copyRowData, exportRow, handleDelete, handleArchive, pageAccess])
 
   // ============================================================================
@@ -569,7 +578,8 @@ export function ActionsColumn<TData>({
 
         {/* Visible Action Buttons - Gray by default, colored text + background on hover */}
         {visibleActions.map((action) => {
-          const Icon = action.icon
+          const isCopied = action.id === 'copy' && justCopied
+          const Icon = isCopied ? CheckCircle : action.icon
 
           return (
             <TooltipProvider key={action.id}>
@@ -580,13 +590,15 @@ export function ActionsColumn<TData>({
                       e.stopPropagation()
                       action.action()
                     }}
-                    className={`p-1 rounded transition-colors ${action.className}`}
+                    className={`p-1 rounded transition-colors ${
+                      isCopied ? 'text-[rgb(var(--color-success))] bg-[rgb(var(--color-success-subtle))]' : action.className
+                    }`}
                   >
                     <Icon className="h-4 w-4" />
                   </button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>{action.label}</p>
+                  <p>{isCopied ? 'Copied' : action.label}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>

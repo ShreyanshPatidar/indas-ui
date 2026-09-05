@@ -6,6 +6,7 @@
  */
 
 import type { AttachedFile } from '@/components'
+import { storageFileUrl } from '@/lib/api/activity/storage'
 
 /**
  * API FileAttachment structure from backend
@@ -56,21 +57,16 @@ export async function loadFileAttachments(
     return []
   }
 
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL
-
   const attachmentPromises = fileAttachments.map(async (file, index) => {
-    const fileName = file.AttachedFileName || file.AttachedFileUrl || file.FilePath || ''
+    // Display name: the clean original filename (FileName column).
+    const rawName = file.AttachedFileName || ''
+    const displayName = rawName.includes('/') ? rawName.split('/').pop() || rawName : rawName
 
-    // AttachedFileName may already contain full path like /Uploads/PlanWindow/filename
-    const fileUrl = fileName.startsWith('/')
-      ? `${apiBaseUrl}${fileName}`
-      : `${apiBaseUrl}/Upload/PlanWindow/${fileName}`
+    // Fetch source: build the public S3 URL from the stored object key.
+    const fileUrl = storageFileUrl(file.AttachedFileUrl || file.FilePath || '')
 
-    const ext = fileName.split('.').pop() || ''
+    const ext = displayName.split('.').pop() || ''
     const mimeType = getMimeType(ext)
-
-    // Extract just the filename (without path) for display
-    const displayName = fileName.includes('/') ? fileName.split('/').pop() || fileName : fileName
 
     try {
       // Fetch the file through proxy to bypass CORS

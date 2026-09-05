@@ -60,6 +60,8 @@ export type { FormToggleProps } from './form-toggle'
 // ============================================================================
 export { Badge, FilterBadge, FilterBadgeGroup } from './feedback/badge'
 export type { BadgeProps, FilterBadgeProps, FilterBadgeVariant, FilterBadgeItem, FilterBadgeGroupProps } from './feedback/badge'
+export { ReminderButton } from './feedback/reminder-button'
+export type { ReminderButtonProps } from './feedback/reminder-button'
 
 export { BooleanBadge } from './display/boolean-badge'
 export type { BooleanBadgeProps } from './display/boolean-badge'

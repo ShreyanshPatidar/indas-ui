@@ -90,7 +90,7 @@ export function ScatterChart({
       }
     },
     legend: showLegend ? {
-      bottom: 0,
+      top: 0,
       left: 'center',
       itemWidth: 12,
       itemHeight: 12,
@@ -100,10 +100,10 @@ export function ScatterChart({
       }
     } : undefined,
     grid: {
-      top: 30,
-      right: 30,
-      bottom: showLegend ? 50 : 30,
-      left: 50,
+      top: showLegend ? 36 : 20,
+      right: 16,
+      bottom: 8,
+      left: 8,
       containLabel: true
     },
     xAxis: {

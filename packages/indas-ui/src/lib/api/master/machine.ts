@@ -78,6 +78,9 @@ export interface MachineMaster {
   ProductionUnitName1: string
   CompanyName: string
   CompanyID: number
+  MachineGroupID?: number | null
+  MachineGroupName?: string | null
+  IsAllProductionUnit?: boolean
 }
 
 /**
@@ -128,6 +131,16 @@ export interface Department {
 export interface ProductionUnit {
   ProductionUnitID: number
   ProductionUnitName: string
+}
+
+/**
+ * Machine Group from /api/machinemaster/machinegroups endpoint
+ * MachineGroupMaster table — ProductionUnitID is optional on save
+ */
+export interface MachineGroup {
+  MachineGroupID: number
+  MachineGroupName: string
+  ProductionUnitID?: number | null
 }
 
 /**
@@ -280,6 +293,79 @@ export function getPerHourCostingOptionsForMachineType(machineType: string): { v
   return MachineDropdownDefaults.perHourCostingParameter
 }
 
+export function transformMachineMaster(machine: MachineMaster): any {
+  return {
+    id: machine.MachineId?.toString() || '0',
+    machineCode: machine.MachineCode || `MM${String(machine.MachineId || 0).padStart(5, '0')}`,
+    machineName: machine.MachineName || '',
+    machineType: machine.MachineType || '',
+    refMachineCode: machine.RefMachineCode || '',
+    departmentName: machine.DepartmentName || '',
+    gripper: machine.Gripper || 0,
+    maxLength: machine.MaxLength || 0,
+    maxWidth: machine.MaxWidth || 0,
+    minLength: machine.MinLength || 0,
+    minWidth: machine.MinWidth || 0,
+    maxPrintL: machine.MaxPrintL || 0,
+    maxPrintW: machine.MaxPrintW || 0,
+    minPrintL: machine.MinPrintL || 0,
+    minPrintW: machine.MinPrintW || 0,
+    perHourCost: machine.PerHourCost || 0,
+    color: machine.Colors?.toString() || '0',
+    underDepartment: machine.DepartmentName || '',
+    printingMargin: machine.PrintingMargin || 0,
+    speedUnit: machine.SpeedUnit || '',
+    colors: machine.Colors?.toString() || '0',
+    makeReadyWastageSheet: machine.MakeReadyWastageSheet || 0,
+    makeReadyCharges: machine.MakeReadyCharges || 0,
+    makeReadyTime: machine.MakeReadyTime || 0,
+    makeReadyTimeMode: machine.MakeReadyTimeMode || '',
+    makeReadyChargesPerHr: machine.MakeReadyPerHourCost || 0,
+    jobChangeOverTime: machine.JobChangeOverTime || 0,
+    speedImpressions: machine.MachineSpeed || 0,
+    electricConsumption: machine.ElectricConsumption || 0,
+    costPerHour: machine.PerHourCost || 0,
+    isPlanningMachine: machine.IsPlanningMachine || false,
+    minPrintingImpr: machine.MinimumSheet || 0,
+    basicPrintingCharged: machine.BasicPrintingCharges || 0,
+    roundOfImpressions: machine.RoundofImpressionsWith || 0,
+    typeOfCharges: machine.ChargesType || '',
+    isPerfectaMachine: machine.IsPerfectaMachine || false,
+    isVariableCutOff: machine.IsVariableCutOff || false,
+    isSpecialMachine: machine.IsSpecialMachine || false,
+    wastageType: machine.WastageType || '',
+    wastageCalculationOn: machine.WastageCalculationOn || '',
+    branch: machine.BranchName || '',
+    productionUnit: machine.ProductionUnitName || '',
+    refMachineCode2: machine.RefMachineCode || '',
+    perHourCostingParameter: machine.PerHourCostingParameter || '',
+    machineGroupID: machine.MachineGroupID != null ? machine.MachineGroupID.toString() : '',
+    machineGroupName: machine.MachineGroupName || '',
+    isAllProductionUnit: machine.IsAllProductionUnit === true || (machine.IsAllProductionUnit as any) === 1,
+    maxReelSize: machine.MaxReelSize || 0,
+    minReelSize: machine.MinReelSize || 0,
+    webCutOffSize: machine.WebCutOffSize || 0,
+    webCutOffSizeMin: machine.WebCutOffSizeMin || 0,
+    minRollWidth: machine.MinRollWidth || 0,
+    maxRollWidth: machine.MaxRollWidth || 0,
+    minCircumference: machine.MinCircumference || 0,
+    maxCircumference: machine.MaxCircumference || 0,
+    plateWidth: machine.PlateWidth || 0,
+    plateLength: machine.PlateLength || 0,
+    plateCharges: machine.PlateCharges || 0,
+    plateChargesType: machine.PlateChargesType || '',
+    avgBreakDownMeter: machine.AvgBreakDownRunningMeters || 0,
+    avgBreakDownTime: machine.AvgBreakDownTime || 0,
+    machineWidth: machine.MachineWidth || 0,
+    avgRollLength: machine.AverageRollLength || 0,
+    avgRollChangeWastage: machine.AverageRollChangeWastage || 0,
+    rollChangeOverTime: machine.RollChangeTime || 0,
+    isPinned: false,
+    isFavorited: false,
+    isArchived: false,
+  }
+}
+
 /**
  * Machine API class
  */
@@ -299,6 +385,22 @@ export class MachineAPI {
         success: false,
         error: error instanceof Error ? error.message : 'Failed to fetch machine master data'
       }
+    }
+  }
+
+  // Fetch one machine, transformed to the row shape MachineMasterModal expects for edit mode.
+  static async getMachineForEdit(machineId: number | string, sessionData?: any): Promise<APIResponse<any>> {
+    try {
+      const response = await this.getMachineMaster(sessionData)
+      if (!response.success || !response.data) {
+        return { success: false, error: response.error || 'Failed to fetch machine' }
+      }
+      const idStr = String(machineId)
+      const match = response.data.find(m => String(m.MachineId) === idStr)
+      if (!match) return { success: false, error: 'Machine not found' }
+      return { success: true, data: transformMachineMaster(match) }
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Failed to fetch machine' }
     }
   }
 
@@ -385,6 +487,18 @@ export class MachineAPI {
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Failed to fetch machine slabs'
+      }
+    }
+  }
+
+  static async getCoatingRates(machineId: string | number, sessionData?: any): Promise<APIResponse<any[]>> {
+    try {
+      const response = await APIClient.get<any[]>(`/api/machinemaster/GetMachineOnlineCoatingRates?MID=${machineId}`, sessionData)
+      return response
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch coating rates'
       }
     }
   }
@@ -589,5 +703,97 @@ export class MachineAPI {
         error: error instanceof Error ? error.message : 'Failed to fetch existing allocations'
       }
     }
+  }
+
+  // ───────────────────────────────────────────────────────────────────────
+  // MACHINE GROUP MASTER — CRUD
+  // ───────────────────────────────────────────────────────────────────────
+
+  /**
+   * Get all machine groups for the current company/fyear
+   * Endpoint: GET /api/machinemaster/machinegroups
+   */
+  static async getMachineGroups(sessionData?: any): Promise<APIResponse<MachineGroup[]>> {
+    try {
+      return await APIClient.get<MachineGroup[]>('/api/machinemaster/machinegroups', sessionData)
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch machine groups'
+      }
+    }
+  }
+
+  /**
+   * Save a new machine group
+   * Endpoint: POST /api/machinemaster/savemachinegroup
+   * Body: { MachineGroupName, ProductionUnitID? }
+   * Response: "Success" | "Exist" (duplicate name)
+   */
+  static async saveMachineGroup(
+    data: { MachineGroupName: string; ProductionUnitID?: number | null },
+    sessionData?: any
+  ): Promise<APIResponse<string>> {
+    try {
+      return await APIClient.post<string>('/api/machinemaster/savemachinegroup', data, sessionData)
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to save machine group'
+      }
+    }
+  }
+
+  /**
+   * Update an existing machine group
+   * Endpoint: POST /api/machinemaster/updatemachinegroup
+   * Body: { MachineGroupID, MachineGroupName, ProductionUnitID? }
+   * Response: "Success" | "Exist"
+   */
+  static async updateMachineGroup(
+    data: { MachineGroupID: number; MachineGroupName: string; ProductionUnitID?: number | null },
+    sessionData?: any
+  ): Promise<APIResponse<string>> {
+    try {
+      return await APIClient.post<string>('/api/machinemaster/updatemachinegroup', data, sessionData)
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to update machine group'
+      }
+    }
+  }
+
+  /**
+   * Soft-delete a machine group (sets IsDeletedTransaction = 1)
+   * Endpoint: POST /api/machinemaster/deletemachinegroup
+   * Body: { MachineGroupID }
+   */
+  static async deleteMachineGroup(
+    machineGroupId: number,
+    sessionData?: any
+  ): Promise<APIResponse<string>> {
+    try {
+      return await APIClient.post<string>(
+        '/api/machinemaster/deletemachinegroup',
+        { MachineGroupID: machineGroupId },
+        sessionData
+      )
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to delete machine group'
+      }
+    }
+  }
+
+  /**
+   * Transform MachineGroup[] into Dropdown options
+   */
+  static transformMachineGroupsToOptions(groups: MachineGroup[]): { value: string; label: string }[] {
+    return (groups || []).map(g => ({
+      value: g.MachineGroupID.toString(),
+      label: g.MachineGroupName
+    }))
   }
 }
