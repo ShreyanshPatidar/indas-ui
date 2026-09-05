@@ -21,7 +21,7 @@ import {
   AlertCircle,
   CheckCircle,
   X,
-} from 'lucide-react'
+} from '@/lib/icons'
 import { importData, ImportResult } from './import'
 
 interface ImportSectionProps<TData> {

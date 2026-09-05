@@ -82,7 +82,7 @@ import {
   XCircle,
   Layers,
   RefreshCw,
-} from 'lucide-react'
+} from '@/lib/icons'
 
 import { Button } from '@/components/ui'
 import { Input } from '@/components/ui'

@@ -15,27 +15,64 @@
   },
   "homepage": "https://shreyanshpatidar.github.io/indas-ui",
   "type": "module",
-  "main": "./dist/index.cjs",
+  "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "default": "./dist/index.js"
     },
-    "./tokens.css": "./src/styles/tokens.css"
+    "./ui": {
+      "types": "./dist/components/ui/index.d.ts",
+      "default": "./dist/components/ui/index.js"
+    },
+    "./layout": {
+      "types": "./dist/components/layout/index.d.ts",
+      "default": "./dist/components/layout/index.js"
+    },
+    "./datagrid": {
+      "types": "./dist/components/datagrid/index.d.ts",
+      "default": "./dist/components/datagrid/index.js"
+    },
+    "./dashboard": {
+      "types": "./dist/components/dashboard/index.d.ts",
+      "default": "./dist/components/dashboard/index.js"
+    },
+    "./charts": {
+      "types": "./dist/components/dashboard/charts/index.d.ts",
+      "default": "./dist/components/dashboard/charts/index.js"
+    },
+    "./kpi": {
+      "types": "./dist/components/dashboard/kpi/index.d.ts",
+      "default": "./dist/components/dashboard/kpi/index.js"
+    },
+    "./modals": {
+      "types": "./dist/components/modals/index.d.ts",
+      "default": "./dist/components/modals/index.js"
+    },
+    "./forms": {
+      "types": "./dist/components/forms/index.d.ts",
+      "default": "./dist/components/forms/index.js"
+    },
+    "./providers": {
+      "types": "./dist/providers.d.ts",
+      "default": "./dist/providers.js"
+    },
+    "./tokens.css": "./dist/styles/tokens.css",
+    "./styles/*": "./dist/styles/*",
+    "./dist/*": "./dist/*",
+    "./package.json": "./package.json"
   },
   "files": [
-    "dist",
-    "src/styles"
+    "dist"
   ],
   "sideEffects": [
-    "*.css"
+    "**/*.css"
   ],
   "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch",
+    "build": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\" && tsc -p tsconfig.build.json && tsc-alias -p tsconfig.build.json --resolve-full-paths && node scripts/copy-assets.mjs",
+    "dev": "tsc -p tsconfig.build.json --watch",
     "type-check": "tsc --noEmit",
     "prepublishOnly": "npm run build"
   },
@@ -44,14 +81,10 @@
     "react-dom": ">=18.0.0"
   },
   "dependencies": {
-    "@dicebear/collection": "^9.4.2",
-    "@dicebear/core": "^9.4.2",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/modifiers": "^9.0.0",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
-    "@headlessui/react": "^2.2.10",
-    "@heroicons/react": "^2.2.0",
     "@microsoft/signalr": "^10.0.0",
     "@radix-ui/react-collapsible": "^1.1.12",
     "@radix-ui/react-dialog": "^1.1.15",
@@ -63,19 +96,14 @@
     "@radix-ui/react-separator": "^1.1.7",
     "@radix-ui/react-tabs": "^1.1.13",
     "@radix-ui/react-tooltip": "^1.2.8",
-    "@react-pdf/renderer": "^4.5.1",
     "@tanstack/react-query": "^5.90.10",
     "@tanstack/react-query-devtools": "^5.90.2",
     "@tanstack/react-table": "^8.21.3",
     "@tanstack/react-virtual": "^3.13.12",
-    "@types/react-window": "^1.8.8",
-    "@types/three": "^0.182.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "date-fns": "^4.3.0",
     "echarts": "^6.0.0",
     "echarts-for-react": "^3.0.5",
-    "emoji-picker-react": "^4.19.1",
     "exceljs": "^4.4.0",
     "file-saver": "^2.0.5",
     "framer-motion": "^12.23.12",
@@ -87,22 +115,19 @@
     "papaparse": "^5.5.3",
     "react-hook-form": "^7.76.1",
     "react-image-crop": "^11.0.10",
-    "react-is": "^19.2.6",
     "react-markdown": "^10.1.0",
-    "react-window": "^2.2.7",
-    "react-window-infinite-loader": "^2.0.1",
     "rehype-highlight": "^7.0.2",
     "rehype-raw": "^7.0.0",
     "remark-gfm": "^4.0.1",
     "svg2pdf.js": "^2.7.0",
     "tailwind-merge": "^3.3.1",
-    "three": "^0.182.0",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "next": "^16.2.1",
+    "tsc-alias": "^1.9.4",
     "tsup": "^8.3.5",
     "typescript": "^5.7.2"
   },
@@ -115,5 +140,36 @@
     "datagrid",
     "indas",
     "erp"
-  ]
+  ],
+  "typesVersions": {
+    "*": {
+      "ui": [
+        "./dist/components/ui/index.d.ts"
+      ],
+      "layout": [
+        "./dist/components/layout/index.d.ts"
+      ],
+      "datagrid": [
+        "./dist/components/datagrid/index.d.ts"
+      ],
+      "dashboard": [
+        "./dist/components/dashboard/index.d.ts"
+      ],
+      "charts": [
+        "./dist/components/dashboard/charts/index.d.ts"
+      ],
+      "kpi": [
+        "./dist/components/dashboard/kpi/index.d.ts"
+      ],
+      "modals": [
+        "./dist/components/modals/index.d.ts"
+      ],
+      "forms": [
+        "./dist/components/forms/index.d.ts"
+      ],
+      "providers": [
+        "./dist/providers.d.ts"
+      ]
+    }
+  }
 }

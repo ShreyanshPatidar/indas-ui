@@ -2,13 +2,13 @@
 
 import * as React from 'react'
 import { usePathname, useRouter } from 'next/navigation'
-import { useSession } from 'next-auth/react'
+import { useSessionAdapter } from '@/contexts/SessionAdapterContext'
 import {
   X, Search, ChevronRight, Home, MessageSquare, Calculator, Receipt,
   Database, Cog, Layers, Boxes, BookOpen, PieChart, Activity, ClipboardCheck,
   TrendingUp, DollarSign, Factory, Users, Settings, Tag, Shield, Target,
   ShoppingCart, BarChart3, UserCog, Building, Gauge
-} from 'lucide-react'
+} from '@/lib/icons'
 import { cn } from '@/lib/utils'
 import { useNavigation } from '@/contexts/NavigationContext'
 import { useModuleAuth } from '@/contexts/ModuleAuthContext'
@@ -53,7 +53,7 @@ interface MobileMenuSheetProps {
 export function MobileMenuSheet({ open, onClose }: MobileMenuSheetProps) {
   const pathname = usePathname()
   const router = useRouter()
-  const { data: session } = useSession()
+  const { data: session } = useSessionAdapter()
   const { t } = useTranslation()
   const { mobileModules } = useNavigation()
   const { hasAccess } = useModuleAuth()

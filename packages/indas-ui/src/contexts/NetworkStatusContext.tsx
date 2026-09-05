@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { WifiOff, AlertTriangle, X } from 'lucide-react'
+import { WifiOff, AlertTriangle, X } from '@/lib/icons'
 import { useLanguage } from '@/contexts/LanguageContext'
 
 type ConnInfo = { downlink: number; rtt: number; effectiveType: string } | null

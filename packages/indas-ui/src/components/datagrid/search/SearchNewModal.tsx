@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react'
-import { Search, X, Filter } from 'lucide-react'
+import { Search, X, Filter } from '@/lib/icons'
 import { Input } from '@/components/ui'
 import { Button } from '@/components/ui'
 import { SearchHighlighter, advancedSearch } from './SearchHighlighter'

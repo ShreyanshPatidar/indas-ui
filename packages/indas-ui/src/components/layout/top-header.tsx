@@ -1,11 +1,11 @@
 'use client'
 
 import * as React from 'react'
-import { ChevronDown, Search, Bell, Sidebar, X, Mail, PanelLeftOpen, PanelLeftClose, CheckCheck, ExternalLink, Trash2, Calendar, Clock, Settings, Building2, User, Factory, MessageSquare, RefreshCw } from 'lucide-react'
+import { ChevronDown, Search, Bell, Sidebar, X, Mail, PanelLeftOpen, PanelLeftClose, CheckCheck, ExternalLink, Trash2, Calendar, Clock, Settings, Building2, User, Factory, MessageSquare, RefreshCw } from '@/lib/icons'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui'
 import { Input } from '@/components/ui'
-import { useSession } from 'next-auth/react'
+import { useSessionAdapter } from '@/contexts/SessionAdapterContext'
 import { useRouter } from 'next/navigation'
 import { ProductionUnitsAPI } from '@/lib/api'
 import { Dropdown, DropdownOption } from '@/components'
@@ -35,7 +35,7 @@ const fallbackProductionUnits: { value: string; label: string }[] = [
 const defaultProductionUnits: { value: string; label: string }[] = []
 
 export function TopHeader({ className, sidebarCollapsed = true, onToggleSidebar, onToggleMobileSidebar }: TopHeaderProps) {
-  const { data: session } = useSession()
+  const { data: session } = useSessionAdapter()
   const companyName = (session?.user as any)?.CompanyName || ''
   // Dynamic company logo: /app/{CompanyName}.png, fallback to /app/company-logo.png
   const companyLogoSrc = companyName ? `/app/${companyName}.png` : '/app/company-logo.png'

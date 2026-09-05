@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import * as Popover from '@radix-ui/react-popover'
-import { Search, X, ChevronDown } from 'lucide-react'
+import { Search, X, ChevronDown } from '@/lib/icons'
 import { Input } from '@/components/ui'
 import { cn } from '@/lib/utils'
 import { DropdownProps, DropdownOption } from './types'

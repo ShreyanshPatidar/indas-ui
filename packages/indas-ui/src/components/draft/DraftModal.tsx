@@ -9,7 +9,7 @@
  */
 
 import React, { useState, useMemo } from 'react'
-import { FileText, Trash2, Download, Search, X, ChevronLeft, ChevronRight } from 'lucide-react'
+import { FileText, Trash2, Download, Search, X, ChevronLeft, ChevronRight } from '@/lib/icons'
 import { Dropdown } from '@/components/forms/dropdown'
 import { useCurrency } from '@/contexts/CurrencyContext'
 import type { DraftMetadata } from '@/types/draft'

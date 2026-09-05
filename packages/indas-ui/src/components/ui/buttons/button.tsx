@@ -1,7 +1,7 @@
 'use client'
 import * as React from "react"
 import { cn } from "@/lib/utils"
-import { LucideIcon, CheckCircle, XCircle, Minus, Plus } from "lucide-react"
+import { LucideIcon, Check, CheckCircle, XCircle, Minus, Plus } from "@/lib/icons"
 
 const STORAGE_KEY = 'fab-btn-pos'
 
@@ -355,7 +355,6 @@ export interface CheckboxButtonProps extends Omit<React.ButtonHTMLAttributes<HTM
 
 export const CheckboxButton = React.forwardRef<HTMLButtonElement, CheckboxButtonProps>(
   ({ checked = false, onChange, label, size = 'md', className, ...props }, ref) => {
-    const { Check } = require('lucide-react')
 
     const sizeClasses = {
       xs: 'h-6 px-2 text-[10px] gap-1.5',

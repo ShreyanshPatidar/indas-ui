@@ -3,7 +3,7 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui'
 import { Button } from '@/components/ui'
-import { Download, Printer, Copy, Maximize2, FileImage, File, X, Minus, Plus, Maximize } from 'lucide-react'
+import { Download, Printer, Copy, Maximize2, FileImage, File, X, Minus, Plus, Maximize } from '@/lib/icons'
 import { jsPDF } from 'jspdf'
 import 'svg2pdf.js'
 import { useLanguage } from '@/contexts/LanguageContext'

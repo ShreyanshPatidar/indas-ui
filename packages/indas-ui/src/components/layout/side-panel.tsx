@@ -13,7 +13,7 @@ import {
     MessageSquare,
     Plus,
     History
-} from 'lucide-react'
+} from '@/lib/icons'
 import { Input } from '@/components'
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui'
 import { cn } from '@/lib/utils'

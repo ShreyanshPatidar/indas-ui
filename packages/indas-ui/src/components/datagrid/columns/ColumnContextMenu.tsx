@@ -25,7 +25,7 @@ import {
   ToggleLeft,
   ArrowUpDown,
   Move,
-} from 'lucide-react'
+} from '@/lib/icons'
 import { Column, Table } from '@tanstack/react-table'
 
 import { Button } from '@/components/ui'

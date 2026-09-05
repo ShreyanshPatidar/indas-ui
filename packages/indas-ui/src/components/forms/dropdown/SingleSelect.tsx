@@ -3,7 +3,7 @@
 import * as React from 'react'
 import * as SelectPrimitive from '@radix-ui/react-select'
 import * as Popover from '@radix-ui/react-popover'
-import { Check, ChevronDown, Search, X } from 'lucide-react'
+import { Check, ChevronDown, Search, X } from '@/lib/icons'
 import { cn } from '@/lib/utils'
 import { DropdownOption } from './types'
 import { getDropdownClassName, dropdownSharedStyles, DropdownSearch, ClearButton, OptionImage } from './Dropdown'

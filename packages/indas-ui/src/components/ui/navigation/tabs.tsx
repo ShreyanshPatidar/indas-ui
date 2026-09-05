@@ -3,7 +3,7 @@
 import * as React from 'react'
 import * as TabsPrimitive from '@radix-ui/react-tabs'
 import { cn } from '@/lib/utils'
-import { LucideIcon } from 'lucide-react'
+import { LucideIcon } from '@/lib/icons'
 import { Dropdown } from '@/components/forms/dropdown'
 
 // ============================================================================

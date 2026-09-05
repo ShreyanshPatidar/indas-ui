@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, memo, useCallback } from 'react'
-import { Reply, Smile, Pencil, Trash2, Copy, Check, MoreHorizontal } from 'lucide-react'
+import { Reply, Smile, Pencil, Trash2, Copy, Check, MoreHorizontal } from '@/lib/icons'
 import { cn } from '@/lib/utils'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { parseReactions, parseAttachments } from '@/lib/api/activity/messaging/messaging'

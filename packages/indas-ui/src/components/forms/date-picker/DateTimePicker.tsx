@@ -7,7 +7,7 @@ import {
   ChevronLeft,
   Clock,
   X
-} from 'lucide-react'
+} from '@/lib/icons'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui'
 import { Input } from '@/components/ui'

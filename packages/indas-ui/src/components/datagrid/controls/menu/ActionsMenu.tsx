@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui'
-import { Settings2 } from 'lucide-react'
+import { Settings2 } from '@/lib/icons'
 import { ViewSection } from './view/ViewSection'
 import { ExportSection } from './export/ExportSection'
 import { ImportSection } from './import/ImportSection'

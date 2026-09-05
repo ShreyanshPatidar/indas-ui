@@ -8,7 +8,7 @@ import {
   Activity, TrendingUp, Users, Settings,
   Tag, BarChart3, Bell, Sparkles, FileText, FileCheck, Mail, Building,
   type LucideIcon,
-} from 'lucide-react'
+} from '@/lib/icons'
 import { cn, getModuleRoutePath } from '@/lib/utils'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useNavigation } from '@/contexts/NavigationContext'
