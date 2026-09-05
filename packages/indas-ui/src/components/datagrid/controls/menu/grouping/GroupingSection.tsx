@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuItem,
 } from '@/components/ui'
-import { Layers, X } from 'lucide-react'
+import { Layers, X } from '@/lib/icons'
 import type { Column } from '@tanstack/react-table'
 
 interface GroupingSectionProps<TData> {

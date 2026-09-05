@@ -2,7 +2,7 @@
 
 import { useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { MessageSquare, Send, RefreshCw } from 'lucide-react'
+import { MessageSquare, Send, RefreshCw } from '@/lib/icons'
 import { cn } from '@/lib/utils'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useSession } from 'next-auth/react'

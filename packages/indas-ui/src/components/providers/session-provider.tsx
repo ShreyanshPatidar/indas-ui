@@ -4,6 +4,7 @@ import { SessionProvider, useSession, signOut } from "next-auth/react"
 import { useEffect, useState, useRef } from "react"
 import type { Session } from "next-auth"
 import { SessionExpiryWarning } from "@/components/modals/session-expiry-warning"
+import { SessionAdapterProvider, type SessionUser } from "@/contexts/SessionAdapterContext"
 import { performLogoutCleanup } from "@/lib/utils/logout-cleanup"
 import { setSessionExpiredHandler } from "@/lib/api/core/client"
 
@@ -118,7 +119,14 @@ function SessionExpiryMonitor({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <>
+    // Feed the auth-agnostic adapter so layout components never import next-auth themselves.
+    <SessionAdapterProvider
+      user={(session?.user as unknown as SessionUser | undefined) ?? null}
+      status={status}
+      signOut={async (options) => {
+        await signOut({ callbackUrl: options?.callbackUrl ?? "/login", redirect: options?.redirect ?? true })
+      }}
+    >
       {children}
       <SessionExpiryWarning
         isOpen={showExpiryWarning}
@@ -126,7 +134,7 @@ function SessionExpiryMonitor({ children }: { children: React.ReactNode }) {
         onLogout={handleLogoutNow}
         minutesRemaining={minutesRemaining}
       />
-    </>
+    </SessionAdapterProvider>
   )
 }
 

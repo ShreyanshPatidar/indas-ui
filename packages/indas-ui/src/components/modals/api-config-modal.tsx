@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Button, Input, Label, Alert, AlertDescription } from '@/components/ui'
-import { Loader2, CheckCircle, AlertCircle, TestTube } from 'lucide-react'
+import { Loader2, CheckCircle, AlertCircle, TestTube } from '@/lib/icons'
 import { StandardModal } from './StandardModal'
 import { getAuthAPIConfig, setAuthAPIConfig, clearAuthAPIConfig } from '@/lib/api'
 

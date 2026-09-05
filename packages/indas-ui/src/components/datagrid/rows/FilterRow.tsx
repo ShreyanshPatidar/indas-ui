@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback, useRef, useEffect } from 'react'
 import { Table, Header } from '@tanstack/react-table'
-import { Search, X, Calendar } from 'lucide-react'
+import { Search, X, Calendar } from '@/lib/icons'
 import { cn } from '@/lib/utils'
 
 interface FilterRowProps<TData> {

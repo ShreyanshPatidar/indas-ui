@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo, useCallback, memo } from 'react'
-import { Search, Plus, MessageSquare, Users, Hash, X } from 'lucide-react'
+import { Search, Plus, MessageSquare, Users, Hash, X } from '@/lib/icons'
 import { cn } from '@/lib/utils'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useMessaging } from '@/contexts/MessagingContext'

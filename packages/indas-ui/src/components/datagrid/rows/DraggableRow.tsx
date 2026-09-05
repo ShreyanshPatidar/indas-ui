@@ -3,7 +3,7 @@
 import React from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { GripVertical } from 'lucide-react'
+import { GripVertical } from '@/lib/icons'
 import { Row } from '@tanstack/react-table'
 import { CellRenderer } from '../cells/CellRenderer'
 

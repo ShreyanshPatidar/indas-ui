@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useCallback } from 'react'
-import { ChevronDown, ChevronRight, ChevronsDownUp, ChevronsUpDown } from 'lucide-react'
+import { ChevronDown, ChevronRight, ChevronsDownUp, ChevronsUpDown } from '@/lib/icons'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Row, ColumnDef } from '@tanstack/react-table'
 import { useCurrency } from '@/contexts/CurrencyContext'

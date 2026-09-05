@@ -14,7 +14,7 @@ import {
   Shield,
   X,
   Clock
-} from 'lucide-react'
+} from '@/lib/icons'
 import { Loading } from '../ui/overlays/loading'
 
 // Design Tokens

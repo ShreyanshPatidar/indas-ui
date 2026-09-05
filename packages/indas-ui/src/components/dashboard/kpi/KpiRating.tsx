@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { TrendingUp, TrendingDown, Info } from 'lucide-react'
+import { TrendingUp, TrendingDown, Info } from '@/lib/icons'
 import { cn } from '@/lib/utils'
 
 export interface RatingBreakdown {

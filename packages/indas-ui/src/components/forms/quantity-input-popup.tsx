@@ -4,7 +4,7 @@ import * as React from 'react'
 import { Button } from '@/components/ui'
 import { Input } from '@/components/ui'
 import { cn } from '@/lib/utils'
-import { Check, X } from 'lucide-react'
+import { Check, X } from '@/lib/icons'
 
 interface QuantityInputPopupProps {
   isOpen: boolean

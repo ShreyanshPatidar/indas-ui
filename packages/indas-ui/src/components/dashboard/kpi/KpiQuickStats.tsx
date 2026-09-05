@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { LucideIcon } from 'lucide-react'
+import { LucideIcon } from '@/lib/icons'
 import { cn } from '@/lib/utils'
 import { KpiCardSkeleton } from './kpi-shell'
 

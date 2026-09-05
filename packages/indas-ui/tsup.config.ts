@@ -1,43 +1,38 @@
 import { defineConfig } from 'tsup'
 import path from 'node:path'
-import fs from 'node:fs'
 
+/**
+ * Build: one entry per component group so consumers only pay for what they import
+ * (`import { Button } from 'indas-ui/ui'` no longer pulls ECharts or the DataGrid).
+ * The root `indas-ui` entry is kept for backwards compatibility. Code splitting shares
+ * common chunks between entries; `sideEffects` in package.json lets bundlers drop
+ * unused modules.
+ */
 export default defineConfig({
-  entry: ['src/index.ts'],
+  entry: {
+    index: 'src/index.ts',
+    ui: 'src/components/ui/index.ts',
+    layout: 'src/components/layout/index.ts',
+    datagrid: 'src/components/datagrid/index.ts',
+    dashboard: 'src/components/dashboard/index.ts',
+    charts: 'src/components/dashboard/charts/index.ts',
+    kpi: 'src/components/dashboard/kpi/index.ts',
+    modals: 'src/components/modals/index.ts',
+    forms: 'src/components/forms/index.ts',
+    providers: 'src/providers.ts',
+  },
   format: ['esm', 'cjs'],
+  splitting: true,
+  treeshake: true,
   dts: true,
   sourcemap: true,
   clean: true,
-  external: [
-    'react',
-    'react-dom',
-    'next',
-    'next-auth',
-    'next/link',
-    'next/image',
-    'next/navigation',
-    'next/headers',
-  ],
-  treeshake: true,
+  // Every module is client-side React; the directive must lead each emitted file.
+  banner: { js: "'use client';" },
+  external: ['react', 'react-dom', 'next', 'next-auth', 'next/link', 'next/image', 'next/navigation', 'next/headers'],
   injectStyle: false,
   esbuildOptions(options) {
-    options.alias = {
-      '@': path.resolve(__dirname, 'src'),
-    }
+    options.alias = { '@': path.resolve(__dirname, 'src') }
   },
-  loader: {
-    '.css': 'copy',
-  },
-  async onSuccess() {
-    const distDir = path.resolve(__dirname, 'dist')
-    for (const file of fs.readdirSync(distDir)) {
-      if (file.endsWith('.js') || file.endsWith('.cjs')) {
-        const full = path.join(distDir, file)
-        const content = fs.readFileSync(full, 'utf8')
-        if (!content.startsWith("'use client'")) {
-          fs.writeFileSync(full, `'use client';\n${content}`)
-        }
-      }
-    }
-  },
+  loader: { '.css': 'copy' },
 })

@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { X, Save, XCircle, LucideIcon } from 'lucide-react'
+import { X, Save, XCircle, LucideIcon } from '@/lib/icons'
 import {
   Dialog,
   DialogContent,

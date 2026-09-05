@@ -9,7 +9,7 @@ import {
   LineChart as LineChartIcon,
   PieChart as PieChartIcon,
   Activity,
-} from 'lucide-react'
+} from '@/lib/icons'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui'
 import { Button } from '@/components/ui'

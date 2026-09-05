@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": "dist",
+    "rootDir": "src",
+    "declaration": true,
+    "declarationMap": false,
+    "sourceMap": false,
+    "removeComments": false,
+    "module": "ESNext",
+    "moduleResolution": "Bundler"
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist", "**/*.stories.tsx", "**/*.test.ts", "**/*.test.tsx", "**/*.selfcheck.mjs"]
+}

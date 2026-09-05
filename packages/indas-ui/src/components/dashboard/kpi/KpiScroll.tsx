@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import { useRef, useState, useEffect } from 'react'
-import { ChevronLeft, ChevronRight, ArrowRight, ChevronDown, LucideIcon } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ArrowRight, ChevronDown, LucideIcon } from '@/lib/icons'
 import { cn } from '@/lib/utils'
 
 export interface KpiScrollItem {

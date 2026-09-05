@@ -11,7 +11,7 @@ import {
   X,
   CalendarDays,
   ArrowRight
-} from 'lucide-react'
+} from '@/lib/icons'
 import { cn, getLocalDateString } from '@/lib/utils'
 import { Button } from '@/components/ui'
 import { Input } from '@/components/ui'

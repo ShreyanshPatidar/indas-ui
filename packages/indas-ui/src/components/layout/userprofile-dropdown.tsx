@@ -1,8 +1,8 @@
 "use client"
 
-import { signOut, useSession } from "next-auth/react"
+import { useSessionAdapter } from "@/contexts/SessionAdapterContext"
 import { useState, useEffect } from "react"
-import { LogOut, Settings, Shield, CircleUser } from "lucide-react"
+import { LogOut, Settings, Shield, CircleUser } from "@/lib/icons"
 import { useRouter } from "next/navigation"
 import { LogoutModal, DeviceInfo } from "@/components/modals/logout-modal"
 import { detectDevice, getDeviceId, getDeviceName } from "@/lib/utils/device-detection"
@@ -10,7 +10,7 @@ import { performLogoutCleanup } from "@/lib/utils/logout-cleanup"
 import { useNotifications } from "@/hooks/useNotifications"
 
 export function UserDropdown() {
-  const { data: session } = useSession()
+  const { data: session, signOut } = useSessionAdapter()
   const { getNotificationCounts } = useNotifications(session)
   const [isOpen, setIsOpen] = useState(false)
   const [showLogoutModal, setShowLogoutModal] = useState(false)

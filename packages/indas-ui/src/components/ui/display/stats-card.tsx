@@ -1,5 +1,5 @@
 import * as React from "react"
-import { LucideIcon, TrendingUp, TrendingDown } from "lucide-react"
+import { LucideIcon, TrendingUp, TrendingDown } from "@/lib/icons"
 import { cn } from "@/lib/utils"
 import { Card } from "./card"
 

@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from '@/components/ui'
 import { Button } from '@/components/ui'
-import { Pin, PinOff } from 'lucide-react'
+import { Pin, PinOff } from '@/lib/icons'
 
 interface ColumnChooserModalProps<TData> {
   isOpen: boolean

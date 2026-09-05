@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { Cell, flexRender } from '@tanstack/react-table'
-import { ChevronRight, ChevronDown } from 'lucide-react'
+import { ChevronRight, ChevronDown } from '@/lib/icons'
 import { TooltipProvider } from '@/components/ui'
 
 interface CellRendererProps<TData> {

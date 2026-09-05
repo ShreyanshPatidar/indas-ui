@@ -1,6 +1,6 @@
 import React from 'react'
 import { clsx } from 'clsx'
-import { Check, Minus } from 'lucide-react'
+import { Check, Minus } from '@/lib/icons'
 
 export interface CheckboxProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string

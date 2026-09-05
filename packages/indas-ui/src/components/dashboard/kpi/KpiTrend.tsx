@@ -1,6 +1,6 @@
 'use client'
 
-import { TrendingUp, TrendingDown, Minus, LucideIcon } from 'lucide-react'
+import { TrendingUp, TrendingDown, Minus, LucideIcon } from '@/lib/icons'
 import { cn } from '@/lib/utils'
 import { KpiShell, ACCENT_MAP, type KpiShellProps } from './kpi-shell'
 

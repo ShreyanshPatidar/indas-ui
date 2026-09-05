@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import { createPortal } from 'react-dom'
-import { Star, ExternalLink, EyeOff, HelpCircle, MessageSquare } from 'lucide-react'
+import { Star, ExternalLink, EyeOff, HelpCircle, MessageSquare } from '@/lib/icons'
 import { cn } from '@/lib/utils'
 import { useSidebarPreferences } from '@/contexts/SidebarPreferencesContext'
 import { useTranslation } from '@/hooks/useTranslation'

@@ -10,8 +10,8 @@
  */
 
 import * as React from 'react'
-import { BellRing, ShieldAlert } from 'lucide-react'
-import { useSession } from 'next-auth/react'
+import { BellRing, ShieldAlert } from '@/lib/icons'
+import { useSessionAdapter } from '@/contexts/SessionAdapterContext'
 import { Button } from '@/components/ui/buttons/button'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useGlobalAlert } from '@/contexts/GlobalAlertContext'
@@ -27,7 +27,7 @@ export interface ReminderButtonProps {
 }
 
 export function ReminderButton({ module, documentId, onSent, size = 'sm', className }: ReminderButtonProps) {
-  const { data: session } = useSession()
+  const { data: session } = useSessionAdapter()
   const { t } = useLanguage()
   const alerts = useGlobalAlert()
 

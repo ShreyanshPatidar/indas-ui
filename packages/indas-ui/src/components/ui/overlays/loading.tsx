@@ -4,7 +4,7 @@ import * as React from 'react'
 import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Loader2 } from 'lucide-react'
+import { Loader2 } from '@/lib/icons'
 import { cn } from '@/lib/utils'
 
 // ── PageLoading (Newton's Cradle) ──────────────────────────────────────
