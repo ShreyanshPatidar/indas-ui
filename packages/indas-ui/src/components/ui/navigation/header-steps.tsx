@@ -1,8 +1,8 @@
 'use client'
 
 import * as React from 'react'
-import { CheckCircle } from '@/lib/icons'
-import type { LucideIcon } from '@/lib/icons'
+import { CheckCircle } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useLanguage } from '@/contexts/LanguageContext'
 

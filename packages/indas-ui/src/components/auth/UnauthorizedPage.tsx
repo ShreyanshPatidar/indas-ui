@@ -1,6 +1,6 @@
 'use client'
 
-import { Lock, Monitor } from '@/lib/icons'
+import { Lock, Monitor } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useTranslation } from '@/hooks/useTranslation'
 

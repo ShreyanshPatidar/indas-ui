@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import { Input } from '@/components/ui'
-import { Pencil } from '@/lib/icons'
+import { Pencil } from 'lucide-react'
 
 type EditableCellType = 'text' | 'number' | 'decimal'
 

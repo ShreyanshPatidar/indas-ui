@@ -28,18 +28,13 @@ export interface SessionAdapterValue {
   signOut: (options?: { callbackUrl?: string; redirect?: boolean }) => Promise<void> | void
 }
 
-const noop = async () => {}
-
-const SessionAdapterContext = createContext<SessionAdapterValue>({
-  data: null,
-  status: 'unauthenticated',
-  signOut: noop,
-})
+const SessionAdapterContext = createContext<SessionAdapterValue | null>(null)
 
 export interface SessionAdapterProviderProps {
   user: SessionUser | null | undefined
   status?: SessionStatus
-  signOut?: SessionAdapterValue['signOut']
+  /** Must be referentially stable (useCallback / module-level); a new function per render re-triggers every consumer keyed on the session. */
+  signOut: SessionAdapterValue['signOut']
   children: ReactNode
 }
 
@@ -48,7 +43,7 @@ export function SessionAdapterProvider({ user, status, signOut, children }: Sess
     () => ({
       data: user ? { user } : null,
       status: status ?? (user ? 'authenticated' : 'unauthenticated'),
-      signOut: signOut ?? noop,
+      signOut,
     }),
     [user, status, signOut],
   )
@@ -57,5 +52,9 @@ export function SessionAdapterProvider({ user, status, signOut, children }: Sess
 
 /** Drop-in replacement for next-auth's `useSession()` inside library components. */
 export function useSessionAdapter(): SessionAdapterValue {
-  return useContext(SessionAdapterContext)
+  const ctx = useContext(SessionAdapterContext)
+  if (!ctx) {
+    throw new Error('useSessionAdapter must be used within <SessionAdapterProvider> (or indas-ui <AuthSessionProvider>)')
+  }
+  return ctx
 }

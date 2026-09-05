@@ -3,7 +3,7 @@
 import { useEffect } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui'
 import { cn } from '@/lib/utils'
-import { LogOut, Clock, Monitor, Smartphone, Tablet, X, XCircle, ClipboardCheck, ArrowRight } from '@/lib/icons'
+import { LogOut, Clock, Monitor, Smartphone, Tablet, X, XCircle, ClipboardCheck, ArrowRight } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
 
 export interface DeviceInfo {

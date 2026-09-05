@@ -8,7 +8,7 @@
 import { useState, useEffect, useCallback, useRef, ReactNode, ComponentType } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { Menu, X, Plus, Maximize2, Download, Share2, Volume2, VolumeX, Bot, History, PanelLeftOpen, Star, Pencil, Trash2, ChevronDown, Search, Calendar, Copy } from '@/lib/icons'
+import { Menu, X, Plus, Maximize2, Download, Share2, Volume2, VolumeX, Bot, History, PanelLeftOpen, Star, Pencil, Trash2, ChevronDown, Search, Calendar, Copy } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { sendChatMessageAPI, getConversationsAPI, getMessagesAPI, deleteConversationAPI, renameConversationAPI, toggleStarConversationAPI, submitMessageFeedbackAPI, duplicateConversationAPI } from '@/lib/api/ai/chat'
 import type { Message, Conversation, UIDataEntry } from '@/lib/api/ai/types'

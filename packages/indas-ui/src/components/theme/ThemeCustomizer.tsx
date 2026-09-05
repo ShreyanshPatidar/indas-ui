@@ -20,7 +20,7 @@ import {
   Sparkles,
   Zap,
   X
-} from '@/lib/icons'
+} from 'lucide-react'
 
 // Define theme variants outside component to avoid translation issues with t()
 const getThemeVariants = (t: (key: string) => string): Array<{

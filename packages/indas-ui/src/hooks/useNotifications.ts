@@ -3,8 +3,8 @@
 import {
   Bell, FileText, DollarSign, AlertTriangle, AlertOctagon,
   CheckCircle, UserPlus
-} from '@/lib/icons'
-import type { LucideIcon } from '@/lib/icons'
+} from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import type { NotificationResponse } from '@/lib/api/activity'
 
 // `useNotifications` now reads from the shared NotificationProvider (one fetch/poll/SignalR

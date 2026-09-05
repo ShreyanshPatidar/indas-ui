@@ -6,7 +6,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
 } from '@/components/ui'
-import { Download, FileSpreadsheet, FileText, File, FileJson } from '@/lib/icons'
+import { Download, FileSpreadsheet, FileText, File, FileJson } from 'lucide-react'
 import { exportData } from './export'
 
 interface ExportSectionProps<TData> {

@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import { useRef, useEffect, useState, useCallback, useMemo } from 'react'
-import { X, RotateCcw, FileBarChart, ListFilter, Lightbulb, FileOutput, Printer, FileSpreadsheet, FileText, TrendingUp, Minus, Plus, Share2, CalendarDays, MoreHorizontal } from '@/lib/icons'
+import { X, RotateCcw, FileBarChart, ListFilter, Lightbulb, FileOutput, Printer, FileSpreadsheet, FileText, TrendingUp, Minus, Plus, Share2, CalendarDays, MoreHorizontal } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Dropdown } from '@/components/forms/dropdown'
 import { DatePicker, DateRange } from '@/components/forms/date-picker'

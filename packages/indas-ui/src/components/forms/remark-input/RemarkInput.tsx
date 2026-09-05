@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useCallback, useRef, useLayoutEffect, useEffect } from 'react'
-import { MessageSquare, Send, Info, X, Pencil, Trash2, Check, Paperclip, FileText, Loader2 } from '@/lib/icons'
+import { MessageSquare, Send, Info, X, Pencil, Trash2, Check, Paperclip, FileText, Loader2 } from 'lucide-react'
 import { Modal, ModalContent, ModalTitle } from '@/components'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { cn } from '@/lib/utils'

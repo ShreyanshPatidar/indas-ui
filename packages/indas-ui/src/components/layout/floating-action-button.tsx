@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { MoreHorizontal, X } from '@/lib/icons'
+import { MoreHorizontal, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export interface FABAction {

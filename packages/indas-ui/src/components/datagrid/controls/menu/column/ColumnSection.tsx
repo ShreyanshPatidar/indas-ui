@@ -1,6 +1,6 @@
 import React from 'react'
 import { DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui'
-import { Columns3, Maximize2 } from '@/lib/icons'
+import { Columns3, Maximize2 } from 'lucide-react'
 
 interface ColumnSectionProps {
   enableColumnVisibility?: boolean

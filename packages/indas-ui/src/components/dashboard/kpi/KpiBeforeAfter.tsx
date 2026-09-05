@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { TrendingUp, TrendingDown, ArrowRight } from '@/lib/icons'
+import { TrendingUp, TrendingDown, ArrowRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export interface KpiBeforeAfterProps {

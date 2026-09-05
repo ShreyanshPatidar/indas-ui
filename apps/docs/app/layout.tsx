@@ -16,7 +16,7 @@ import { Sidebar } from '../components/sidebar'
 
 export const metadata: Metadata = {
   title: 'indas-ui — Component Library',
-  description: 'React components extracted from Indas Estimo ERP. Tailwind + Radix + DataGrid + 80+ components.',
+  description: 'Indas UI — React component library for business apps. Tailwind + Radix + DataGrid + 130+ components.',
 }
 
 export const viewport: Viewport = {

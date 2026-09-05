@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { Maximize2 } from '@/lib/icons'
+import { Maximize2 } from 'lucide-react'
 import { Button } from '@/components/ui'
 
 interface AutoResizeButtonProps {

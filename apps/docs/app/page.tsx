@@ -17,7 +17,7 @@ export default function Home() {
           The ERP component library<br />for serious teams.
         </h1>
         <p className="text-lg text-[rgb(var(--fg-muted))] leading-relaxed max-w-2xl">
-          {totalCount}+ production-grade React components extracted from Indas Estimo.
+          {totalCount}+ production-grade React components for business applications.
           Includes DataGrid, DatePicker, action buttons, charts, modals — everything you need to ship a real app.
         </p>
 

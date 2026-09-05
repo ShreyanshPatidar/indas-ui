@@ -13,7 +13,7 @@
 
 import React, { useState, useCallback } from 'react'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui'
-import { X, Maximize2, Box, RotateCw } from '@/lib/icons'
+import { X, Maximize2, Box, RotateCw } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
 
 export interface ThreeDModalDetail {

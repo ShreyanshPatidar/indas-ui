@@ -6,7 +6,7 @@
  */
 
 import { useState, useRef, useEffect, useCallback, KeyboardEvent } from 'react'
-import { Send, Paperclip, Mic, MicOff, X, FileIcon, Image as ImageIcon } from '@/lib/icons'
+import { Send, Paperclip, Mic, MicOff, X, FileIcon, Image as ImageIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useLanguage } from '@/contexts/LanguageContext'
 

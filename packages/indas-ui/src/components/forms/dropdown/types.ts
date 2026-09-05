@@ -24,6 +24,10 @@ export interface DropdownProps {
   required?: boolean
   emptyMessage?: string
   triggerClassName?: string
+  /** Forwarded to the trigger so a <label htmlFor> can target it. */
+  id?: string
+  /** Accessible name for the trigger when no visible label is rendered. */
+  'aria-label'?: string
   autoWidth?: boolean
   customFooter?: React.ReactNode
   multiSelect?: boolean

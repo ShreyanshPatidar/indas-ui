@@ -1,7 +1,7 @@
 'use client'
 import * as React from "react"
 import { cn } from "@/lib/utils"
-import { LucideIcon, Check, CheckCircle, XCircle, Minus, Plus } from "@/lib/icons"
+import { LucideIcon, Check, CheckCircle, XCircle, Minus, Plus } from "lucide-react"
 
 const STORAGE_KEY = 'fab-btn-pos'
 

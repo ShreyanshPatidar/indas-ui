@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { ArrowLeft, Phone, Video, MoreVertical, Users } from '@/lib/icons'
+import { ArrowLeft, Phone, Video, MoreVertical, Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useMessaging } from '@/contexts/MessagingContext'

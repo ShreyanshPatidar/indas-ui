@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 import { flexRender, Header } from '@tanstack/react-table'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { ArrowUpDown, ArrowUp, ArrowDown, GripVertical, Plus, RefreshCw, ListFilter } from '@/lib/icons'
+import { ArrowUpDown, ArrowUp, ArrowDown, GripVertical, Plus, RefreshCw, ListFilter } from 'lucide-react'
 
 import { Button } from '@/components/ui'
 import { cn } from '@/lib/utils'

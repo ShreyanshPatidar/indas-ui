@@ -24,7 +24,7 @@ import {
   Paperclip,
   RefreshCw,
   Search
-} from '@/lib/icons'
+} from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui'
 import { Footer } from '@/components/layout'

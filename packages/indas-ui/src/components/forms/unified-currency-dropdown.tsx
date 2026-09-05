@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { Check, ChevronDown, RefreshCw, Calculator, AlertTriangle, TrendingUp } from '@/lib/icons'
+import { Check, ChevronDown, RefreshCw, Calculator, AlertTriangle, TrendingUp } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Dropdown } from '@/components'
 import { Button } from '@/components/ui'

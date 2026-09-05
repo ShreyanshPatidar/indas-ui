@@ -7,7 +7,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
 } from '@/components/ui'
-import { Grid3X3, LayoutGrid, BarChart3, Check, Eye } from '@/lib/icons'
+import { Grid3X3, LayoutGrid, BarChart3, Check, Eye } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
 
 interface ViewSectionProps {

@@ -1,6 +1,6 @@
 # indas-ui
 
-Reusable React component library extracted from Indas Estimo (ERP). Built with Tailwind CSS, Radix UI primitives, and Lucide icons.
+React component library for business applications. Built with Tailwind CSS design tokens, Radix UI primitives, Lucide icons, and an advanced DataGrid.
 
 - **Docs site:** https://shreyanshpatidar.github.io/indas-ui
 - **npm:** https://www.npmjs.com/package/indas-ui

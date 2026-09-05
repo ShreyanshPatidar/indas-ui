@@ -8,7 +8,7 @@ import {
   ModalTitle,
 } from '@/components/modals/Modal'
 import { Input } from '@/components/ui/forms/input'
-import { Eye, EyeOff, Lock, Check, X } from '@/lib/icons'
+import { Eye, EyeOff, Lock, Check, X } from 'lucide-react'
 import { useGlobalAlert } from '@/contexts/GlobalAlertContext'
 
 interface PasswordResetModalProps {

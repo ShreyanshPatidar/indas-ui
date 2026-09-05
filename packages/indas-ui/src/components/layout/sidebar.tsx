@@ -3,7 +3,7 @@
 import * as React from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { ChevronDown, ChevronRight, Home, Package, Settings, FileText, Users, Calculator, Wrench, Building2, ClipboardList, TrendingUp, DollarSign, Factory, Briefcase, Database, ShoppingCart, BarChart3, ChevronLeft, Gauge, MessageSquare, ClipboardCheck, Cog, UserCog, Building, Tag, Layers, Boxes, BookOpen, Receipt, PieChart, FileSpreadsheet, Target, Shield, PanelLeftOpen, PanelLeftClose, AlertCircle, Star, Activity, Plus } from '@/lib/icons'
+import { ChevronDown, ChevronRight, Home, Package, Settings, FileText, Users, Calculator, Wrench, Building2, ClipboardList, TrendingUp, DollarSign, Factory, Briefcase, Database, ShoppingCart, BarChart3, ChevronLeft, Gauge, MessageSquare, ClipboardCheck, Cog, UserCog, Building, Tag, Layers, Boxes, BookOpen, Receipt, PieChart, FileSpreadsheet, Target, Shield, PanelLeftOpen, PanelLeftClose, AlertCircle, Star, Activity, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from '@/components/ui'
