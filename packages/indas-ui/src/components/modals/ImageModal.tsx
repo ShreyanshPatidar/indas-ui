@@ -4,8 +4,6 @@ import React, { useRef, useState, useEffect, useCallback } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui'
 import { Button } from '@/components/ui'
 import { Download, Printer, Copy, Maximize2, FileImage, File, X, Minus, Plus, Maximize } from '@/lib/icons'
-import { jsPDF } from 'jspdf'
-import 'svg2pdf.js'
 import { useLanguage } from '@/contexts/LanguageContext'
 
 export interface ImageModalDetail {
@@ -496,6 +494,12 @@ export function ImageModal({
       const pageHeight = svgHeight + margin * 2 + titleSpace
       const orientation: 'landscape' | 'portrait' = pageWidth > pageHeight ? 'landscape' : 'portrait'
 
+      // jsPDF and the svg2pdf plugin download only when a PDF is actually requested.
+
+      const { jsPDF } = await import('jspdf')
+
+      await import('svg2pdf.js')
+
       const pdf = new jsPDF({
         orientation,
         unit: 'mm',
@@ -539,6 +543,12 @@ export function ImageModal({
       const pageWidth = svgWidth + margin * 2
       const pageHeight = svgHeight + margin * 2 + titleSpace
       const orientation: 'landscape' | 'portrait' = pageWidth > pageHeight ? 'landscape' : 'portrait'
+
+      // jsPDF and the svg2pdf plugin download only when a PDF is actually requested.
+
+      const { jsPDF } = await import('jspdf')
+
+      await import('svg2pdf.js')
 
       const pdf = new jsPDF({
         orientation,

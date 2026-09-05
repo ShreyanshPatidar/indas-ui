@@ -1,6 +1,6 @@
 'use client'
 import * as React from 'react'
-import { useSession } from 'next-auth/react'
+import { useSessionAdapter } from '@/contexts/SessionAdapterContext'
 import { usePathname, useRouter } from 'next/navigation'
 import { UserMasterAPI } from '@/lib/api/master/user'
 // User module permission structure from API
@@ -78,7 +78,7 @@ const ADMIN_ONLY_PATHS = [
   '/activity/audit-logs',
 ]
 export function ModuleAuthProvider({ children }: { children: React.ReactNode }) {
-  const { data: session, status } = useSession()
+  const { data: session, status } = useSessionAdapter()
   const [permissions, setPermissions] = React.useState<UserModulePermission[]>([])
   const [isLoading, setIsLoading] = React.useState(true)
   // Fetch user permissions on mount and when session changes
@@ -94,7 +94,7 @@ export function ModuleAuthProvider({ children }: { children: React.ReactNode }) 
     }
     try {
       setIsLoading(true)
-      const response = await UserMasterAPI.getUserModulePermissions(userId, session)
+      const response = await UserMasterAPI.getUserModulePermissions(userId, session as any)
       if (response.success && Array.isArray(response.data)) {
         setPermissions(response.data)
       }

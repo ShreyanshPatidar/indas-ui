@@ -1,8 +1,5 @@
-import { saveAs } from 'file-saver'
-import ExcelJS from 'exceljs'
-import Papa from 'papaparse'
-import jsPDF from 'jspdf'
-import autoTable from 'jspdf-autotable'
+// Heavy libraries (ExcelJS, jsPDF, PapaParse, file-saver) are loaded on demand so that
+// rendering a DataGrid does not ship them; they download the first time a user exports.
 
 /** Format any cell value into a clean string. Avoids "[object Object]" and stray nulls. */
 function formatCellValue(value: unknown): string {
@@ -35,15 +32,21 @@ function buildExportRows<TData>(
   return { headers: keys, keys, rows }
 }
 
+async function saveBlob(blob: Blob, name: string) {
+  const { saveAs } = await import('file-saver')
+  saveAs(blob, name)
+}
+
 /**
  * Export data to CSV format
  */
-export function exportToCSV<TData>(data: TData[], filename: string = 'data-export') {
+export async function exportToCSV<TData>(data: TData[], filename: string = 'data-export') {
   try {
+    const Papa = (await import('papaparse')).default
     const { headers, rows } = buildExportRows(data)
     const csv = Papa.unparse({ fields: headers, data: rows })
     const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' })
-    saveAs(blob, `${filename}.csv`)
+    await saveBlob(blob, `${filename}.csv`)
   } catch (error) {
     console.error('❌ [DataGrid Export] CSV export failed:', error)
     throw error
@@ -55,6 +58,7 @@ export function exportToCSV<TData>(data: TData[], filename: string = 'data-expor
  */
 export async function exportToExcel<TData>(data: TData[], filename: string = 'data-export') {
   try {
+    const ExcelJS = (await import('exceljs')).default
     const workbook = new ExcelJS.Workbook()
     const worksheet = workbook.addWorksheet('Data')
 
@@ -88,7 +92,7 @@ export async function exportToExcel<TData>(data: TData[], filename: string = 'da
     const blob = new Blob([buffer], {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     })
-    saveAs(blob, `${filename}.xlsx`)
+    await saveBlob(blob, `${filename}.xlsx`)
   } catch (error) {
     console.error('❌ [DataGrid Export] Excel export failed:', error)
     throw error
@@ -99,8 +103,9 @@ export async function exportToExcel<TData>(data: TData[], filename: string = 'da
  * Export data to PDF format.
  * Landscape, auto-fit columns, line-wrapped cells, repeated headers, page numbers.
  */
-export function exportToPDF<TData>(data: TData[], filename: string = 'data-export') {
+export async function exportToPDF<TData>(data: TData[], filename: string = 'data-export') {
   try {
+    const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([import('jspdf'), import('jspdf-autotable')])
     const { headers, rows } = buildExportRows(data)
 
     // Landscape fits wide grids; switch to portrait only for very narrow tables.
@@ -166,11 +171,11 @@ export function exportToPDF<TData>(data: TData[], filename: string = 'data-expor
 /**
  * Export data to JSON format
  */
-export function exportToJSON<TData>(data: TData[], filename: string = 'data-export') {
+export async function exportToJSON<TData>(data: TData[], filename: string = 'data-export') {
   try {
     const jsonString = JSON.stringify(data, null, 2)
     const blob = new Blob([jsonString], { type: 'application/json' })
-    saveAs(blob, `${filename}.json`)
+    await saveBlob(blob, `${filename}.json`)
   } catch (error) {
     console.error('❌ [DataGrid Export] JSON export failed:', error)
     throw error
@@ -189,11 +194,11 @@ export async function exportData<TData>(
     case 'excel':
       return await exportToExcel(data, filename)
     case 'csv':
-      return exportToCSV(data, filename)
+      return await exportToCSV(data, filename)
     case 'pdf':
-      return exportToPDF(data, filename)
+      return await exportToPDF(data, filename)
     case 'json':
-      return exportToJSON(data, filename)
+      return await exportToJSON(data, filename)
     default:
       throw new Error(`Unsupported export format: ${format}`)
   }

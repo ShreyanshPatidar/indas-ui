@@ -14,7 +14,7 @@ import {
     Plus,
     History
 } from '@/lib/icons'
-import { Input } from '@/components'
+import { Input } from '@/components/ui/forms/input'
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui'
 import { cn } from '@/lib/utils'
 

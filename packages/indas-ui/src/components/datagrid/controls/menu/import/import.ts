@@ -1,5 +1,4 @@
-import Papa from 'papaparse'
-import ExcelJS from 'exceljs'
+// PapaParse and ExcelJS are loaded on demand so that rendering a DataGrid does not ship them.
 
 /**
  * Result of import operation
@@ -16,10 +15,11 @@ export interface ImportResult<TData> {
 /**
  * Import data from CSV file
  */
-export function importFromCSV<TData>(
+export async function importFromCSV<TData>(
   file: File,
   onProgress?: (progress: number) => void
 ): Promise<ImportResult<TData>> {
+  const Papa = (await import('papaparse')).default
   return new Promise((resolve) => {
     Papa.parse(file, {
       header: true,
@@ -75,6 +75,7 @@ export async function importFromExcel<TData>(
   onProgress?: (progress: number) => void
 ): Promise<ImportResult<TData>> {
   try {
+    const ExcelJS = (await import('exceljs')).default
     const workbook = new ExcelJS.Workbook()
     const buffer = await file.arrayBuffer()
     await workbook.xlsx.load(buffer)
