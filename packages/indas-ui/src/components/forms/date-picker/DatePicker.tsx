@@ -24,6 +24,10 @@ export interface DateRange {
 }
 
 export interface DatePickerProps {
+  /** Forwarded to the text input so a <label htmlFor> can target it. */
+  id?: string
+  /** Accessible name for the input when no visible label is rendered. */
+  'aria-label'?: string
   value?: Date | DateRange | string
   onChange?: (date: Date | DateRange | string | undefined) => void
   mode?: 'single' | 'range'
@@ -54,6 +58,8 @@ export interface DatePickerProps {
 // ============================================
 
 export function DatePicker({
+  id,
+  'aria-label': ariaLabel,
   value,
   onChange,
   mode = 'single',
@@ -996,8 +1002,12 @@ export function DatePicker({
               )}
             </button>
           ) : (
-          <div className="relative" ref={inputWrapperRef}>
+          <div className="relative" ref={inputWrapperRef} onClick={(e) => e.preventDefault()}>
+            {/* The input opens the calendar on focus; cancelling the click keeps the Radix trigger
+                from toggling it straight back shut (composeEventHandlers honours defaultPrevented). */}
             <Input
+              id={id}
+              aria-label={ariaLabel}
               value={inputValue}
               onChange={handleInputChange}
               onBlur={handleInputBlur}
