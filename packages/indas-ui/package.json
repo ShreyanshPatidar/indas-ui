@@ -1,6 +1,6 @@
 {
   "name": "indas-ui",
-  "version": "0.0.1",
+  "version": "0.1.1",
   "description": "Reusable React component library extracted from Indas Estimo (ERP). Tailwind + Radix + Lucide + DataGrid.",
   "license": "MIT",
   "author": "Indas Analytics Pvt Ltd",
