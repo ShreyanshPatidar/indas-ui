@@ -3,7 +3,7 @@
 import * as React from 'react'
 import * as SelectPrimitive from '@radix-ui/react-select'
 import * as Popover from '@radix-ui/react-popover'
-import { Check, ChevronDown, Search, X } from '@/lib/icons'
+import { Check, ChevronDown, Search, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { DropdownOption } from './types'
 import { getDropdownClassName, dropdownSharedStyles, DropdownSearch, ClearButton, OptionImage } from './Dropdown'
@@ -20,6 +20,8 @@ interface SingleSelectProps {
   autoWidth: boolean
   triggerClassName?: string
   className?: string
+  id?: string
+  'aria-label'?: string
   searchable: boolean
   searchTerm: string
   setSearchTerm: (term: string) => void
@@ -54,6 +56,8 @@ export function SingleSelect({
   autoWidth,
   triggerClassName,
   className,
+  id,
+  'aria-label': ariaLabel,
   searchable,
   searchTerm,
   setSearchTerm,
@@ -320,7 +324,9 @@ export function SingleSelect({
       <Popover.Root open={open} onOpenChange={onOpenChange}>
         <Popover.Trigger asChild>
           <div
+            id={id}
             role="combobox"
+            aria-label={ariaLabel}
             aria-expanded={open}
             tabIndex={disabled ? -1 : 0}
             onKeyDown={(e) => {
@@ -461,6 +467,8 @@ export function SingleSelect({
     >
       <div className="relative" onKeyDownCapture={handleKeyDown}>
         <SelectPrimitive.Trigger
+          id={id}
+          aria-label={ariaLabel}
           suppressHydrationWarning
           className={cn(
             "group",

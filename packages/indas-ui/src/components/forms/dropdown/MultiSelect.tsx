@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { Check } from '@/lib/icons'
+import { Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { DropdownOption } from './types'
 import { getDropdownClassName, dropdownSharedStyles, DropdownSearch, OptionImage } from './Dropdown'

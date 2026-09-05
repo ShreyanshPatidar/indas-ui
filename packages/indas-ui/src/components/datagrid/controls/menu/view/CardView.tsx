@@ -3,7 +3,7 @@
 import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ColumnDef } from '@tanstack/react-table'
-import { LayoutGrid } from '@/lib/icons'
+import { LayoutGrid } from 'lucide-react'
 
 import { Badge } from '@/components/ui'
 import { SelectionCheckbox } from '@/components/datagrid/cells/SelectionCell'

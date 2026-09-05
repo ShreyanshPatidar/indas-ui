@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useCallback } from 'react'
-import { ChevronUp, ChevronDown } from '@/lib/icons'
+import { ChevronUp, ChevronDown } from 'lucide-react'
 
 export interface SearchNavigationState {
   currentIndex: number

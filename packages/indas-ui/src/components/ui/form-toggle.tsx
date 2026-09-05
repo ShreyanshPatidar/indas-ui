@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { ChevronDown, ChevronUp, Plus, X } from '@/lib/icons'
+import { ChevronDown, ChevronUp, Plus, X } from 'lucide-react'
 import { Button } from '@/components/ui'
 import { cn } from '@/lib/utils'
 

@@ -10,7 +10,7 @@
  */
 
 import * as React from 'react'
-import { BellRing, ShieldAlert } from '@/lib/icons'
+import { BellRing, ShieldAlert } from 'lucide-react'
 import { useSessionAdapter } from '@/contexts/SessionAdapterContext'
 import { Button } from '@/components/ui/buttons/button'
 import { useLanguage } from '@/contexts/LanguageContext'

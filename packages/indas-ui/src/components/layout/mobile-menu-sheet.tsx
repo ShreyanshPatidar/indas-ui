@@ -8,7 +8,7 @@ import {
   Database, Cog, Layers, Boxes, BookOpen, PieChart, Activity, ClipboardCheck,
   TrendingUp, DollarSign, Factory, Users, Settings, Tag, Shield, Target,
   ShoppingCart, BarChart3, UserCog, Building, Gauge
-} from '@/lib/icons'
+} from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useNavigation } from '@/contexts/NavigationContext'
 import { useModuleAuth } from '@/contexts/ModuleAuthContext'

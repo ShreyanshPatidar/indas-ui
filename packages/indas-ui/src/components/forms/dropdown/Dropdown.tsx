@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import * as Popover from '@radix-ui/react-popover'
-import { Search, X, ChevronDown } from '@/lib/icons'
+import { Search, X, ChevronDown } from 'lucide-react'
 import { Input } from '@/components/ui'
 import { cn } from '@/lib/utils'
 import { DropdownProps, DropdownOption } from './types'
@@ -378,6 +378,8 @@ interface DropdownTriggerProps {
   autoWidth: boolean
   triggerClassName?: string
   className?: string
+  id?: string
+  'aria-label'?: string
   showAsTags: boolean
   showSelectedCount: boolean
   open: boolean
@@ -400,6 +402,8 @@ export function DropdownTrigger({
   autoWidth,
   triggerClassName,
   className,
+  id,
+  'aria-label': ariaLabel,
   showAsTags,
   showSelectedCount,
   open,
@@ -414,7 +418,11 @@ export function DropdownTrigger({
   return (
     <div className="relative">
       <div
+        id={id}
         role="button"
+        aria-label={ariaLabel}
+        aria-expanded={open}
+        aria-haspopup="listbox"
         tabIndex={disabled ? -1 : 0}
         className={cn(
           "group",
@@ -553,6 +561,8 @@ export function Dropdown({
   required = false,
   emptyMessage = "No options found",
   triggerClassName,
+  id,
+  'aria-label': ariaLabel,
   autoWidth = false,
   customFooter,
   multiSelect = false,
@@ -747,6 +757,8 @@ export function Dropdown({
                   autoWidth={autoWidth}
                   triggerClassName={triggerClassName}
                   className={className}
+                  id={id}
+                  aria-label={ariaLabel}
                   showAsTags={showAsTags}
                   showSelectedCount={showSelectedCount}
                   open={open}
@@ -815,6 +827,8 @@ export function Dropdown({
           autoWidth={autoWidth}
           triggerClassName={triggerClassName}
           className={className}
+          id={id}
+          aria-label={ariaLabel}
           searchable={searchable}
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}

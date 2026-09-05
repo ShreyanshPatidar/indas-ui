@@ -9,7 +9,7 @@
 import { useEffect, useRef, useState, useCallback, KeyboardEvent, ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 import type { Message as MessageType } from '@/lib/api/ai/types'
-import { User, Copy, Check, Download, Share2, Pencil, Bot, RotateCcw, ThumbsUp, ThumbsDown } from '@/lib/icons'
+import { User, Copy, Check, Download, Share2, Pencil, Bot, RotateCcw, ThumbsUp, ThumbsDown } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 

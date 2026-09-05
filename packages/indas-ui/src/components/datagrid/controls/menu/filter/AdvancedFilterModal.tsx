@@ -6,9 +6,9 @@ import {
   X, Plus, Trash2, ListFilter, Eye, EyeOff,
   ArrowUpDown, GripVertical, Layers,
   Check, XCircle,
-} from '@/lib/icons'
+} from 'lucide-react'
 import { ColumnDef, Table, SortingState, Column } from '@tanstack/react-table'
-import type { LucideIcon } from '@/lib/icons'
+import type { LucideIcon } from 'lucide-react'
 import {
   DndContext,
   closestCenter,

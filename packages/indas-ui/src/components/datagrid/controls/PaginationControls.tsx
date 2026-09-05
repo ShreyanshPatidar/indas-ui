@@ -7,7 +7,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronsRight,
-} from '@/lib/icons'
+} from 'lucide-react'
 import { calculatePaginationInfo, generatePageNumbers, formatNumber } from '../utils/grid-helpers'
 import { Dropdown } from '@/components'
 

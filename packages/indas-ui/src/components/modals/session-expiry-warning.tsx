@@ -2,7 +2,7 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui"
 import { Button } from "@/components/ui"
-import { AlertTriangle, Clock, LogOut, RefreshCw } from "@/lib/icons"
+import { AlertTriangle, Clock, LogOut, RefreshCw } from "lucide-react"
 import { useOptionalLanguage } from "@/contexts/LanguageContext"
 
 interface SessionExpiryWarningProps {

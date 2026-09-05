@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react'
 import { motion } from 'framer-motion'
-import { LucideIcon } from '@/lib/icons'
+import { LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export type KpiAccent = 'primary' | 'success' | 'warning' | 'error' | 'info' | 'tertiary' | 'secondary' | 'neutral'

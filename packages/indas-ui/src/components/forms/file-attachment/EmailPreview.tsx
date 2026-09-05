@@ -10,7 +10,7 @@ import {
   X,
   Mail,
   Paperclip
-} from '@/lib/icons'
+} from 'lucide-react'
 import { Button } from '@/components/ui'
 import type { AttachedFile } from './FileAttachment'
 

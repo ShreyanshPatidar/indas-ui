@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { Send, Paperclip, X, FileIcon, Image as ImageIcon, Reply, Mic, MicOff } from '@/lib/icons'
+import { Send, Paperclip, X, FileIcon, Image as ImageIcon, Reply, Mic, MicOff } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useLanguage } from '@/contexts/LanguageContext'
 import type { ChatMessage, ChatAttachment } from '@/lib/api/activity/messaging/messaging'

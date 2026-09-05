@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { ChevronLeft, ChevronRight } from '@/lib/icons'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui'
 import { MONTHS, WEEKDAYS, getDaysInMonth, getFirstDayOfMonth } from './shared-utils'

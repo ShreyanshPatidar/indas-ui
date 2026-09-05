@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { ChevronDown, Search, Bell, Sidebar, X, Mail, PanelLeftOpen, PanelLeftClose, CheckCheck, ExternalLink, Trash2, Calendar, Clock, Settings, Building2, User, Factory, MessageSquare, RefreshCw } from '@/lib/icons'
+import { ChevronDown, Search, Bell, Sidebar, X, Mail, PanelLeftOpen, PanelLeftClose, CheckCheck, ExternalLink, Trash2, Calendar, Clock, Settings, Building2, User, Factory, MessageSquare, RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui'
 import { Input } from '@/components/ui'

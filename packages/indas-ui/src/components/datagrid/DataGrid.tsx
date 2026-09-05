@@ -82,7 +82,7 @@ import {
   XCircle,
   Layers,
   RefreshCw,
-} from '@/lib/icons'
+} from 'lucide-react'
 
 import { Button } from '@/components/ui'
 import { Input } from '@/components/ui'
@@ -2864,7 +2864,7 @@ export function DataGrid<TData>({
               transition={{ duration: 0.2 }}
             >
               {/* Data Visualization (lazy: ECharts downloads on first use) */}
-              <React.Suspense fallback={<div className="p-6 text-sm text-[rgb(var(--fg-muted))]">Loading chart…</div>}>
+              <React.Suspense fallback={<div className="flex justify-center p-6"><div className="h-6 w-6 animate-spin rounded-full border-2 border-[rgb(var(--color-primary))] border-t-transparent" /></div>}>
                 <DataVisualization
                   data={processedData}
                   columns={columns}

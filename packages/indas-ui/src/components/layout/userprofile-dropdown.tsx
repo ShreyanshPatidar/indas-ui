@@ -2,7 +2,7 @@
 
 import { useSessionAdapter } from "@/contexts/SessionAdapterContext"
 import { useState, useEffect } from "react"
-import { LogOut, Settings, Shield, CircleUser } from "@/lib/icons"
+import { LogOut, Settings, Shield, CircleUser } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { LogoutModal, DeviceInfo } from "@/components/modals/logout-modal"
 import { detectDevice, getDeviceId, getDeviceName } from "@/lib/utils/device-detection"

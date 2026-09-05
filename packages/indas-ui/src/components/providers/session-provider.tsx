@@ -1,7 +1,7 @@
 "use client"
 
 import { SessionProvider, useSession, signOut } from "next-auth/react"
-import { useEffect, useState, useRef } from "react"
+import { useCallback, useEffect, useState, useRef } from "react"
 import type { Session } from "next-auth"
 import { SessionExpiryWarning } from "@/components/modals/session-expiry-warning"
 import { SessionAdapterProvider, type SessionUser } from "@/contexts/SessionAdapterContext"
@@ -118,14 +118,18 @@ function SessionExpiryMonitor({ children }: { children: React.ReactNode }) {
     await handleAutoLogout()
   }
 
+  // Stable identity: a fresh function per render would rebuild the adapter value and
+  // re-fire every consumer keyed on the session (ModuleAuth permission refetch).
+  const adapterSignOut = useCallback(async (options?: { callbackUrl?: string; redirect?: boolean }) => {
+    await signOut({ callbackUrl: options?.callbackUrl ?? "/login", redirect: options?.redirect ?? true })
+  }, [])
+
   return (
     // Feed the auth-agnostic adapter so layout components never import next-auth themselves.
     <SessionAdapterProvider
       user={(session?.user as unknown as SessionUser | undefined) ?? null}
       status={status}
-      signOut={async (options) => {
-        await signOut({ callbackUrl: options?.callbackUrl ?? "/login", redirect: options?.redirect ?? true })
-      }}
+      signOut={adapterSignOut}
     >
       {children}
       <SessionExpiryWarning

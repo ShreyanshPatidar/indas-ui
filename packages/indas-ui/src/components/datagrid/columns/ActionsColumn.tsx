@@ -66,7 +66,7 @@ import {
   CheckCircle,
   Settings,
   Target,
-} from '@/lib/icons'
+} from 'lucide-react'
 
 import { Button } from '@/components/ui'
 import {

@@ -11,7 +11,7 @@
  */
 
 import React from 'react'
-import { Clock, Save, AlertCircle } from '@/lib/icons'
+import { Clock, Save, AlertCircle } from 'lucide-react'
 
 interface AutoSaveIndicatorProps {
   /** Whether auto-save is enabled */

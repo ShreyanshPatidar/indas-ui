@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useRef, useEffect } from 'react'
-import { Search } from '@/lib/icons'
+import { Search } from 'lucide-react'
 
 interface InlineSearchCellProps {
   value: any
