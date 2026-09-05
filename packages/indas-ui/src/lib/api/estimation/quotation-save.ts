@@ -60,7 +60,7 @@ export interface SaveQuotationPayload {
   TblMaterialCostParams: any[]
   TblContentSpecData: any[]
   TblAllocatedMaterialLayers: any[]
-  TblDeliverySpecData: { State: string; Location: string; FreightRate: string }[]
+  TblDeliverySpecData: { State: string; Location: string; FreightRate: string; Quantity?: string }[]
 }
 
 /**

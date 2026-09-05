@@ -16,6 +16,7 @@ import type {
   UpdateRoomRequest
 } from '@/lib/api/activity/messaging/messaging'
 import { parseReactions } from '@/lib/api/activity/messaging/messaging'
+import { getBasicAuthHeader } from '@/lib/api/core/config'
 
 // ─── State ──────────────────────────────────────────────────────────────────
 
@@ -30,6 +31,7 @@ interface MessagingState {
   // Real-time
   onlineUsers: Set<string> // userId strings
   typingUsers: Record<number, string[]> // roomId → typing userIds
+  readReceipts: Record<number, Record<string, number>> // roomId → userId → lastReadMessageId
   unreadCounts: Record<number, number> // roomId → count
   totalUnreadCount: number
 
@@ -73,6 +75,7 @@ type MessagingAction =
   | { type: 'USER_ONLINE'; payload: string }
   | { type: 'USER_OFFLINE'; payload: string }
   | { type: 'SET_TYPING'; payload: { roomId: number; userId: string; isTyping: boolean } }
+  | { type: 'SET_READ_RECEIPT'; payload: { roomId: number; userId: string; lastReadMessageId: number } }
   | { type: 'SET_UNREAD_COUNTS'; payload: Record<number, number> }
   | { type: 'CLEAR_UNREAD'; payload: number } // roomId
   | { type: 'INCREMENT_UNREAD'; payload: number } // roomId
@@ -96,6 +99,7 @@ const initialState: MessagingState = {
   contacts: [],
   onlineUsers: new Set(),
   typingUsers: {},
+  readReceipts: {},
   unreadCounts: {},
   totalUnreadCount: 0,
   loadingConversations: false,
@@ -242,6 +246,17 @@ function messagingReducer(state: MessagingState, action: MessagingAction): Messa
       return { ...state, typingUsers: { ...state.typingUsers, [roomId]: next } }
     }
 
+    case 'SET_READ_RECEIPT': {
+      const { roomId, userId, lastReadMessageId } = action.payload
+      const room = state.readReceipts[roomId] || {}
+      // Only advance — never move a read marker backwards.
+      if ((room[userId] || 0) >= lastReadMessageId) return state
+      return {
+        ...state,
+        readReceipts: { ...state.readReceipts, [roomId]: { ...room, [userId]: lastReadMessageId } }
+      }
+    }
+
     case 'SET_UNREAD_COUNTS': {
       const total = Object.values(action.payload).reduce((sum, c) => sum + c, 0)
       return { ...state, unreadCounts: action.payload, totalUnreadCount: total }
@@ -336,6 +351,8 @@ interface MessagingContextValue {
     // Utility
     isUserOnline: (userId: number | string) => boolean
     getTypingUsers: (roomId: number) => string[]
+    getReadReceipts: (roomId: number) => Record<string, number>
+    fetchOnlineUsers: () => Promise<void>
     clearError: () => void
   }
 }
@@ -450,9 +467,19 @@ export function MessagingProvider({ children }: { children: React.ReactNode }) {
       }
     }, []),
 
-    onReadReceipt: useCallback((_data) => {
-      // Could update read indicators in the future
-    }, [])
+    onReadReceipt: useCallback((data) => {
+      if (!data || data.roomId == null || data.userId == null) return
+      // Ignore our own receipts — we already cleared unread locally on markAsRead.
+      if (String(data.userId) === currentUserId) return
+      dispatch({
+        type: 'SET_READ_RECEIPT',
+        payload: {
+          roomId: data.roomId,
+          userId: String(data.userId),
+          lastReadMessageId: Number(data.lastReadMessageId) || 0
+        }
+      })
+    }, [currentUserId])
   }
 
   // ─── Inline SignalR connection ────────────────────────────────────────────
@@ -485,12 +512,28 @@ export function MessagingProvider({ children }: { children: React.ReactNode }) {
   // Extract stable session values to avoid re-evaluating casted expressions in deps
   const sessionCompanyId = (session?.user as any)?.CompanyID || (session?.user as any)?.companyID || ''
   const sessionUserId = (session?.user as any)?.UserID || (session?.user as any)?.userID || ''
+  const sessionCompanyUser = (session?.user as any)?.companyUsername || ''
+  const sessionCompanyPass = (session?.user as any)?.companyPassword || ''
+
+  // Called after a dropped connection is re-established: rejoin the active room's group
+  // (group membership is lost server-side on disconnect) and refetch to recover any
+  // messages/read-state missed while offline. Held in a ref so the connection effect
+  // doesn't depend on actions defined further down.
+  const onReconnectedRef = useRef<() => void>(() => {})
 
   useEffect(() => {
     const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || ''
     if (!sessionCompanyId || !sessionUserId || !API_BASE_URL) return
 
-    const hubUrl = `${API_BASE_URL}/hubs/messaging?companyId=${sessionCompanyId}&userId=${sessionUserId}`
+    // WebSockets can't send custom headers, so the company Basic-Auth credentials travel
+    // as a base64 `auth` query param. Prefer the app-wide auth token (the exact value sent
+    // on REST calls); fall back to session creds when the global API config isn't set yet.
+    const basicHeader = getBasicAuthHeader() // "Basic <base64>" or null
+    const authToken = basicHeader
+      ? basicHeader.replace(/^Basic\s+/i, '')
+      : (sessionCompanyUser && sessionCompanyPass ? btoa(`${sessionCompanyUser}:${sessionCompanyPass}`) : '')
+    if (!authToken) return // no credentials available yet — effect re-runs when they arrive
+    const hubUrl = `${API_BASE_URL}/hubs/messaging?companyId=${sessionCompanyId}&userId=${sessionUserId}&auth=${encodeURIComponent(authToken)}`
 
     const connection = new HubConnectionBuilder()
       .withUrl(hubUrl)
@@ -507,6 +550,8 @@ export function MessagingProvider({ children }: { children: React.ReactNode }) {
     connection.on('PresenceChanged', (data) => cb.current.onPresenceChanged?.(data))
     connection.on('ReadReceipt', (data) => cb.current.onReadReceipt?.(data))
 
+    connection.onreconnected(() => onReconnectedRef.current())
+
     connection.start().catch(() => {})
     signalRConnectionRef.current = connection
 
@@ -515,7 +560,7 @@ export function MessagingProvider({ children }: { children: React.ReactNode }) {
         connection.stop()
       }
     }
-  }, [sessionCompanyId, sessionUserId])
+  }, [sessionCompanyId, sessionUserId, sessionCompanyUser, sessionCompanyPass])
 
   // ─── API Actions ────────────────────────────────────────────────────────
 
@@ -782,9 +827,35 @@ export function MessagingProvider({ children }: { children: React.ReactNode }) {
     return stateRef.current.typingUsers[roomId] || []
   }, [])
 
+  const getReadReceipts = useCallback((roomId: number) => {
+    return stateRef.current.readReceipts[roomId] || {}
+  }, [])
+
+  const fetchOnlineUsers = useCallback(async () => {
+    if (!session) return
+    const res = await MessagingAPI.getOnlineUsers(session)
+    if (res.success && res.data) {
+      dispatch({ type: 'SET_ONLINE_USERS', payload: new Set(res.data.map(String)) })
+    }
+  }, [session])
+
   const clearError = useCallback(() => {
     dispatch({ type: 'SET_ERROR', payload: null })
   }, [])
+
+  // Keep the reconnect handler current. On reconnect, group membership is lost server-side,
+  // so rejoin the active room and refetch to recover anything missed while offline.
+  useEffect(() => {
+    onReconnectedRef.current = () => {
+      const activeRoomId = stateRef.current.activeRoomId
+      if (activeRoomId != null) {
+        hubJoin(activeRoomId)
+        fetchMessages(activeRoomId, 1)
+      }
+      fetchUnreadCounts()
+      fetchOnlineUsers()
+    }
+  }, [hubJoin, fetchMessages, fetchUnreadCounts, fetchOnlineUsers])
 
   // ─── Initial data fetch ─────────────────────────────────────────────────
 
@@ -793,6 +864,7 @@ export function MessagingProvider({ children }: { children: React.ReactNode }) {
     if (!session || initializedRef.current) return
     initializedRef.current = true
     fetchUnreadCounts()
+    fetchOnlineUsers()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session])
 
@@ -825,13 +897,16 @@ export function MessagingProvider({ children }: { children: React.ReactNode }) {
     sendTyping: hubSendTyping,
     isUserOnline,
     getTypingUsers,
+    getReadReceipts,
+    fetchOnlineUsers,
     clearError
   }), [
     fetchConversations, createRoom, getOrCreateDM, updateRoom, setActiveRoom,
     fetchMessages, fetchMoreMessages, sendMessage, editMessage, deleteMessage,
     fetchThreadReplies, replyToMessage, openThread, closeThread, toggleReaction,
     markAsRead, fetchUnreadCounts, searchMessages, clearSearch, fetchContacts,
-    uploadFile, hubJoin, hubLeave, hubSendTyping, isUserOnline, getTypingUsers, clearError
+    uploadFile, hubJoin, hubLeave, hubSendTyping, isUserOnline, getTypingUsers,
+    getReadReceipts, fetchOnlineUsers, clearError
   ])
 
   const value = useMemo<MessagingContextValue>(() => ({

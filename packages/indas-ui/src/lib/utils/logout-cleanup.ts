@@ -136,23 +136,28 @@ export function clearLocalStorage(): void {
         'app-language',           // Language preference (LanguageContext)
         'selectedCurrency',       // Currency preference (CurrencyContext)
         'sidebarPreferences',     // Sidebar state (SidebarPreferencesContext)
-        'searchPreferences'       // Search preferences (SearchPreferencesContext)
+        'searchPreferences',      // Search preferences (SearchPreferencesContext)
+        'bottom-nav-quick-tabs-v4' // Mobile bottom-nav quick tabs (bottom-nav.tsx)
     ]
+    // Per-user keys (dashboard Quick Actions, home/quick-actions.tsx) — matched by prefix.
+    // 'datagrid-view:' keeps DataGrid view prefs (column order/visibility/width/sort)
+    // across logins — they're device-level, like theme/language.
+    const preservePrefixes = ['estimo_quick_actions_v3_', 'estimo_quick_starred_v3_', 'datagrid-view:']
 
     // Get all current values to preserve
     const preservedValues: Record<string, string | null> = {}
-    preserveKeys.forEach(key => {
-        preservedValues[key] = localStorage.getItem(key)
+    Object.keys(localStorage).forEach(key => {
+        if (preserveKeys.includes(key) || preservePrefixes.some(p => key.startsWith(p))) {
+            preservedValues[key] = localStorage.getItem(key)
+        }
     })
 
     // Clear ALL localStorage
     localStorage.clear()
 
     // Restore preserved values
-    preserveKeys.forEach(key => {
-        if (preservedValues[key] !== null) {
-            localStorage.setItem(key, preservedValues[key]!)
-        }
+    Object.entries(preservedValues).forEach(([key, value]) => {
+        if (value !== null) localStorage.setItem(key, value)
     })
 
 }

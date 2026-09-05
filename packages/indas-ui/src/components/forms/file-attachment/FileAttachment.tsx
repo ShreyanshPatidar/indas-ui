@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import ReactCrop, { type Crop, type PixelCrop, centerCrop, makeAspectCrop } from 'react-image-crop'
 import 'react-image-crop/dist/ReactCrop.css'
@@ -30,7 +31,6 @@ import { Footer } from '@/components/layout'
 import { Modal, ModalContent, ModalHeader, ModalTitle } from '@/components/modals/Modal'
 import { EmailPreview } from './EmailPreview'
 import { useEmail } from '@/contexts/EmailContext'
-import * as XLSX from 'xlsx'
 
 // Helper function to get cropped image as blob
 async function getCroppedImg(
@@ -150,6 +150,9 @@ export interface FileAttachmentProps {
   previewShape?: 'circular' | 'rectangular' // Shape of inline preview
   previewSize?: 'sm' | 'md' | 'lg' // Size of inline preview
   hideInstructions?: boolean // Hide the "Drag & drop" instruction text
+  hideDropzone?: boolean // Hide the upload dropzone entirely (view-only: just the file list)
+  onFileClick?: (file: AttachedFile) => void // Clicking a file tile (instead of opening preview) — for host-side selection
+  selectedFileId?: string // Highlight this file id as selected (used with onFileClick)
   enableEmailImport?: boolean // Enable "Import from Email" button
 }
 
@@ -170,6 +173,21 @@ const formatFileSize = (bytes: number): string => {
   const sizes = ['Bytes', 'KB', 'MB', 'GB']
   const i = Math.floor(Math.log(bytes) / Math.log(k))
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+}
+
+// Allowed filename characters: letters, digits, space, and a small set of safe
+// punctuation. Rejects emojis and other characters that break the S3 object key.
+const VALID_FILENAME = /^[A-Za-z0-9 ._\-()[\]&+#]+$/
+// Returns an error string if the filename is invalid, else null.
+const validateFileName = (name: string): string | null => {
+  const base = (name || '').trim()
+  if (!base) return 'File name is empty'
+  if (!VALID_FILENAME.test(base)) {
+    const bad = Array.from(base).filter(c => !VALID_FILENAME.test(c))
+    const shown = Array.from(new Set(bad)).slice(0, 5).join(' ')
+    return `File name "${base}" has invalid characters (${shown}). Use only letters, numbers, spaces and . _ - ( ) [ ] & + #`
+  }
+  return null
 }
 
 // Check if file is an email type (.eml, .msg, or imported email)
@@ -316,10 +334,24 @@ function ImagePreviewContent({ file }: { file: AttachedFile }) {
 }
 
 // Excel Preview Component
+// A merge range in row/col terms (inclusive, 0-based).
+interface MergeRange { r1: number; c1: number; r2: number; c2: number }
+// One rendered cell: text + resolved colors from the workbook.
+interface PreviewCell { text: string; bg?: string; fg?: string; bold?: boolean }
+interface PreviewSheet { name: string; rows: PreviewCell[][]; merges: MergeRange[] }
+
+// ExcelJS ARGB ("FF1E3A5F") → CSS "#1E3A5F". Skips fully transparent / absent.
+function argbToCss(argb?: string): string | undefined {
+  if (!argb || argb.length < 6) return undefined
+  const hex = argb.length === 8 ? argb.slice(2) : argb
+  if (argb.length === 8 && argb.slice(0, 2) === '00') return undefined // transparent
+  return `#${hex}`
+}
+
 function ExcelPreviewContent({ file }: { file: AttachedFile }) {
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState(false)
-  const [sheetData, setSheetData] = React.useState<{ name: string; data: any[][] }[]>([])
+  const [sheetData, setSheetData] = React.useState<PreviewSheet[]>([])
   const [activeSheet, setActiveSheet] = React.useState(0)
 
   React.useEffect(() => {
@@ -341,14 +373,46 @@ function ExcelPreviewContent({ file }: { file: AttachedFile }) {
           throw new Error('No file data available')
         }
 
-        // Parse Excel file
-        const workbook = XLSX.read(arrayBuffer, { type: 'array' })
+        // Parse with ExcelJS (not SheetJS) — the community xlsx build strips cell
+        // fills/fonts, but ExcelJS preserves them, so the preview can show the
+        // real colors + merges of the sheet.
+        const { Workbook } = await import('exceljs')
+        const workbook = new Workbook()
+        await workbook.xlsx.load(arrayBuffer)
 
-        // Convert sheets to arrays
-        const sheets = workbook.SheetNames.map(name => ({
-          name,
-          data: XLSX.utils.sheet_to_json(workbook.Sheets[name], { header: 1 }) as any[][]
-        }))
+        const sheets: PreviewSheet[] = workbook.worksheets.map(ws => {
+          const merges: MergeRange[] = Object.values((ws as any)._merges ?? {}).map((m: any) => ({
+            r1: m.top - 1, c1: m.left - 1, r2: m.bottom - 1, c2: m.right - 1,
+          }))
+          const colCount = Math.max(ws.columnCount, ...merges.map(m => m.c2 + 1), 0)
+          const rows: PreviewCell[][] = []
+          for (let r = 1; r <= ws.rowCount; r++) {
+            const row = ws.getRow(r)
+            const cells: PreviewCell[] = []
+            for (let c = 1; c <= colCount; c++) {
+              const cell = row.getCell(c)
+              const v = cell.value
+              let text = ''
+              if (v != null) {
+                if (typeof v === 'object' && 'richText' in (v as any)) {
+                  text = (v as any).richText.map((t: any) => t.text).join('')
+                } else if (typeof v === 'object' && 'text' in (v as any)) {
+                  text = String((v as any).text)
+                } else if (typeof v === 'object' && 'result' in (v as any)) {
+                  text = String((v as any).result ?? '')
+                } else {
+                  text = String(v)
+                }
+              }
+              const fill: any = cell.fill
+              const bg = fill?.type === 'pattern' ? argbToCss(fill.fgColor?.argb) : undefined
+              const fg = argbToCss((cell.font?.color as any)?.argb)
+              cells.push({ text, bg, fg, bold: cell.font?.bold })
+            }
+            rows.push(cells)
+          }
+          return { name: ws.name, rows, merges }
+        })
 
         if (!isCancelled) {
           setSheetData(sheets)
@@ -415,31 +479,65 @@ function ExcelPreviewContent({ file }: { file: AttachedFile }) {
 
       {/* Table content */}
       <div className="flex-1 overflow-auto p-4">
-        {currentSheet.data.length > 0 ? (
-          <table className="w-full border-collapse text-sm">
-            <tbody>
-              {currentSheet.data.slice(0, 100).map((row, rowIndex) => (
-                <tr key={rowIndex} className={rowIndex === 0 ? "bg-[rgb(var(--bg-muted))] font-medium" : ""}>
-                  {(row as any[]).map((cell, cellIndex) => (
-                    <td
-                      key={cellIndex}
-                      className="border border-[rgb(var(--bd-default))] px-2 py-1.5 text-[rgb(var(--fg-default))]"
-                    >
-                      {cell !== null && cell !== undefined ? String(cell) : ''}
-                    </td>
+        {currentSheet.rows.length > 0 ? (
+          (() => {
+            // Merge lookups: origin cell "r:c" → span; covered cell "r:c" → skip.
+            // Row spans are clamped to the 100-row render window so a merge that
+            // extends past it doesn't reference unrendered rows.
+            const ROW_LIMIT = 100
+            const spanByOrigin = new Map<string, { rowSpan: number; colSpan: number }>()
+            const covered = new Set<string>()
+            for (const m of currentSheet.merges) {
+              if (m.r1 >= ROW_LIMIT) continue
+              const r2 = Math.min(m.r2, ROW_LIMIT - 1)
+              spanByOrigin.set(`${m.r1}:${m.c1}`, { rowSpan: r2 - m.r1 + 1, colSpan: m.c2 - m.c1 + 1 })
+              for (let r = m.r1; r <= r2; r++) {
+                for (let c = m.c1; c <= m.c2; c++) {
+                  if (r !== m.r1 || c !== m.c1) covered.add(`${r}:${c}`)
+                }
+              }
+            }
+            return (
+              <table className="border-collapse text-sm whitespace-nowrap">
+                <tbody>
+                  {currentSheet.rows.slice(0, 100).map((row, rowIndex) => (
+                    <tr key={rowIndex}>
+                      {row.map((cell, cellIndex) => {
+                        if (covered.has(`${rowIndex}:${cellIndex}`)) return null
+                        const span = spanByOrigin.get(`${rowIndex}:${cellIndex}`)
+                        return (
+                          <td
+                            key={cellIndex}
+                            rowSpan={span?.rowSpan}
+                            colSpan={span?.colSpan}
+                            className={cn(
+                              "border border-[rgb(var(--bd-default))] px-2 py-1.5 align-top",
+                              span && "text-center",
+                              cell.bold && "font-semibold",
+                            )}
+                            style={{
+                              backgroundColor: cell.bg,
+                              color: cell.fg,
+                            }}
+                          >
+                            {cell.text}
+                          </td>
+                        )
+                      })}
+                    </tr>
                   ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                </tbody>
+              </table>
+            )
+          })()
         ) : (
           <div className="text-center text-[rgb(var(--fg-muted))] py-8">
             This sheet is empty
           </div>
         )}
-        {currentSheet.data.length > 100 && (
+        {currentSheet.rows.length > 100 && (
           <div className="text-center text-[rgb(var(--fg-muted))] text-xs mt-4">
-            Showing first 100 rows of {currentSheet.data.length} total
+            Showing first 100 rows of {currentSheet.rows.length} total
           </div>
         )}
       </div>
@@ -460,10 +558,31 @@ export function FileAttachment({
   previewShape = 'rectangular',
   previewSize = 'md',
   hideInstructions = false,
+  hideDropzone = false,
+  onFileClick,
+  selectedFileId,
   enableEmailImport = false
 }: FileAttachmentProps) {
   const [isDragging, setIsDragging] = React.useState(false)
   const [previewFile, setPreviewFile] = React.useState<AttachedFile | null>(null)
+  // Blob URL created for the currently-previewed server file. Revoked when the
+  // preview closes or switches to another file so we don't leak it (a PDF/image
+  // blob can be several MB, and every preview open created a fresh one).
+  const previewBlobUrlRef = React.useRef<string | null>(null)
+  React.useEffect(() => {
+    const url = previewFile?.url
+    const isBlob = !!url && url.startsWith('blob:')
+    if (isBlob && url !== previewBlobUrlRef.current) {
+      if (previewBlobUrlRef.current) URL.revokeObjectURL(previewBlobUrlRef.current)
+      previewBlobUrlRef.current = url!
+    } else if (!previewFile && previewBlobUrlRef.current) {
+      URL.revokeObjectURL(previewBlobUrlRef.current)
+      previewBlobUrlRef.current = null
+    }
+  }, [previewFile])
+  React.useEffect(() => () => {
+    if (previewBlobUrlRef.current) URL.revokeObjectURL(previewBlobUrlRef.current)
+  }, [])
   const [imageZoom, setImageZoom] = React.useState(1)
   const [imageRotation, setImageRotation] = React.useState(0)
   const [showCameraModal, setShowCameraModal] = React.useState(false)
@@ -521,6 +640,9 @@ export function FileAttachment({
           continue
         }
 
+        const nameError = validateFileName(file.name)
+        if (nameError) { alert(nameError); continue }
+
         newFiles.push({
           id: Math.random().toString(36).substr(2, 9),
           name: file.name,
@@ -553,6 +675,9 @@ export function FileAttachment({
       alert(`File type "${file.type}" is not accepted`)
       return
     }
+
+    const nameError = validateFileName(file.name)
+    if (nameError) { alert(nameError); return }
 
     // For single image, show cropper
     if (file.type.startsWith('image/')) {
@@ -1113,6 +1238,7 @@ export function FileAttachment({
               {label}
             </label>
           )}
+          {!hideDropzone && (
           <div
             className={cn(
               'group border-2 border-dashed rounded-lg transition-all duration-200 px-3 py-2 h-10',
@@ -1204,6 +1330,7 @@ export function FileAttachment({
               )}
             </div>
           </div>
+          )}
         </div>
       )}
 
@@ -1232,8 +1359,14 @@ export function FileAttachment({
                     className="relative group"
                   >
                     <div
-                      className="flex flex-col items-center justify-center p-1.5 bg-[rgb(var(--bg-surface))] border border-[rgb(var(--bd-default))] rounded hover:shadow-sm transition-all duration-200 cursor-pointer w-14 h-14 relative"
-                      onClick={() => handlePreviewFile(file)}
+                      title={file.name}
+                      className={cn(
+                        'flex flex-col items-center justify-center p-1.5 bg-[rgb(var(--bg-surface))] border rounded hover:shadow-sm transition-all duration-200 cursor-pointer w-14 h-14 relative',
+                        onFileClick && selectedFileId === file.id
+                          ? 'border-[rgb(var(--color-primary))] ring-2 ring-[rgb(var(--color-primary))]/40'
+                          : 'border-[rgb(var(--bd-default))]'
+                      )}
+                      onClick={() => onFileClick ? onFileClick(file) : handlePreviewFile(file)}
                     >
                       <div className={cn('p-1 rounded mb-0.5', colorClasses)}>
                         <FileIcon className="h-3.5 w-3.5" />
@@ -1278,11 +1411,13 @@ export function FileAttachment({
                     >
                       <X className="h-2.5 w-2.5" />
                     </button>
-
-                    {/* Tooltip with filename on hover */}
-                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1 px-2 py-1 bg-gray-900 text-white text-[10px] rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                    {/* Filename on hover — left-anchored, single line, truncated
+                        with ellipsis so it never wraps ugly or clips at the
+                        modal edge. The native title (on the tile) gives the full
+                        name on hover as the untruncated fallback. */}
+                    <div className="absolute bottom-full left-0 mb-1 px-2 py-1 bg-gray-900 text-white text-[10px] rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none max-w-[12rem] truncate z-[120]">
                       {file.name}
-                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+                      <div className="absolute top-full left-3 border-4 border-transparent border-t-gray-900"></div>
                     </div>
                   </motion.div>
                 )
@@ -1293,7 +1428,10 @@ export function FileAttachment({
       </AnimatePresence>
 
 
-      {/* Preview Modal - Full Screen with improved viewing */}
+      {/* Preview Modal - Full Screen with improved viewing.
+          Portaled to <body> so it escapes any parent modal's stacking/clip
+          context and truly fills the screen. z-[200] sits above app dialogs. */}
+      {typeof document !== 'undefined' && createPortal(
       <AnimatePresence>
         {previewFile && (
           <motion.div
@@ -1301,7 +1439,7 @@ export function FileAttachment({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="fixed inset-0 bg-black/95 z-50 flex flex-col"
+            className="fixed inset-0 bg-black/95 z-[200] flex flex-col"
             onClick={() => setPreviewFile(null)}
           >
             <motion.div
@@ -1403,7 +1541,9 @@ export function FileAttachment({
             </motion.div>
           </motion.div>
         )}
-      </AnimatePresence>
+      </AnimatePresence>,
+      document.body,
+      )}
 
       {/* Crop Modal - Using standard Modal component with react-image-crop */}
       <Modal

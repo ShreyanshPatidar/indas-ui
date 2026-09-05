@@ -67,6 +67,8 @@ export interface TabItem {
   icon?: LucideIcon
   /** Dropdown options for this tab (for time filter style) */
   dropdownOptions?: Array<{ value: string; label: string }>
+  /** Quick-select shortcuts pinned as a footer below the dropdown list (e.g. This / Last) */
+  quickOptions?: Array<{ value: string; label: string }>
 }
 
 export interface TabsProps {
@@ -96,11 +98,6 @@ export function Tabs({
   dropdownValues,
   onDropdownChange
 }: TabsProps) {
-  const handleDropdownChange = React.useCallback((tabId: string) => (selected: string | number | string[]) => {
-    const newValues = Array.isArray(selected) ? selected : [selected.toString()]
-    onDropdownChange?.(tabId, newValues)
-  }, [onDropdownChange])
-
   const containerClasses = cn(
     'inline-flex items-center max-w-full overflow-x-auto scrollbar-hide [-webkit-overflow-scrolling:touch]',
     variant === 'pill' && 'bg-[rgb(var(--bg-subtle))] rounded-full border border-[rgb(var(--bd-default))] p-px gap-0.5',
@@ -131,12 +128,48 @@ export function Tabs({
         const hasDropdown = tab.dropdownOptions && tab.dropdownOptions.length > 0
 
         if (hasDropdown) {
+          const selected = dropdownValues?.[tab.id] || []
+          const quickFooter = tab.quickOptions && tab.quickOptions.length > 0 ? (
+            <div className="border-t border-[rgb(var(--bd-default))] bg-[rgb(var(--bg-subtle))] px-2 py-2 flex flex-wrap gap-1.5">
+              {tab.quickOptions.map((q) => {
+                const active = selected.includes(q.value)
+                return (
+                  <button
+                    key={q.value}
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => {
+                      // Quick presets (This/Last) are mutually exclusive with each other
+                      // AND with the named-checkbox selections — pick one mode, not both.
+                      const next = active ? [] : [q.value]
+                      onDropdownChange?.(tab.id, next)
+                    }}
+                    className={cn(
+                      'h-6 px-2.5 rounded-full text-[11px] font-medium transition-colors border',
+                      active
+                        ? 'bg-[rgb(var(--color-primary))] text-white border-[rgb(var(--color-primary))]'
+                        : 'bg-[rgb(var(--bg-surface))] text-[rgb(var(--fg-muted))] border-[rgb(var(--bd-default))] hover:border-[rgb(var(--color-primary))] hover:text-[rgb(var(--color-primary))]'
+                    )}
+                  >
+                    {q.label}
+                  </button>
+                )
+              })}
+            </div>
+          ) : undefined
+
           return (
             <Dropdown
               key={tab.id}
               options={tab.dropdownOptions!}
-              value={dropdownValues?.[tab.id] || []}
-              onValueChange={handleDropdownChange(tab.id)}
+              value={selected}
+              onValueChange={(sel) => {
+                const arr = Array.isArray(sel) ? sel.map(String) : [String(sel)]
+                // Ticking a named option clears any quick preset (This/Last) — they're exclusive.
+                const quickVals = (tab.quickOptions || []).map(q => q.value)
+                const named = arr.filter(v => !quickVals.includes(v))
+                onDropdownChange?.(tab.id, named.length > 0 ? named : arr)
+              }}
               onOpen={() => {
                 if (!isActive) {
                   onTabChange(tab.id)
@@ -146,6 +179,8 @@ export function Tabs({
               multiSelect
               searchable
               showOnlyButton
+              hideSelectAll
+              customFooter={quickFooter}
               customTrigger={
                 <button type="button" className={getButtonClasses(isActive)}>
                   {Icon && <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />}

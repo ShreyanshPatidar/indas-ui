@@ -19,6 +19,7 @@ export interface DonutChartProps {
   innerRadius?: string
   outerRadius?: string
   className?: string
+  onSegmentClick?: (item: DonutChartDataItem) => void
 }
 
 /**
@@ -34,7 +35,8 @@ export function DonutChart({
   centerValue,
   innerRadius = '50%',
   outerRadius = '70%',
-  className
+  className,
+  onSegmentClick
 }: DonutChartProps) {
   const chartRef = useRef<any>(null)
   const colors = ['#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de', '#3ba272', '#fc8452', '#9a60b4']
@@ -141,6 +143,10 @@ export function DonutChart({
       chart.setOption({
         graphic: defaultGraphic ?? []
       })
+    },
+    click: (params: any) => {
+      if (params.componentType !== 'series' || !onSegmentClick) return
+      onSegmentClick({ name: params.name, value: params.value })
     }
   }
 
@@ -149,7 +155,7 @@ export function DonutChart({
       <ReactECharts
         ref={chartRef}
         option={option}
-        style={{ height, width: '100%' }}
+        style={{ height, width: '100%', cursor: onSegmentClick ? 'pointer' : 'default' }}
         opts={{ renderer: 'canvas' }}
         onEvents={onEvents}
       />

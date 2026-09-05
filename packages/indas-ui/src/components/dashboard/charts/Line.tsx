@@ -60,7 +60,7 @@ export function LineChart({
       trigger: 'axis',
       ...getTooltipConfig()
     },
-    legend: showLegend ? getLegendConfig('bottom') : undefined,
+    legend: showLegend ? getLegendConfig('top') : undefined,
     grid: getGridConfig(showLegend),
     xAxis: {
       type: 'category',

@@ -110,14 +110,14 @@ export function BoxPlotChart({
       }
     },
     legend: showLegend ? {
-      bottom: 0,
+      top: 0,
       textStyle: { fontSize: 12, color: '#6c757d' }
     } : undefined,
     grid: {
-      top: 20,
-      right: 30,
-      bottom: showLegend ? 40 : 20,
-      left: 50,
+      top: showLegend ? 36 : 12,
+      right: 16,
+      bottom: 4,
+      left: 8,
       containLabel: true
     },
     xAxis: horizontal ? valueAxis : categoryAxis,

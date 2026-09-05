@@ -177,7 +177,7 @@ function FilterCell<TData>({
           position: 'sticky',
           left: `${leftPosition}px`,
           zIndex: 11,
-          backgroundColor: 'color-mix(in srgb, rgb(var(--color-primary)) 5%, white)',
+          backgroundColor: 'color-mix(in srgb, rgb(var(--color-primary)) 5%, rgb(var(--bg-surface)))',
           transform: 'translateZ(0)',
           willChange: 'transform'
         }),
@@ -185,7 +185,7 @@ function FilterCell<TData>({
           position: 'sticky',
           right: `${rightPosition}px`,
           zIndex: 12,
-          backgroundColor: 'color-mix(in srgb, rgb(var(--color-primary)) 5%, white)',
+          backgroundColor: 'color-mix(in srgb, rgb(var(--color-primary)) 5%, rgb(var(--bg-surface)))',
           transform: 'translateZ(0)',
           willChange: 'transform'
         })

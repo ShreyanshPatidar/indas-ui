@@ -46,6 +46,10 @@ export interface CompanyConfiguration {
   TypeOfCost: string
   ProcessWiseWastageTypeSetting: number // 0 = hide wastage dropdown, 1 = show wastage dropdown
   IsMarginBasedApproval: boolean // true = margin-based approval system is active
+  IsHeadCustomerApproval: boolean // true = Vertical Head approval stage active for this tenant
+  IsExcludeFromProfit: boolean // company master switch: when true, plate+cylinder & shipper leave the profit base and the per-process exclude checkbox is enabled
+  StatusLabels: string // JSON map of status key → per-company display label
+  GridCostingColumnConfig: string // JSON array of grid-costing output column keys (FIELD_CATALOG keys) to show, in order. Empty = default columns.
 }
 
 /**

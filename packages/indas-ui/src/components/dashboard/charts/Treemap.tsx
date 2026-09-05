@@ -37,8 +37,8 @@ export interface TreemapChartProps {
 export function TreemapChart({
   data,
   height = 300,
-  showBreadcrumb = true,
-  colors = ['#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de', '#3ba272', '#fc8452', '#9a60b4'],
+  showBreadcrumb = false,
+  colors = ['#6366f1', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6'],
   showLabels = true,
   labelPosition = 'insideTopLeft',
   drillDown = true,
@@ -47,9 +47,12 @@ export function TreemapChart({
   const option = {
     tooltip: {
       trigger: 'item',
-      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      backgroundColor: 'rgba(255, 255, 255, 0.98)',
       borderColor: '#e9ecef',
       borderWidth: 1,
+      borderRadius: 8,
+      padding: [8, 12],
+      extraCssText: 'box-shadow: 0 4px 16px rgba(0,0,0,0.12);',
       textStyle: { color: '#344767', fontSize: 12 },
       formatter: (params: any) => {
         const path = params.treePathInfo
@@ -62,14 +65,17 @@ export function TreemapChart({
     series: [{
       type: 'treemap',
       data: data,
-      width: '100%',
-      height: '100%',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: showBreadcrumb ? 22 : 0,
       roam: false,
       nodeClick: drillDown ? 'zoomToNode' : false,
       breadcrumb: showBreadcrumb ? {
         show: true,
-        bottom: 5,
+        bottom: 0,
         left: 'center',
+        height: 18,
         itemStyle: {
           color: '#f5f5f5',
           borderColor: '#dee2e6',
@@ -83,10 +89,11 @@ export function TreemapChart({
         show: showLabels,
         position: labelPosition,
         formatter: '{b}',
-        fontSize: 11,
+        fontSize: 12,
+        fontWeight: 500,
         color: '#fff',
-        textShadowColor: 'rgba(0,0,0,0.3)',
-        textShadowBlur: 2
+        textShadowColor: 'rgba(0,0,0,0.35)',
+        textShadowBlur: 3
       },
       upperLabel: {
         show: true,
@@ -98,31 +105,26 @@ export function TreemapChart({
       },
       itemStyle: {
         borderColor: '#fff',
-        borderWidth: 2,
-        gapWidth: 2
+        borderWidth: 3,
+        gapWidth: 3,
+        borderRadius: 4
       },
       levels: [
         {
           itemStyle: {
             borderColor: '#fff',
-            borderWidth: 3,
-            gapWidth: 3
+            borderWidth: 4,
+            gapWidth: 4,
+            borderRadius: 6
           }
         },
         {
-          colorSaturation: [0.3, 0.6],
-          itemStyle: {
-            borderColorSaturation: 0.7,
-            gapWidth: 2,
-            borderWidth: 2
-          }
-        },
-        {
-          colorSaturation: [0.3, 0.5],
+          colorSaturation: [0.45, 0.7],
           itemStyle: {
             borderColorSaturation: 0.6,
-            gapWidth: 1,
-            borderWidth: 1
+            gapWidth: 2,
+            borderWidth: 2,
+            borderRadius: 3
           }
         }
       ],

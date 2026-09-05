@@ -5,6 +5,19 @@
 
 import APIClient from '@/lib/api/core/client'
 
+// Backend returns HTTP 200 with a status string ("Success" | "fail" | "Exist" |
+// "Error:..." | "You cannot delete..."); surface anything that isn't Success.
+function checkBackendResult(response: any, fallback: string) {
+  const body = typeof response?.data === 'string' ? response.data.trim() : ''
+  if (response?.success && body && body.toLowerCase() !== 'success') {
+    if (body === 'Exist') {
+      return { success: false, error: 'Record already exists or is in use by other records' }
+    }
+    return { success: false, error: body.toLowerCase() === 'fail' ? fallback : body }
+  }
+  return response
+}
+
 // ============================================================================
 // TYPES
 // ============================================================================
@@ -194,18 +207,19 @@ export async function getDepartmentsAPI(session: any) {
  */
 export async function saveDepartmentAPI(departmentData: Department, session: any) {
   try {
+    // Backend model is List<CostingDataGroupMaster> and reads [0] — must be an array.
     const payload = {
-      CostingDataGroupMaster: {
+      CostingDataGroupMaster: [{
         DepartmentName: departmentData.DepartmentName,
         Press: departmentData.Press,
         SequenceNo: departmentData.SequenceNo
-      },
+      }],
       DepartmentName: departmentData.DepartmentName,
       SelectBoxPress: ''
     }
 
     const response = await APIClient.post('/api/othermaster/save-department', payload, session)
-    return response
+    return checkBackendResult(response, 'Failed to save department')
   } catch (error: any) {
     return {
       success: false,
@@ -228,8 +242,8 @@ export async function updateDepartmentAPI(departmentData: Department, department
       TxtDepartmentID: String(departmentID)
     }
 
-    const response = await APIClient.post('/api/othermaster/update-department', payload, session)
-    return response
+    const response = await APIClient.put('/api/othermaster/update-department', payload, session)
+    return checkBackendResult(response, 'Failed to update department')
   } catch (error: any) {
     return {
       success: false,
@@ -243,11 +257,8 @@ export async function updateDepartmentAPI(departmentData: Department, department
  */
 export async function deleteDepartmentAPI(departmentID: number, session: any) {
   try {
-    const payload = {
-      departmentID: String(departmentID)
-    }
-    const response = await APIClient.post(`/api/othermaster/delete-department/${departmentID}`, payload, session)
-    return response
+    const response = await APIClient.delete(`/api/othermaster/delete-department/${departmentID}`, session)
+    return checkBackendResult(response, 'Failed to delete department')
   } catch (error: any) {
     return {
       success: false,
@@ -300,7 +311,7 @@ export async function saveDomainAPI(domainData: Domain, session: any) {
     }
 
     const response = await APIClient.post('/api/othermaster/savesegmentdata', payload, session)
-    return response
+    return checkBackendResult(response, 'Failed to save domain')
   } catch (error: any) {
     return {
       success: false,
@@ -334,7 +345,7 @@ export async function updateDomainAPI(domainData: Domain, segmentID: number, ses
     }
 
     const response = await APIClient.post('/api/othermaster/updatesegmentdata', payload, session)
-    return response
+    return checkBackendResult(response, 'Failed to update domain')
   } catch (error: any) {
     return {
       success: false,
@@ -352,7 +363,7 @@ export async function deleteDomainAPI(segmentID: number, session: any) {
       SegmentID: String(segmentID)
     }
     const response = await APIClient.post('/api/othermaster/deletesegmentdata', payload, session)
-    return response
+    return checkBackendResult(response, 'Failed to delete domain')
   } catch (error: any) {
     return {
       success: false,
@@ -385,12 +396,12 @@ export async function getProductionUnitsAPI(session: any) {
  */
 export async function saveProductionUnitAPI(unitData: ProductionUnit, session: any) {
   try {
-    const payload = {
-      jsonObjectsProductionData: unitData
-    }
+    // Backend binds the WHOLE body to its data object (no wrapper key) and adds
+    // CompanyID itself — sending it again duplicates the column in the INSERT.
+    const { ProductionUnitID: _id, CompanyID: _cid, ...payload } = unitData
 
     const response = await APIClient.post('/api/othermaster/saveproductionunitmaster', payload, session)
-    return response
+    return checkBackendResult(response, 'Failed to save production unit')
   } catch (error: any) {
     return {
       success: false,
@@ -404,13 +415,12 @@ export async function saveProductionUnitAPI(unitData: ProductionUnit, session: a
  */
 export async function updateProductionUnitAPI(unitData: ProductionUnit, productionUnitID: number, session: any) {
   try {
-    const payload = {
-      jsonObjectsProductionData: unitData,
-      ProductionUnitID: String(productionUnitID)
-    }
+    // ProductionUnitID is a URI-bound param on the backend; body is the raw unit
+    // data (CompanyID/ModifiedBy are appended by the backend itself).
+    const { ProductionUnitID: _id, CompanyID: _cid, ...payload } = unitData
 
-    const response = await APIClient.post('/api/othermaster/updateproductionunitmaster', payload, session)
-    return response
+    const response = await APIClient.post(`/api/othermaster/updateproductionunitmaster?ProductionUnitID=${productionUnitID}`, payload, session)
+    return checkBackendResult(response, 'Failed to update production unit')
   } catch (error: any) {
     return {
       success: false,
@@ -424,11 +434,8 @@ export async function updateProductionUnitAPI(unitData: ProductionUnit, producti
  */
 export async function deleteProductionUnitAPI(productionUnitID: number, session: any) {
   try {
-    const payload = {
-      ProductionUnitID: String(productionUnitID)
-    }
-    const response = await APIClient.post('/api/othermaster/deleteproductionunitmaster', payload, session)
-    return response
+    const response = await APIClient.post(`/api/othermaster/deleteproductionunitmaster?ProductionUnitID=${productionUnitID}`, null, session)
+    return checkBackendResult(response, 'Failed to delete production unit')
   } catch (error: any) {
     return {
       success: false,

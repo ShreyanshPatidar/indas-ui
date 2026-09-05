@@ -2,7 +2,8 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui"
 import { Button } from "@/components/ui"
-import { AlertTriangle, Clock } from "lucide-react"
+import { AlertTriangle, Clock, LogOut, RefreshCw } from "lucide-react"
+import { useOptionalLanguage } from "@/contexts/LanguageContext"
 
 interface SessionExpiryWarningProps {
     isOpen: boolean
@@ -12,8 +13,8 @@ interface SessionExpiryWarningProps {
 }
 
 /**
- * Modal to warn users when their session is about to expire
- * Gives them the option to extend the session or logout immediately
+ * Modal to warn users when their session is about to expire.
+ * Gives them the option to extend the session or logout immediately.
  */
 export function SessionExpiryWarning({
     isOpen,
@@ -21,6 +22,9 @@ export function SessionExpiryWarning({
     onLogout,
     minutesRemaining
 }: SessionExpiryWarningProps) {
+    const { t } = useOptionalLanguage()
+    const minuteLabel = minutesRemaining === 1 ? t('minute') : t('minutes')
+
     return (
         <Dialog open={isOpen} onOpenChange={() => { }}>
             <DialogContent
@@ -29,25 +33,25 @@ export function SessionExpiryWarning({
             >
                 <DialogHeader className="border-b border-[rgb(var(--bd-default))] pb-4">
                     <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-amber-100 dark:bg-amber-900/20 flex items-center justify-center">
-                            <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-500" />
+                        <div className="h-10 w-10 rounded-full bg-[rgb(var(--color-warning)/0.12)] flex items-center justify-center">
+                            <AlertTriangle className="h-5 w-5 text-[rgb(var(--color-warning))]" />
                         </div>
                         <DialogTitle className="text-lg font-semibold text-[rgb(var(--fg-default))]">
-                            Session Expiring Soon
+                            {t('Session Expiring Soon')}
                         </DialogTitle>
                     </div>
                 </DialogHeader>
 
                 <div className="p-6 space-y-4">
                     {/* Time Remaining */}
-                    <div className="flex items-center gap-3 p-4 rounded-lg bg-[rgb(var(--bg-surface-secondary))] border border-[rgb(var(--bd-default))]">
+                    <div className="flex items-center gap-3 p-4 rounded-lg bg-[rgb(var(--bg-subtle))] border border-[rgb(var(--bd-default))]">
                         <Clock className="h-5 w-5 text-[rgb(var(--color-icon))]" />
                         <div>
                             <p className="text-sm font-medium text-[rgb(var(--fg-default))]">
-                                Time Remaining
+                                {t('Time Remaining')}
                             </p>
-                            <p className="text-2xl font-bold text-amber-600 dark:text-amber-500">
-                                {minutesRemaining} {minutesRemaining === 1 ? 'minute' : 'minutes'}
+                            <p className="text-2xl font-bold text-[rgb(var(--color-warning))]">
+                                {minutesRemaining} {minuteLabel}
                             </p>
                         </div>
                     </div>
@@ -55,35 +59,36 @@ export function SessionExpiryWarning({
                     {/* Message */}
                     <div className="space-y-2">
                         <p className="text-sm text-[rgb(var(--fg-default))]">
-                            Your session will expire in <span className="font-semibold text-amber-600 dark:text-amber-500">{minutesRemaining} {minutesRemaining === 1 ? 'minute' : 'minutes'}</span> due to inactivity.
+                            {t('Your session will expire in')} <span className="font-semibold text-[rgb(var(--color-warning))]">{minutesRemaining} {minuteLabel}</span>.
                         </p>
                         <p className="text-sm text-[rgb(var(--fg-muted))]">
-                            Would you like to extend your session and continue working?
+                            {t('Would you like to extend your session and continue working?')}
                         </p>
                     </div>
 
                     {/* Warning Note */}
-                    <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800">
-                        <p className="text-xs text-amber-800 dark:text-amber-400">
-                            <strong>Note:</strong> If you don't take action, you'll be automatically logged out when the timer reaches zero. Any unsaved work may be lost.
+                    <div className="p-3 rounded-lg bg-[rgb(var(--color-warning)/0.08)] border border-[rgb(var(--color-warning)/0.2)]">
+                        <p className="text-xs text-[rgb(var(--color-warning-hover))]">
+                            <strong>{t('Note')}:</strong> {t("If you don't take action, you'll be automatically logged out when the timer reaches zero. Any unsaved work may be lost.")}
                         </p>
                     </div>
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[rgb(var(--bd-default))] bg-[rgb(var(--bg-surface-secondary))]">
+                <div className="flex items-center justify-end gap-2.5 px-6 py-4 border-t border-[rgb(var(--bd-default))] bg-[rgb(var(--bg-subtle))]">
                     <Button
-                        variant="outline"
+                        variant="action-delete"
+                        icon={LogOut}
                         onClick={onLogout}
-                        className="min-w-[100px]"
                     >
-                        Logout Now
+                        {t('Logout Now')}
                     </Button>
                     <Button
+                        variant="action-apply"
+                        icon={RefreshCw}
                         onClick={onExtend}
-                        className="min-w-[120px] bg-[rgb(var(--color-primary))] hover:bg-[rgb(var(--color-primary-hover))] text-white"
                     >
-                        Extend Session
+                        {t('Extend Session')}
                     </Button>
                 </div>
             </DialogContent>

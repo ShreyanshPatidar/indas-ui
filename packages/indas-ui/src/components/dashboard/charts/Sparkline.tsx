@@ -46,6 +46,15 @@ export interface SparklineProps {
   smooth?: boolean
   /** Reference line value */
   referenceLine?: number
+  /** Optional x-axis category labels (e.g. months) — used in the hover tooltip; rendered on the axis only when showAxis is true */
+  labels?: string[]
+  /** Render the x-axis labels below the trend */
+  showAxis?: boolean
+  /** Show hover tooltip with the value (and label) at each point */
+  showTooltip?: boolean
+  /** Optional value prefix/suffix for the tooltip (e.g. '₹', '%') */
+  valuePrefix?: string
+  valueSuffix?: string
   className?: string
 }
 
@@ -64,6 +73,11 @@ export function Sparkline({
   showMinMax = false,
   smooth = true,
   referenceLine,
+  labels,
+  showAxis = false,
+  showTooltip = false,
+  valuePrefix = '',
+  valueSuffix = '',
   className
 }: SparklineProps) {
   const min = Math.min(...data)
@@ -124,17 +138,41 @@ export function Sparkline({
     barWidth: type === 'bar' ? '60%' : undefined
   }
 
+  const hasLabels = !!labels && labels.length > 0
+  const showAxisLabels = hasLabels && showAxis
+
   const option = {
+    tooltip: showTooltip ? {
+      trigger: 'axis',
+      backgroundColor: 'rgba(255, 255, 255, 0.98)',
+      borderColor: '#e9ecef',
+      borderWidth: 1,
+      borderRadius: 8,
+      padding: [6, 10],
+      extraCssText: 'box-shadow: 0 4px 16px rgba(0,0,0,0.12);',
+      textStyle: { color: '#344767', fontSize: 12 },
+      axisPointer: { type: 'line', lineStyle: { color: '#cbd5e1', width: 1 } },
+      formatter: (params: any) => {
+        const p = Array.isArray(params) ? params[0] : params
+        const cat = hasLabels && p.axisValue ? `${p.axisValue}<br/>` : ''
+        return `${cat}<strong>${valuePrefix}${Number(p.value).toLocaleString()}${valueSuffix}</strong>`
+      }
+    } : undefined,
     grid: {
       top: showMinMax ? 8 : 4,
       right: showEndDot ? 8 : 4,
-      bottom: 4,
-      left: 4
+      bottom: showAxisLabels ? 20 : 4,
+      left: 4,
+      containLabel: showAxisLabels
     },
     xAxis: {
       type: 'category',
-      show: false,
-      boundaryGap: type === 'bar'
+      data: hasLabels ? labels : undefined,
+      show: showAxisLabels,
+      boundaryGap: type === 'bar',
+      axisLine: { show: false },
+      axisTick: { show: false },
+      axisLabel: showAxisLabels ? { color: '#94a3b8', fontSize: 10, margin: 6, interval: 0, hideOverlap: true } : { show: false }
     },
     yAxis: {
       type: 'value',

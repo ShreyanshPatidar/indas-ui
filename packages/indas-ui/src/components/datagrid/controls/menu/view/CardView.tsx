@@ -21,6 +21,8 @@ interface CardViewProps<TData> {
   isLoading?: boolean
   cardSize?: CardSize
   circularCheckboxes?: boolean
+  /** Extra classes per card — DataGrid forwards getRowProps().className here */
+  getCardClassName?: (item: TData) => string | undefined
 }
 
 const sizeConfig = {
@@ -84,6 +86,7 @@ export function CardView<TData>({
   isLoading = false,
   cardSize = 'normal',
   circularCheckboxes = false,
+  getCardClassName,
 }: CardViewProps<TData>) {
   const { t } = useLanguage()
   const cfg = sizeConfig[cardSize]
@@ -260,6 +263,7 @@ export function CardView<TData>({
                       : 'border-[rgb(var(--bd-default))] hover:border-[rgb(var(--color-primary))]/40 hover:shadow-sm'
                     }
                     ${isFocused ? 'ring-2 ring-[rgb(var(--color-primary))]/30 ring-offset-1' : ''}
+                    ${getCardClassName?.(item) ?? ''}
                   `}>
                     {/* Left accent bar */}
                     <div className={`absolute left-0 top-0 bottom-0 w-[2px] transition-colors duration-150 ${

@@ -37,6 +37,9 @@ interface SingleSelectProps {
   customFooter?: React.ReactNode
   variant?: 'default' | 'compact' | 'detailed'
   size?: 'sm' | 'md' | 'lg'
+  trailingAction?: React.ReactNode
+  customTrigger?: React.ReactNode
+  contentClassName?: string
 }
 
 export function SingleSelect({
@@ -67,7 +70,10 @@ export function SingleSelect({
   handleClear,
   customFooter,
   variant = 'default',
-  size = 'md'
+  size = 'md',
+  trailingAction,
+  customTrigger,
+  contentClassName
 }: SingleSelectProps) {
   // Find selected option from ALL options (not just filtered) to show label in trigger
   // This ensures the selected value displays correctly even when options are still loading
@@ -87,18 +93,52 @@ export function SingleSelect({
   // Track highlighted option index for keyboard navigation
   const [highlightedIndex, setHighlightedIndex] = React.useState(0)
 
+  // The options actually RENDERED in the list (null/empty values stripped). Keyboard
+  // nav must index THIS array — the rendered rows and highlight use it too.
+  const displayOptions = React.useMemo(
+    () => filteredOptions.filter(o => o.value != null && o.value !== ''),
+    [filteredOptions]
+  )
+
   // Reset highlighted index when options change or dropdown opens
   React.useEffect(() => {
     if (open) {
-      const currentIndex = filteredOptions.findIndex(opt => opt.value?.toString() === value?.toString())
-      setHighlightedIndex(currentIndex >= 0 ? currentIndex : -1)
+      const currentIndex = displayOptions.findIndex(opt => opt.value?.toString() === value?.toString())
+      setHighlightedIndex(currentIndex >= 0 ? currentIndex : 0)
     }
-  }, [open, filteredOptions, value])
+  }, [open, displayOptions, value])
 
   // When typing narrows list, reset to first result
   React.useEffect(() => {
     setHighlightedIndex(0)
-  }, [filteredOptions.length])
+  }, [displayOptions.length])
+
+  // Keydown for the searchable single-select input: arrows move the highlight,
+  // Enter commits the highlighted option (Radix can't — focus is in this input).
+  const handleSearchKeyDown = React.useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault(); e.stopPropagation()
+      setHighlightedIndex(prev => (prev + 1 >= displayOptions.length ? 0 : prev + 1))
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault(); e.stopPropagation()
+      setHighlightedIndex(prev => (prev - 1 < 0 ? displayOptions.length - 1 : prev - 1))
+    } else if (e.key === 'Enter' || e.key === 'Tab') {
+      const opt = displayOptions[highlightedIndex]
+      if (opt && !opt.disabled) {
+        e.preventDefault(); e.stopPropagation()
+        onValueChange(opt.value)
+        onOpenChange(false)
+      } else if (allowCustomInput && searchTerm.trim()) {
+        e.preventDefault(); e.stopPropagation()
+        handleCreateOption()
+      }
+    } else if (e.key === 'Escape') {
+      e.preventDefault(); e.stopPropagation()
+      onOpenChange(false)
+    } else {
+      e.stopPropagation()
+    }
+  }, [displayOptions, highlightedIndex, onValueChange, onOpenChange, allowCustomInput, searchTerm, handleCreateOption])
 
   // Handle keyboard navigation - works both when open and closed (like DevExtreme)
   const handleKeyDown = React.useCallback((e: React.KeyboardEvent) => {
@@ -204,6 +244,77 @@ export function SingleSelect({
     }
   }, [filteredOptions, highlightedIndex, searchTerm, onValueChange, onOpenChange, handleCreateOption])
 
+  if (customTrigger) {
+    return (
+      <Popover.Root open={open} onOpenChange={onOpenChange}>
+        <Popover.Trigger asChild>{customTrigger}</Popover.Trigger>
+        <Popover.Portal container={typeof document !== 'undefined' ? document.body : undefined}>
+          <Popover.Content
+            className={cn(getDropdownClassName.content(), "flex flex-col !max-h-72 overflow-hidden", contentClassName)}
+            side="bottom"
+            align="start"
+            sideOffset={4}
+            avoidCollisions
+            sticky="always"
+            collisionPadding={16}
+          >
+            {searchable && (
+              <DropdownSearch
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
+                resultCount={displayOptions.length}
+                onKeyDown={handleSearchKeyDown}
+              />
+            )}
+            <div className={dropdownSharedStyles.viewport} onWheel={(e) => e.stopPropagation()}>
+              {loading ? (
+                <div className="py-6 text-center text-xs text-[rgb(var(--fg-muted))]">Loading...</div>
+              ) : displayOptions.length === 0 ? (
+                <div className="py-6 text-center text-xs text-[rgb(var(--fg-muted))]">{emptyMessage}</div>
+              ) : (
+                displayOptions.map((option, index) => (
+                  <div
+                    key={option.key || `${option.value}-${index}`}
+                    onMouseDown={(e) => { e.preventDefault(); if (!option.disabled) { onValueChange(option.value); onOpenChange(false) } }}
+                    onMouseEnter={() => setHighlightedIndex(index)}
+                    className={cn(
+                      "relative flex w-full cursor-pointer select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-xs outline-none transition-colors duration-150",
+                      option.value?.toString() === value?.toString()
+                        ? "bg-[rgb(var(--color-primary)/0.08)] text-[rgb(var(--color-primary))]"
+                        : index === highlightedIndex ? "bg-[rgb(var(--bg-hover))]" : "hover:bg-[rgb(var(--bg-hover))]",
+                      option.disabled && "opacity-50 pointer-events-none"
+                    )}
+                  >
+                    <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+                      {option.value?.toString() === value?.toString() && <Check className="h-4 w-4" />}
+                    </span>
+                    <div className="min-w-0 flex items-center gap-2">
+                      {option.image && <OptionImage image={option.image} alt={option.label} />}
+                      <div className="min-w-0 flex-1">
+                        <div className="font-medium truncate">{option.label}</div>
+                        {option.description && <div className="text-xs text-[rgb(var(--fg-muted))] truncate">{option.description}</div>}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+            {customFooter && (
+              <div
+                onPointerDown={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+                onClick={(e) => e.stopPropagation()}
+                style={{ pointerEvents: 'auto' }}
+              >
+                {customFooter}
+              </div>
+            )}
+          </Popover.Content>
+        </Popover.Portal>
+      </Popover.Root>
+    )
+  }
+
   if (allowCustomInput) {
     return (
       <Popover.Root open={open} onOpenChange={onOpenChange}>
@@ -232,6 +343,17 @@ export function SingleSelect({
             <div className="flex items-center gap-0.5 pr-2 flex-shrink-0">
               {clearable && value && !disabled && (
                 <ClearButton onClear={handleClear} disabled={disabled} />
+              )}
+              {trailingAction && (
+                // Stop bubbling so interacting with the trailing action doesn't
+                // toggle the dropdown popover.
+                <div
+                  className="flex items-center"
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => e.stopPropagation()}
+                >
+                  {trailingAction}
+                </div>
               )}
               <ChevronDown className={cn("h-4 w-4 text-[rgb(var(--fg-muted))] transition-transform duration-200", open && "rotate-180")} />
             </div>

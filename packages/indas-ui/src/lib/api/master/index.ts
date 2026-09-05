@@ -51,3 +51,19 @@ export {
 
 // Export Material Group API
 export { MaterialGroupAPI, type MaterialGroup, type UnderGroupOption } from './material-group'
+
+// Export Logistics Master API (container/truck, pallet, port, freight rates)
+export {
+  LogisticsContainerAPI,
+  LogisticsPalletAPI,
+  LogisticsPortAPI,
+  FreightRateAPI,
+  withPlant,
+  readSaveResult,
+  type LogisticsContainer,
+  type LogisticsPallet,
+  type LogisticsPort,
+  type FreightRateRow,
+  type TruckRateSlot,
+  type ContainerCategory
+} from './logistics'

@@ -4,13 +4,45 @@ import Papa from 'papaparse'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 
+/** Format any cell value into a clean string. Avoids "[object Object]" and stray nulls. */
+function formatCellValue(value: unknown): string {
+  if (value === null || value === undefined) return ''
+  if (typeof value === 'boolean') return value ? 'Yes' : 'No'
+  if (value instanceof Date) return value.toLocaleString()
+  if (typeof value === 'number') return Number.isFinite(value) ? String(value) : ''
+  if (typeof value === 'object') {
+    try {
+      return JSON.stringify(value)
+    } catch {
+      return ''
+    }
+  }
+  return String(value)
+}
+
+/**
+ * Build headers + rows for export. The DataGrid already hands us rows keyed by their
+ * visible column header labels (in display order), so the object keys ARE the headers.
+ */
+function buildExportRows<TData>(
+  data: TData[]
+): { headers: string[]; keys: string[]; rows: string[][] } {
+  if (data.length === 0) return { headers: [], keys: [], rows: [] }
+
+  const keys = Object.keys(data[0] as any)
+  const rows = data.map(item => keys.map(key => formatCellValue((item as any)[key])))
+
+  return { headers: keys, keys, rows }
+}
+
 /**
  * Export data to CSV format
  */
 export function exportToCSV<TData>(data: TData[], filename: string = 'data-export') {
   try {
-    const csv = Papa.unparse(data)
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
+    const { headers, rows } = buildExportRows(data)
+    const csv = Papa.unparse({ fields: headers, data: rows })
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' })
     saveAs(blob, `${filename}.csv`)
   } catch (error) {
     console.error('❌ [DataGrid Export] CSV export failed:', error)
@@ -26,43 +58,32 @@ export async function exportToExcel<TData>(data: TData[], filename: string = 'da
     const workbook = new ExcelJS.Workbook()
     const worksheet = workbook.addWorksheet('Data')
 
-    if (data.length > 0) {
-      // Add headers
-      const headers = Object.keys(data[0] as any)
+    const { headers, rows } = buildExportRows(data)
+
+    if (headers.length > 0) {
       worksheet.addRow(headers)
 
-      // Style headers
       const headerRow = worksheet.getRow(1)
-      headerRow.font = { bold: true }
+      headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } }
       headerRow.fill = {
         type: 'pattern',
         pattern: 'solid',
-        fgColor: { argb: 'FF3B82F6' }
+        fgColor: { argb: 'FF003366' } // brand primary (#003366)
       }
-      headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } }
 
-      // Add data rows
-      data.forEach((item) => {
-        const row = headers.map(header => (item as any)[header])
-        worksheet.addRow(row)
-      })
+      rows.forEach(row => worksheet.addRow(row))
 
-      // Auto-size columns
+      // Auto-size columns from header + cell content length
       worksheet.columns.forEach((column, index) => {
         let maxLength = headers[index]?.length || 10
-
-        data.forEach((item) => {
-          const value = (item as any)[headers[index]]
-          if (value) {
-            maxLength = Math.max(maxLength, value.toString().length)
-          }
+        rows.forEach(row => {
+          const cell = row[index]
+          if (cell) maxLength = Math.max(maxLength, cell.length)
         })
-
         column.width = Math.min(maxLength + 2, 50)
       })
     }
 
-    // Save file
     const buffer = await workbook.xlsx.writeBuffer()
     const blob = new Blob([buffer], {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
@@ -75,42 +96,64 @@ export async function exportToExcel<TData>(data: TData[], filename: string = 'da
 }
 
 /**
- * Export data to PDF format
+ * Export data to PDF format.
+ * Landscape, auto-fit columns, line-wrapped cells, repeated headers, page numbers.
  */
 export function exportToPDF<TData>(data: TData[], filename: string = 'data-export') {
   try {
-    const doc = new jsPDF()
+    const { headers, rows } = buildExportRows(data)
 
-    // Add title
-    doc.setFontSize(16)
-    doc.text('Data Export', 14, 22)
+    // Landscape fits wide grids; switch to portrait only for very narrow tables.
+    const orientation = headers.length <= 4 ? 'portrait' : 'landscape'
+    const doc = new jsPDF({ orientation, unit: 'pt', format: 'a4' })
+    const pageWidth = doc.internal.pageSize.getWidth()
 
-    // Add timestamp
-    doc.setFontSize(10)
-    doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 32)
+    const title = filename.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+    doc.setFontSize(14)
+    doc.text(title, 40, 40)
+    doc.setFontSize(9)
+    doc.setTextColor(120)
+    doc.text(`Date and Time: ${new Date().toLocaleString()}`, 40, 56)
+    doc.setTextColor(0)
 
-    // Extract headers and rows
-    if (data.length > 0) {
-      const headers = Object.keys(data[0] as any)
-      const rows = data.map(item => headers.map(header => (item as any)[header]))
-
+    if (headers.length > 0) {
       autoTable(doc, {
         head: [headers],
         body: rows,
-        startY: 40,
+        startY: 70,
         theme: 'striped',
         headStyles: {
-          fillColor: [59, 130, 246], // Blue
+          fillColor: [0, 51, 102], // brand primary (#003366)
           textColor: 255,
           fontStyle: 'bold',
+          halign: 'left',
         },
         styles: {
-          fontSize: 8,
+          fontSize: 7,
           cellPadding: 3,
+          overflow: 'linebreak',  // wrap long cells instead of overflowing the page
+          valign: 'middle',
         },
-        columnStyles: {},
-        margin: { top: 40 },
+        // Let autoTable distribute width across the page, capping any single column.
+        tableWidth: 'auto',
+        margin: { top: 70, left: 40, right: 40, bottom: 40 },
+        didDrawPage: (hookData) => {
+          const pageCount = doc.getNumberOfPages()
+          const pageCurrent = hookData.pageNumber
+          doc.setFontSize(8)
+          doc.setTextColor(120)
+          doc.text(
+            `Page ${pageCurrent} of ${pageCount}`,
+            pageWidth - 40,
+            doc.internal.pageSize.getHeight() - 20,
+            { align: 'right' }
+          )
+          doc.setTextColor(0)
+        },
       })
+    } else {
+      doc.setFontSize(11)
+      doc.text('No data to export.', 40, 80)
     }
 
     doc.save(`${filename}.pdf`)
@@ -135,7 +178,7 @@ export function exportToJSON<TData>(data: TData[], filename: string = 'data-expo
 }
 
 /**
- * Unified export function that handles all formats
+ * Unified export function that handles all formats.
  */
 export async function exportData<TData>(
   data: TData[],

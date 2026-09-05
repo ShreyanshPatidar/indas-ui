@@ -28,10 +28,14 @@ interface ExpandableRowProps<TData> {
   onSubRowClick?: (item: TData) => void
   /** Callback when a sub-row is selected (clicked) — propagates selection to parent */
   onSubRowSelect?: (item: TData) => void
+  /** Per sub-row class/style (DataGrid forwards getRowProps so revisions get the same tint) */
+  getSubRowProps?: (item: TData) => { className?: string; style?: React.CSSProperties }
   onRowClick?: (e: React.MouseEvent) => void
   onRowDoubleClick?: () => void
   onRowContextMenu?: (e: React.MouseEvent) => void
   className?: string
+  /** Inline style from DataGrid's getRowProps (e.g. a row tint that sticky cells inherit via --dg-row-bg) */
+  style?: React.CSSProperties
   rowHeight?: number
   children: React.ReactNode
 }
@@ -45,10 +49,12 @@ export function ExpandableRow<TData>({
   getSubRowId,
   onSubRowClick,
   onSubRowSelect,
+  getSubRowProps,
   onRowClick,
   onRowDoubleClick,
   onRowContextMenu,
   className = '',
+  style,
   rowHeight,
   children
 }: ExpandableRowProps<TData>) {
@@ -60,7 +66,7 @@ export function ExpandableRow<TData>({
         onClick={onRowClick}
         onDoubleClick={onRowDoubleClick}
         onContextMenu={onRowContextMenu}
-        style={rowHeight ? { height: `${rowHeight}px` } : undefined}
+        style={{ ...(rowHeight ? { height: `${rowHeight}px` } : {}), ...style }}
       >
         {children}
       </tr>
@@ -92,6 +98,7 @@ export function ExpandableRow<TData>({
           getSubRowId={getSubRowId}
           onSubRowClick={onSubRowClick}
           onSubRowSelect={onSubRowSelect}
+          getSubRowProps={getSubRowProps}
           parentRow={row}
         />
       )}
@@ -111,6 +118,7 @@ interface DetailedSubRowsProps<TData> {
   getSubRowId?: (row: TData) => string
   onSubRowClick?: (item: TData) => void
   onSubRowSelect?: (item: TData) => void
+  getSubRowProps?: (item: TData) => { className?: string; style?: React.CSSProperties }
   parentRow: Row<TData>
 }
 
@@ -120,6 +128,7 @@ function DetailedSubRows<TData>({
   getSubRowId,
   onSubRowClick,
   onSubRowSelect,
+  getSubRowProps,
   parentRow,
 }: DetailedSubRowsProps<TData>) {
   const parentCells = parentRow.getVisibleCells()
@@ -148,11 +157,14 @@ function DetailedSubRows<TData>({
           ? 'bg-[color-mix(in_srgb,rgb(var(--color-primary))_12%,rgb(var(--bg-surface)))]'
           : 'bg-[color-mix(in_srgb,rgb(var(--color-primary))_5%,rgb(var(--bg-surface)))]'
         const bgHover = 'hover:bg-[color-mix(in_srgb,rgb(var(--color-primary))_18%,rgb(var(--bg-surface)))]'
+        // Consumer tint (e.g. margin colour) — inline style wins over the revision shade.
+        const subProps = getSubRowProps?.(item)
 
         return (
           <tr
             key={rowId}
-            className={`cursor-pointer group transition-colors duration-150 ease-out ${bgHover} ${bgBase}`}
+            className={`cursor-pointer group transition-colors duration-150 ease-out ${bgHover} ${bgBase} ${subProps?.className ?? ''}`}
+            style={subProps?.style}
             onClick={(e) => handleSubRowClick(item, rowId, e)}
           >
             {parentCells.map((parentCell, cellIndex) => {
@@ -246,10 +258,11 @@ function DetailedSubRows<TData>({
                 }
               }
 
-              // Pinned cells get solid surface background (no tint) to match parent rows
+              // Pinned cells need a solid background; inherit the row tint (--dg-row-bg)
+              // when the consumer set one so frozen/pinned cells match the rest of the row.
               const pinnedBg = isSelected
                 ? 'color-mix(in srgb, rgb(var(--color-primary)) 12%, rgb(var(--bg-surface)))'
-                : 'rgb(var(--bg-surface))'
+                : 'var(--dg-row-bg, rgb(var(--bg-surface)))'
 
               return (
                 <td

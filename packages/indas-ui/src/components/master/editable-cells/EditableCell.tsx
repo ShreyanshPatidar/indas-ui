@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 import { Input } from '@/components/ui'
+import { Pencil } from 'lucide-react'
 
 type EditableCellType = 'text' | 'number' | 'decimal'
 
@@ -13,6 +14,12 @@ interface EditableCellProps {
   className?: string
   placeholder?: string
   disabled?: boolean // Disable editing
+  /** Show a hover pencil icon + stronger hover bg so users know the value is editable. */
+  editAffordance?: boolean
+  /** Tooltip shown on the affordance variant (pass a translated string). */
+  editTitle?: string
+  /** Display-only formatter (e.g. Indian comma grouping). Editing still uses the raw value. */
+  formatDisplay?: (value: string | number) => string
 }
 
 /**
@@ -36,10 +43,18 @@ export function EditableCell({
   step = '0.01',
   className = 'w-full h-8 text-sm',
   placeholder = '-',
-  disabled = false
+  disabled = false,
+  editAffordance = false,
+  editTitle,
+  formatDisplay
 }: EditableCellProps) {
   const [isEditing, setIsEditing] = React.useState(false)
   const [inputValue, setInputValue] = React.useState(value.toString())
+  const display = value !== '' && value != null && formatDisplay ? formatDisplay(value) : value
+
+  React.useEffect(() => {
+    if (!isEditing) setInputValue(value.toString())
+  }, [value, isEditing])
 
   const handleSave = () => {
     let newValue: string | number = inputValue
@@ -86,13 +101,27 @@ export function EditableCell({
     )
   }
 
+  if (editAffordance) {
+    return (
+      <span
+        className={`group/edit inline-flex items-center gap-1 max-w-full -mx-1 px-1 rounded transition-colors ${disabled ? 'cursor-not-allowed opacity-60' : 'cursor-text hover:bg-[rgb(var(--bg-muted))]'}`}
+        onClick={() => !disabled && setIsEditing(true)}
+        title={disabled ? undefined : editTitle}
+      >
+        <span className="truncate">{display || placeholder}</span>
+        {!disabled && (
+          <Pencil className="h-3 w-3 flex-shrink-0 text-[rgb(var(--fg-muted))] opacity-0 group-hover/edit:opacity-100 transition-opacity" />
+        )}
+      </span>
+    )
+  }
+
   return (
     <div
-      className={`px-2 py-1 rounded ${disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:bg-gray-100'}`}
+      className={`px-2 py-1 rounded ${disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:bg-[rgb(var(--bg-muted))]'}`}
       onClick={() => !disabled && setIsEditing(true)}
-      title={disabled ? 'Editing disabled' : 'Click to edit'}
     >
-      {value || placeholder}
+      {display || placeholder}
     </div>
   )
 }

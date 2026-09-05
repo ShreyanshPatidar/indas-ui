@@ -24,6 +24,8 @@ interface MultiSelectProps {
   customFooter?: React.ReactNode
   /** Header title for select all section */
   selectAllLabel?: string
+  /** Hide the Select All / Deselect All header row */
+  hideSelectAll?: boolean
   /** Show "ONLY" button on hover (like OTIF) */
   showOnlyButton?: boolean
   /** Callback to close the dropdown */
@@ -47,6 +49,7 @@ export function MultiSelect({
   handleToggleOption,
   customFooter,
   selectAllLabel,
+  hideSelectAll = false,
   showOnlyButton = false,
   onClose
 }: MultiSelectProps) {
@@ -137,9 +140,9 @@ export function MultiSelect({
       .every(opt => selectedValues.includes(opt.value.toString()))
 
   return (
-    <div className="flex flex-col h-full overflow-hidden" onKeyDown={handleKeyDown}>
+    <div className="flex flex-col overflow-hidden" onKeyDown={handleKeyDown}>
       {/* Select All / Deselect All - Header (FIRST, like dashboard) */}
-      {!loading && filteredOptions.length > 0 && (
+      {!hideSelectAll && !loading && filteredOptions.length > 0 && (
         <div
           className="bg-[rgb(var(--bg-subtle))] border-b border-[rgb(var(--bd-default))] px-3 py-2.5 flex-shrink-0"
           onMouseDown={(e) => e.preventDefault()}
@@ -185,7 +188,7 @@ export function MultiSelect({
 
       <div
         ref={scrollContainerRef}
-        className="p-1 bg-bg-surface flex-1 min-h-0 overflow-y-auto scrollbar-thin"
+        className="p-1 bg-bg-surface flex-1 min-h-0 max-h-60 overflow-y-auto scrollbar-thin"
         onWheel={handleWheel}
         onMouseDown={(e) => {
           // Prevent focus from leaving the search input when clicking options
@@ -299,8 +302,10 @@ export function MultiSelect({
         )}
       </div>
 
-      {/* Custom Footer */}
-      {customFooter && customFooter}
+      {/* Custom Footer — pinned, adds height below the scrollable list */}
+      {customFooter && (
+        <div className="flex-shrink-0">{customFooter}</div>
+      )}
     </div>
   )
 }

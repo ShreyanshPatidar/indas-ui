@@ -18,8 +18,8 @@ export interface KpiScrollItem {
   customIcon?: React.ReactNode
   /** Main title */
   title: string
-  /** Subtitle/description */
-  subtitle?: string
+  /** Subtitle/description (string or custom node, e.g. a pill) */
+  subtitle?: React.ReactNode
   /** Metric value */
   value: string | number
   /** Metric prefix (e.g., +, -, ₹) */

@@ -355,6 +355,67 @@ export class EnquiryAPI {
   }
 
   /**
+   * Get Bid enquiries for the Grid Costing "Load Bid Enquiry" modal.
+   * Returns ALL Bid enquiries (not just unbooked ones) with a QuotedCount =
+   * number of bookings linked via EnquiryID. The modal splits these into
+   * Pending (QuotedCount = 0) and Quoted (QuotedCount > 0) tabs.
+   */
+  static async getBidEnquiriesForGridCosting(sessionData?: any): Promise<APIResponse<any[]>> {
+    try {
+      const endpoint = 'api/planwindow/GetBidEnquiriesForGridCosting'
+      const response = await APIClient.get<any[]>(endpoint, sessionData)
+      return response
+    } catch (error) {
+      return {
+        success: false,
+        error: `Failed to get bid enquiries: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        data: []
+      }
+    }
+  }
+
+  /**
+   * Get export data for all quotations generated from a Bid enquiry.
+   * Returns { TblQuotes, TblProcessMaterials } — one quote row per booking plus
+   * per-booking process→material rows, used to build the Quoted Data Excel.
+   */
+  static async getQuotedEnquiryExportData(enquiryId: number, sessionData?: any): Promise<APIResponse<any>> {
+    try {
+      const endpoint = `api/planwindow/GetQuotedEnquiryExportData/${enquiryId}`
+      const response = await APIClient.get<any>(endpoint, sessionData)
+      return response
+    } catch (error) {
+      return {
+        success: false,
+        error: `Failed to get quoted enquiry data: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        data: null
+      }
+    }
+  }
+
+  /**
+   * Bulk target-price revision. Each item reverse-costs a booking to its target
+   * price and saves a new revision (e.g. 100.0 -> 100.1). Returns a per-item
+   * outcome summary { SuccessCount, FailedCount, Results }.
+   */
+  static async generateQuoteRevisionBulk(
+    items: { BookingID: number; TargetedCost: number }[],
+    sessionData?: any
+  ): Promise<APIResponse<any>> {
+    try {
+      const endpoint = 'api/planwindow/generatequoterevisionbulk'
+      const response = await APIClient.post<any>(endpoint, { Items: items }, sessionData)
+      return response
+    } catch (error) {
+      return {
+        success: false,
+        error: `Failed to revise quotes: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        data: null
+      }
+    }
+  }
+
+  /**
    * Get enquiry content data (contents, processes, layers)
    * @param enquiryId - Enquiry ID
    * @param sessionData - Session data for authentication
@@ -531,6 +592,21 @@ export class EnquiryAPI {
       return {
         success: false,
         error: `Failed to get users for assignment: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        data: []
+      }
+    }
+  }
+
+  // Rate-enquiry "Send To" list — Purchase department + Admin (who provide rates).
+  static async getUsersForRateEnquiry(sessionData?: any): Promise<APIResponse<{ UserID: number; UserName: string; EmailID?: string; Department?: string }[]>> {
+    try {
+      const endpoint = 'api/planwindow/getuserlistforrateenquiry'
+      const response = await APIClient.get<{ UserID: number; UserName: string; EmailID?: string; Department?: string }[]>(endpoint, sessionData)
+      return response
+    } catch (error) {
+      return {
+        success: false,
+        error: `Failed to get users for rate enquiry: ${error instanceof Error ? error.message : 'Unknown error'}`,
         data: []
       }
     }

@@ -8,9 +8,9 @@
 import { useState, useEffect, useCallback, useRef, ReactNode, ComponentType } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { Menu, X, Plus, Maximize2, Download, Share2, Volume2, VolumeX, Bot, History, PanelLeftOpen, Star, Pencil, Trash2, ChevronDown, Search, Calendar } from 'lucide-react'
+import { Menu, X, Plus, Maximize2, Download, Share2, Volume2, VolumeX, Bot, History, PanelLeftOpen, Star, Pencil, Trash2, ChevronDown, Search, Calendar, Copy } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { sendChatMessageAPI, getConversationsAPI, getMessagesAPI, deleteConversationAPI, renameConversationAPI, toggleStarConversationAPI, submitMessageFeedbackAPI } from '@/lib/api/ai/chat'
+import { sendChatMessageAPI, getConversationsAPI, getMessagesAPI, deleteConversationAPI, renameConversationAPI, toggleStarConversationAPI, submitMessageFeedbackAPI, duplicateConversationAPI } from '@/lib/api/ai/chat'
 import type { Message, Conversation, UIDataEntry } from '@/lib/api/ai/types'
 import { useGlobalAlert } from '@/contexts/GlobalAlertContext'
 import { useLanguage } from '@/contexts/LanguageContext'
@@ -18,6 +18,9 @@ import { SidePanel } from '@/components/layout/side-panel'
 import { Messages } from '@/components/chat/ai-messages'
 import { MultimodalInput } from '@/components/chat/multimodal-input'
 import type { SelectableItem } from '@/components/chat/ai-messages'
+import { ChatPromptNavigator } from '@/components/chat/chat-prompt-navigator'
+import { DatePicker, type DateRange } from '@/components/forms/date-picker'
+import { getLocalDateString } from '@/lib/utils'
 
 interface MessagesComponentProps {
   messages: Message[]
@@ -53,6 +56,9 @@ export interface ChatProps {
   initialConversationId?: number
   /** Extra buttons rendered on the right side of the chat header (mobile + desktop). */
   headerActions?: ReactNode
+  /** Fires whenever the current conversation's messages change so the parent can
+   *  inspect them (e.g. to copy the latest job-spec summary). */
+  onMessagesChange?: (messages: Message[]) => void
 }
 
 // ─── Conversation context (discriminated union) ──────────────────────────────
@@ -125,7 +131,8 @@ export function Chat({
   onBeforeEditMessage,
   initialMessage,
   initialConversationId,
-  headerActions
+  headerActions,
+  onMessagesChange
 }: ChatProps) {
   const { data: session } = useSession()
   const router = useRouter()
@@ -150,6 +157,12 @@ export function Chat({
   const isNewChat = convCtx.mode === 'new'
 
   const [messages, setMessages] = useState<Message[]>([])
+  // Stream the latest messages array out to the parent so it can derive UI state
+  // (e.g. SynthiaPage uses it to build the Copy-Input-Specs template from the
+  // active conversation's summary).
+  useEffect(() => {
+    onMessagesChange?.(messages)
+  }, [messages, onMessagesChange])
   const [isLoading, setIsLoading] = useState(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isFloatingOpen, setIsFloatingOpen] = useState(false)
@@ -388,6 +401,17 @@ export function Chat({
     )
   }, [session, currentConversationId, startNewChat, loadConversations, alerts])
 
+  const duplicateConversation = useCallback(async (conversationId: number) => {
+    if (!session) return
+    const response = await duplicateConversationAPI(conversationId, session)
+    if (response.success && response.data?.ConversationID) {
+      await loadConversations()
+      alerts.showSuccess(t('Duplicated'), t('Conversation duplicated successfully'))
+    } else {
+      alerts.showError(t('Error'), response.error || t('Failed to duplicate conversation'))
+    }
+  }, [session, loadConversations, alerts, t])
+
   // Inline rename — which conversation is currently being edited, and the draft title
   const [renamingId, setRenamingId] = useState<number | null>(null)
   const [renameDraft, setRenameDraft] = useState('')
@@ -549,6 +573,12 @@ export function Chat({
           <Pencil className="w-3.5 h-3.5" />
           Rename
         </button>
+        {/* Duplicate hidden until backend endpoint ships.
+        <button onClick={fire(() => duplicateConversation(id))} className={itemCls}>
+          <Copy className="w-3.5 h-3.5" />
+          Duplicate
+        </button>
+        */}
         <button
           onClick={fire(() => deleteConversation(id))}
           className="w-full px-3 py-2 text-left text-sm text-red-500 hover:bg-red-500/10 transition-colors flex items-center gap-2.5"
@@ -778,10 +808,14 @@ export function Chat({
       }
     }
 
-    // Cascade delete: keep only messages up to and including the edited one
-    // Update the edited message content
+    // Cascade delete: keep only messages up to and including the edited one.
+    // Stamp a fresh client-only id so we can find this exact row later when
+    // the backend hands us the real MessageID — matching by content alone
+    // would alias to any earlier user message with the same text.
+    const optimisticEditedId = `user-edit-${Date.now()}`
     const updatedMessages = messages.slice(0, editIndex).concat({
       ...messages[editIndex],
+      id: optimisticEditedId,
       content: newContent
     })
     setMessages(updatedMessages)
@@ -820,7 +854,7 @@ export function Chat({
         // Update the edited user message with new backend MessageID
         if (response.userMessageId) {
           setMessages(prev => prev.map(m =>
-            m.role === 'user' && m.content === newContent
+            m.id === optimisticEditedId
               ? { ...m, id: response.userMessageId! }
               : m
           ))
@@ -1144,19 +1178,20 @@ export function Chat({
         </div>
         <div className="flex items-center gap-2 px-4 py-2 border-b border-[rgb(var(--bd-default))] text-xs text-[rgb(var(--fg-muted))]">
           <Calendar className="w-3.5 h-3.5 shrink-0" />
-          <span>From</span>
-          <input
-            type="date"
-            value={searchFrom}
-            onChange={e => setSearchFrom(e.target.value)}
-            className="bg-[rgb(var(--bg-subtle))] border border-[rgb(var(--bd-default))] rounded px-2 py-1 outline-none text-xs text-[rgb(var(--fg-default))]"
-          />
-          <span>To</span>
-          <input
-            type="date"
-            value={searchTo}
-            onChange={e => setSearchTo(e.target.value)}
-            className="bg-[rgb(var(--bg-subtle))] border border-[rgb(var(--bd-default))] rounded px-2 py-1 outline-none text-xs text-[rgb(var(--fg-default))]"
+          <span className="whitespace-nowrap shrink-0">{t('Date range')}</span>
+          <DatePicker
+            mode="range"
+            showFromTo
+            placeholder={t('Select date range...')}
+            value={{
+              from: searchFrom ? new Date(searchFrom + 'T00:00:00') : undefined,
+              to: searchTo ? new Date(searchTo + 'T00:00:00') : undefined,
+            }}
+            onChange={(val) => {
+              const range = (val && typeof val === 'object' && 'from' in val) ? val as DateRange : { from: undefined, to: undefined }
+              setSearchFrom(range.from ? getLocalDateString(range.from) : '')
+              setSearchTo(range.to ? getLocalDateString(range.to) : '')
+            }}
           />
           {(searchFrom || searchTo || searchQuery) && (
             <button
@@ -1574,6 +1609,9 @@ export function Chat({
             >
               <ChevronDown className="w-4 h-4 text-[rgb(var(--fg-default))]" />
             </button>
+          )}
+          {mode === 'fullpage' && (
+            <ChatPromptNavigator messages={messages} scrollContainer={findScroller} moduleName={title} />
           )}
         </div>
 

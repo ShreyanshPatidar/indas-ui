@@ -40,6 +40,7 @@ export interface CategoryItem {
     DefaultJobTrimmingLeft: number
     DefaultJobTrimmingRight: number
     Layer: number | null
+    IsForBot?: boolean | number
     Remark: string | null
 }
 
@@ -221,6 +222,45 @@ export class CategoryAPI {
                 success: false,
                 error: `Failed to delete category: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 data: null
+            }
+        }
+    }
+
+    /**
+     * Get the processes allocated to a category (its default processes).
+     * Returns the distinct ProcessName list from CategoryWiseProcessAllocation.
+     * Used to auto-fill the grid-costing template's process columns when
+     * downloading from an enquiry (no manual process picker).
+     */
+    static async getCategoryProcesses(categoryID: number, sessionData?: any): Promise<APIResponse<string[]>> {
+        try {
+            const endpoint = `api/categorymaster/getallcontents/${categoryID}`
+            const response = await APIClient.get<any>(endpoint, sessionData)
+            if (!response.success) return { success: false, error: response.error, data: [] }
+
+            // Endpoint returns a (possibly double-serialized) DataSet { Contents, Process }.
+            let payload: any = response.data
+            for (let i = 0; i < 3 && typeof payload === 'string'; i++) {
+                try { payload = JSON.parse(payload) } catch { break }
+            }
+            const procRows: any[] = Array.isArray(payload?.Process) ? payload.Process : []
+            // Order by department sequence (same as estimation), then name; backend
+            // already orders this way, but sort here too so it's robust to dedup.
+            const ordered = procRows.slice().sort((a: any, b: any) => {
+                const sa = Number(a?.DepartmentSequenceNo ?? 0), sb = Number(b?.DepartmentSequenceNo ?? 0)
+                if (sa !== sb) return sa - sb
+                return String(a?.DisplayProcessName ?? a?.ProcessName ?? '').localeCompare(String(b?.DisplayProcessName ?? b?.ProcessName ?? ''))
+            })
+            // Prefer DisplayProcessName (what the template's process columns key on).
+            const names = Array.from(new Set(
+                ordered.map((p: any) => String(p?.DisplayProcessName ?? p?.ProcessName ?? '').trim()).filter(Boolean),
+            ))
+            return { success: true, data: names }
+        } catch (error) {
+            return {
+                success: false,
+                error: `Failed to fetch category processes: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                data: []
             }
         }
     }

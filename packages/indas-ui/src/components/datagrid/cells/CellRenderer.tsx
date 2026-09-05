@@ -160,7 +160,7 @@ export function CellRenderer<TData>({
           left: `${leftPosition}px`,
           backgroundColor: isSelected
             ? 'color-mix(in srgb, rgb(var(--color-primary)) 8%, rgb(var(--bg-surface)))'
-            : 'rgb(var(--bg-surface))',
+            : 'var(--dg-row-bg, rgb(var(--bg-surface)))',
           transform: 'translateZ(0)',
           willChange: 'transform',
         }),
@@ -169,7 +169,7 @@ export function CellRenderer<TData>({
           right: `${rightPosition}px`,
           backgroundColor: isSelected
             ? 'color-mix(in srgb, rgb(var(--color-primary)) 8%, rgb(var(--bg-surface)))'
-            : 'rgb(var(--bg-surface))',
+            : 'var(--dg-row-bg, rgb(var(--bg-surface)))',
           transform: 'translateZ(0)',
           willChange: 'transform',
         })

@@ -10,6 +10,28 @@ import type { APIResponse, Quality, GSMData, MillData, FinishData, CoatingData, 
  * @param sessionData - Session data containing user and company info
  * @returns Promise with qualities array
  */
+/**
+ * Get matched raw-material rate (L1 + L2) for the Raw Material card.
+ * Backend resolves the item group dynamically from contentType (Paper/Reel/Board/etc),
+ * so this works for any group. Returns matched item rows.
+ */
+export async function getMaterialRateAPI(
+  filters: { contentType: string; quality: string; gsm: string; mill?: string; bf?: string; boardBrand?: string; finish?: string; plant?: string },
+  sessionData?: any
+): Promise<APIResponse> {
+  const p = new URLSearchParams({
+    contenttype: filters.contentType || '',
+    quality: filters.quality || '',
+    gsm: filters.gsm || '',
+    mill: filters.mill || '',
+    bf: filters.bf || '',
+    boardbrand: filters.boardBrand || '',
+    finish: filters.finish || '',
+    plant: filters.plant || '',
+  })
+  return APIClient.get(`api/planwindow/material-rate?${p.toString()}`, sessionData)
+}
+
 export async function getQualitiesAPI(
   contentType: string,
   sessionData?: any
@@ -45,8 +67,9 @@ export async function getGSMAPI(
     // If thickness has an actual value (including "0"), use that value
     const thicknessValue = (thickness !== undefined && thickness !== null && thickness.trim() !== '') ? thickness : '0'
 
-    // Build endpoint with all parameters (thickness is required by backend)
-    const endpoint = `api/planwindow/gsm/${encodeURIComponent(contentType)}/${encodeURIComponent(quality)}/${thicknessValue}`
+    // Query string, not path segments: qualities like "Polycoated (335+15) Gsm"
+    // encode to %2B, which IIS rejects as double-escaping in a path.
+    const endpoint = `api/planwindow/gsm?contenttype=${encodeURIComponent(contentType)}&quality=${encodeURIComponent(quality)}&thickness=${encodeURIComponent(thicknessValue)}`
 
     const response = await APIClient.get<GSMData[]>(endpoint, sessionData)
     return response
@@ -79,8 +102,7 @@ export async function getMillAPI(
     // If thickness has an actual value (including "0"), use that value
     const thicknessValue = (thickness !== undefined && thickness !== null && thickness.trim() !== '') ? thickness : '0'
 
-    // Build endpoint with all parameters (thickness is required by backend)
-    const endpoint = `api/planwindow/mill/${encodeURIComponent(contentType)}/${encodeURIComponent(quality)}/${encodeURIComponent(gsm)}/${thicknessValue}`
+    const endpoint = `api/planwindow/mill?contenttype=${encodeURIComponent(contentType)}&quality=${encodeURIComponent(quality)}&gsm=${encodeURIComponent(gsm)}&thickness=${encodeURIComponent(thicknessValue)}`
 
     const response = await APIClient.get<MillData[]>(endpoint, sessionData)
     return response
@@ -107,13 +129,42 @@ export async function getFinishAPI(
   sessionData?: any
 ): Promise<APIResponse<FinishData[]>> {
   try {
-    const endpoint = `api/planwindow/finish/${encodeURIComponent(quality)}/${encodeURIComponent(gsm)}/${encodeURIComponent(mill)}`
+    const endpoint = `api/planwindow/finish?quality=${encodeURIComponent(quality)}&gsm=${encodeURIComponent(gsm)}&mill=${encodeURIComponent(mill)}`
     const response = await APIClient.get<FinishData[]>(endpoint, sessionData)
     return response
   } catch (error) {
     return {
       success: false,
       error: `Failed to fetch finish data: ${error instanceof Error ? error.message : 'Unknown error'}`
+    }
+  }
+}
+
+/**
+ * One distinct paper combination — drives the import-template paper cascade.
+ */
+export interface PaperCombinationRow {
+  Quality: string
+  GSM: string
+  Mill: string
+  Finish: string
+  Brand: string
+}
+
+/**
+ * Get the FULL flat paper combination table in one call (Quality / GSM / Mill /
+ * Finish / Brand). Used to build the Grid Costing import template's dependent
+ * paper dropdowns without thousands of per-combination requests.
+ */
+export async function getPaperCombinationsAPI(
+  sessionData?: any
+): Promise<APIResponse<PaperCombinationRow[]>> {
+  try {
+    return await APIClient.get<PaperCombinationRow[]>('api/planwindow/papercombinations', sessionData)
+  } catch (error) {
+    return {
+      success: false,
+      error: `Failed to fetch paper combinations: ${error instanceof Error ? error.message : 'Unknown error'}`,
     }
   }
 }
@@ -248,11 +299,14 @@ export async function getBoardBrandAPI(
   sessionData?: any
 ): Promise<APIResponse<BoardBrandData[]>> {
   try {
+    // Default every segment to 'all' so a missing ContentDomainType doesn't produce a
+    // broken `boardbrand//all/...` URL — Board Brand must still load without a content type.
+    const ct = contentType || 'all'
     const q = quality || 'all'
     const g = gsm || 'all'
     const m = mill || 'all'
     const f = finish || 'all'
-    const endpoint = `api/planwindow/boardbrand/${encodeURIComponent(contentType)}/${encodeURIComponent(q)}/${encodeURIComponent(g)}/${encodeURIComponent(m)}/${encodeURIComponent(f)}`
+    const endpoint = `api/planwindow/boardbrand?contenttype=${encodeURIComponent(ct)}&quality=${encodeURIComponent(q)}&gsm=${encodeURIComponent(g)}&mill=${encodeURIComponent(m)}&finish=${encodeURIComponent(f)}`
     const response = await APIClient.get<BoardBrandData[]>(endpoint, sessionData)
     return response
   } catch (error) {

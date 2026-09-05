@@ -74,10 +74,10 @@ export function HeatmapChart({
       }
     },
     grid: {
-      top: 20,
-      right: showVisualMap ? 80 : 20,
-      bottom: 40,
-      left: 60,
+      top: 12,
+      right: showVisualMap ? 70 : 12,
+      bottom: 4,
+      left: 4,
       containLabel: true
     },
     xAxis: {

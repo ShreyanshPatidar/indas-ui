@@ -7,6 +7,10 @@
 export { AuditAPI, BusinessAuditAPI } from './audit'
 export * from './audit/send'
 
+// Remarks (remark intelligence / trail)
+export { RemarkIntelligenceAPI } from './remarks'
+export type { RemarkEntry, RemarkRow, RemarkSavePayload, RemarkSummary } from './remarks'
+
 // Email
 export * from './email'
 

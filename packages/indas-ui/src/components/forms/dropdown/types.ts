@@ -30,6 +30,8 @@ export interface DropdownProps {
   maxSelections?: number
   showSelectedCount?: boolean
   showAsTags?: boolean
+  /** Custom text for the multi-select trigger count, e.g. (n) => `${n} quantities selected` */
+  formatSelectedCount?: (count: number) => string
 
   // Text Input / Creatable features
   allowTextInput?: boolean
@@ -53,10 +55,24 @@ export interface DropdownProps {
   // Multi-select specific
   /** Header title for select all section */
   selectAllLabel?: string
+  /** Hide the Select All / Deselect All header row */
+  hideSelectAll?: boolean
   /** Show "ONLY" button on hover (like OTIF) */
   showOnlyButton?: boolean
 
   // Custom trigger
   /** Custom trigger element - replaces default trigger button */
   customTrigger?: React.ReactNode
+
+  /** Keep the caller-supplied option order (e.g. backend priority ordering) instead of label-sorting. */
+  preserveOrder?: boolean
+
+  /**
+   * Element rendered inside the trigger, between the clear button and the chevron.
+   * Use for inline action buttons (e.g. a group-picker popover, an "open in modal"
+   * shortcut) that should sit visually attached to the field rather than as a
+   * separate adjacent control. Click events from this element are isolated —
+   * they will not toggle the dropdown.
+   */
+  trailingAction?: React.ReactNode
 }

@@ -3,6 +3,7 @@
 import * as React from 'react'
 import { LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { KpiCardSkeleton } from './kpi-shell'
 
 export interface QuickStat {
   /** Label for this stat */
@@ -22,6 +23,8 @@ export interface KpiQuickStatsProps {
   stats: QuickStat[]
   /** Number of columns (2, 3, or 4) */
   columns?: 2 | 3 | 4
+  /** Show a skeleton placeholder while data loads */
+  loading?: boolean
   /** Additional class names */
   className?: string
 }
@@ -35,8 +38,10 @@ export function KpiQuickStats({
   title,
   stats,
   columns = 2,
+  loading,
   className
 }: KpiQuickStatsProps) {
+  if (loading) return <KpiCardSkeleton className={className} />
   const getIconColorClass = (color?: string) => {
     switch (color) {
       case 'success':
@@ -68,10 +73,10 @@ export function KpiQuickStats({
       )}
     >
       {/* Title */}
-      <p className="text-sm text-[rgb(var(--fg-muted))] mb-4">{title}</p>
+      <p className="text-sm text-[rgb(var(--fg-muted))] mb-3">{title}</p>
 
       {/* Stats Grid */}
-      <div className={cn('grid gap-3', gridClasses[columns])}>
+      <div className={cn('grid gap-x-3 gap-y-2', gridClasses[columns])}>
         {stats.map((stat, index) => {
           const Icon = stat.icon
           return (

@@ -76,3 +76,14 @@ export function useLanguage() {
     }
     return context
 }
+
+/**
+ * Like useLanguage() but safe to call outside a LanguageProvider.
+ * Falls back to an identity t() (returns the key, i.e. the English source text)
+ * when no provider is present — e.g. SessionExpiryWarning rendered by the
+ * AuthSessionProvider, which sits above LanguageProvider in the tree.
+ */
+export function useOptionalLanguage(): Pick<LanguageContextType, 't'> {
+    const context = useContext(LanguageContext)
+    return context ?? { t: (key: string) => key }
+}

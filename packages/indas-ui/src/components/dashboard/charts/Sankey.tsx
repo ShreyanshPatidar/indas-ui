@@ -56,13 +56,21 @@ export function SankeyChart({
   nodeWidth = 20,
   nodeGap = 12,
   showLabels = true,
-  colors = ['#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de', '#3ba272', '#fc8452', '#9a60b4'],
-  linkOpacity = 0.4,
+  colors = ['#6366f1', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6'],
+  linkOpacity = 0.45,
   className
 }: SankeyChartProps) {
+  // Node value = total flow through it (incoming for non-source nodes, else outgoing).
+  const nodeValue = (name: string) => {
+    const incoming = links.filter(l => l.target === name).reduce((s, l) => s + l.value, 0)
+    if (incoming > 0) return incoming
+    return links.filter(l => l.source === name).reduce((s, l) => s + l.value, 0)
+  }
+
   // Assign colors to nodes if not specified
   const nodesWithColors = nodes.map((node, index) => ({
     ...node,
+    value: nodeValue(node.name),
     itemStyle: {
       color: node.color || colors[index % colors.length]
     }
@@ -72,9 +80,12 @@ export function SankeyChart({
     tooltip: {
       trigger: 'item',
       triggerOn: 'mousemove',
-      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      backgroundColor: 'rgba(255, 255, 255, 0.98)',
       borderColor: '#e9ecef',
       borderWidth: 1,
+      borderRadius: 8,
+      padding: [8, 12],
+      extraCssText: 'box-shadow: 0 4px 16px rgba(0,0,0,0.12);',
       textStyle: { color: '#344767', fontSize: 12 },
       formatter: (params: any) => {
         if (params.dataType === 'edge') {
@@ -85,28 +96,38 @@ export function SankeyChart({
     },
     series: [{
       type: 'sankey',
-      layout: 'none',
       orient: orient,
       nodeWidth: nodeWidth,
       nodeGap: nodeGap,
-      draggable: true,
+      draggable: false,
+      left: 8,
+      right: 64,
+      top: 12,
+      bottom: 12,
+      nodeAlign: 'justify',
+      layoutIterations: 0,
       emphasis: {
         focus: 'adjacency',
         lineStyle: {
-          opacity: 0.8
+          opacity: 0.7
         }
+      },
+      itemStyle: {
+        borderWidth: 0,
+        borderRadius: 3
       },
       lineStyle: {
         color: 'gradient',
         opacity: linkOpacity,
-        curveness: 0.5
+        curveness: 0.55
       },
       label: {
         show: showLabels,
         position: orient === 'horizontal' ? 'right' : 'bottom',
         color: '#344767',
         fontSize: 11,
-        formatter: '{b}'
+        fontWeight: 500,
+        formatter: (p: any) => `${p.name} (${p.value?.toLocaleString() ?? '-'})`
       },
       data: nodesWithColors,
       links: links.map(link => ({

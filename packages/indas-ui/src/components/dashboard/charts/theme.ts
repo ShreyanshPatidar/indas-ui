@@ -87,7 +87,7 @@ export function getTooltipConfig() {
 /**
  * Get legend config for ECharts
  */
-export function getLegendConfig(position: 'bottom' | 'top' | 'right' = 'bottom') {
+export function getLegendConfig(position: 'bottom' | 'top' | 'right' = 'top') {
   const theme = getChartTheme()
 
   const baseConfig = {
@@ -127,10 +127,10 @@ export function getAxisConfig() {
  */
 export function getGridConfig(showLegend: boolean = true) {
   return {
-    top: 20,
-    right: 20,
-    bottom: showLegend ? 40 : 20,
-    left: 40,
+    top: showLegend ? 36 : 12,
+    right: 12,
+    bottom: 4,
+    left: 4,
     containLabel: true
   }
 }

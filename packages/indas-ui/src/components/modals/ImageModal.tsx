@@ -52,10 +52,13 @@ interface ImageModalProps {
 
   // Extra export buttons (optional) - custom export actions rendered in the export toolbar
   extraExportButtons?: React.ReactNode
+
+  // Extra header buttons (optional) - custom controls rendered in the header beside the zoom controls
+  extraHeaderButtons?: React.ReactNode
 }
 
 // ─── Zoom constants ───
-const MIN_SCALE = 0.25
+const MIN_SCALE = 0.1
 const MAX_SCALE = 5.0
 const ZOOM_STEP = 0.25
 // Physical zoom presets are defined inside the component (PHYSICAL_PRESETS)
@@ -79,7 +82,8 @@ export function ImageModal({
   viewBoxWidthMM,
   viewBoxHeightMM,
   exportFilename,
-  extraExportButtons
+  extraExportButtons,
+  extraHeaderButtons
 }: ImageModalProps) {
   const { t } = useLanguage()
   const contentRef = useRef<HTMLDivElement>(null)
@@ -104,14 +108,14 @@ export function ImageModal({
     const compute = () => {
       const viewportH = window.innerHeight
       const viewportW = window.innerWidth
-      const modalH = viewportH * 0.9
+      const modalH = viewportH * 0.95
       // Header ~44px + Details ~36px + Footer ~52px + padding ~20px = ~152px chrome
       const chromeH = 152
       const contentH = modalH - chromeH
       const aspect = viewBoxWidthMM / viewBoxHeightMM
       const idealContentW = contentH * aspect
-      // Add padding (48px sides) and clamp between 40vw and 92vw
-      const minW = viewportW * 0.4
+      // Add padding (48px sides) and clamp between 60vw and 92vw
+      const minW = viewportW * 0.6
       const maxW = viewportW * 0.92
       const idealModalW = idealContentW + 48
       setComputedModalWidth(Math.max(minW, Math.min(maxW, idealModalW)))
@@ -312,29 +316,18 @@ export function ImageModal({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [showZoomPresets])
 
-  // ─── Physical scale calculations ───
-  // 96 CSS px per inch = 3.7795 CSS px per mm (standard screen)
-  const PX_PER_MM_REAL = 96 / 25.4
+  // ─── Zoom % (plain) ───
+  // Displayed % is the literal CSS zoom: 100% = fit-to-page, 200% = 2× etc.
+  // Picking a preset sets exactly that value, so the label always matches.
+  const physicalPercent = Math.round(zoomScale * 100)
 
-  // How many CSS px currently represent 1mm of the diagram
+  // mm scale display (informational): how many CSS px represent 1mm of the diagram
   const pxPerMM = viewBoxWidthMM && svgBaseWidth > 0
     ? (svgBaseWidth / viewBoxWidthMM) * zoomScale
     : 0
-
-  // Physical zoom %: 100% means 1mm on screen = 1mm real
-  const physicalPercent = pxPerMM > 0 ? Math.round((pxPerMM / PX_PER_MM_REAL) * 100) : Math.round(zoomScale * 100)
-
-  // mm scale display
   const mmScale = pxPerMM > 0 ? pxPerMM.toFixed(1) : null
 
-  // Convert a desired physical % back to CSS zoomScale
-  const physicalPercentToScale = useCallback((percent: number) => {
-    if (!viewBoxWidthMM || svgBaseWidth <= 0) return percent / 100
-    const targetPxPerMM = (percent / 100) * PX_PER_MM_REAL
-    return targetPxPerMM / (svgBaseWidth / viewBoxWidthMM)
-  }, [viewBoxWidthMM, svgBaseWidth])
-
-  // Physical-scale presets (what the user sees as %)
+  // Plain zoom presets (literal % of CSS scale)
   const PHYSICAL_PRESETS = [10, 25, 50, 75, 100, 150, 200, 300, 500]
 
   const handlePreviewClick = () => {
@@ -366,6 +359,40 @@ export function ImageModal({
     return clone
   }
 
+  // Crop viewBox to the actual bounding box of the SVG's content (after dimension
+  // arrows are stripped) so exports don't carry empty padding around the diagram.
+  // Returns the final {width, height} of the cropped viewBox, or null on failure.
+  // Mutates `svg` in place. Falls back to the existing viewBox dimensions if getBBox throws.
+  const cropToContent = (svg: SVGSVGElement, padMm = 2): { width: number; height: number } | null => {
+    const host = document.createElement('div')
+    host.style.cssText = 'position:absolute;left:-99999px;top:-99999px;width:0;height:0;overflow:hidden'
+    document.body.appendChild(host)
+    host.appendChild(svg)
+    let result: { width: number; height: number } | null = null
+    try {
+      const bbox = svg.getBBox()
+      const x = bbox.x - padMm
+      const y = bbox.y - padMm
+      const w = bbox.width + padMm * 2
+      const h = bbox.height + padMm * 2
+      if (w > 0 && h > 0) {
+        svg.setAttribute('viewBox', `${x} ${y} ${w} ${h}`)
+        result = { width: w, height: h }
+      }
+    } catch {
+      const viewBox = svg.getAttribute('viewBox')
+      if (viewBox) {
+        const parts = viewBox.split(/\s+/)
+        const vbWidth = parseFloat(parts[2])
+        const vbHeight = parseFloat(parts[3])
+        if (vbWidth > 0 && vbHeight > 0) result = { width: vbWidth, height: vbHeight }
+      }
+    }
+    host.removeChild(svg)
+    document.body.removeChild(host)
+    return result
+  }
+
   const exportAsPNG = async () => {
     if (!contentRef.current) return
 
@@ -373,19 +400,11 @@ export function ImageModal({
       const clonedSvg = getCleanSvg()
       if (!clonedSvg) return
 
-      const viewBox = clonedSvg.getAttribute('viewBox')
-      let width = 800
-      let height = 600
+      const size = cropToContent(clonedSvg)
+      const width = size?.width ?? 800
+      const height = size?.height ?? 600
 
-      if (viewBox) {
-        const parts = viewBox.split(' ')
-        width = parseFloat(parts[2]) || 800
-        height = parseFloat(parts[3]) || 600
-      } else {
-        width = parseFloat(clonedSvg.getAttribute('width') || '800')
-        height = parseFloat(clonedSvg.getAttribute('height') || '600')
-      }
-
+      // PNG renders at 2x the mm-numeric dimensions for crisp resolution.
       clonedSvg.setAttribute('width', String(width * 2))
       clonedSvg.setAttribute('height', String(height * 2))
 
@@ -438,6 +457,12 @@ export function ImageModal({
       const cleanSvg = getCleanSvg()
       if (!cleanSvg) return
 
+      const size = cropToContent(cleanSvg)
+      if (size) {
+        cleanSvg.setAttribute('width', `${size.width}mm`)
+        cleanSvg.setAttribute('height', `${size.height}mm`)
+      }
+
       const svgData = new XMLSerializer().serializeToString(cleanSvg)
       const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' })
       const url = URL.createObjectURL(blob)
@@ -459,58 +484,36 @@ export function ImageModal({
       const svgElement = getCleanSvg()
       if (!svgElement) return
 
-      const viewBox = svgElement.getAttribute('viewBox')
-      let svgWidth = 800
-      let svgHeight = 600
+      const size = cropToContent(svgElement)
+      const svgWidth = size?.width ?? 800
+      const svgHeight = size?.height ?? 600
 
-      if (viewBox) {
-        const parts = viewBox.split(' ')
-        svgWidth = parseFloat(parts[2]) || 800
-        svgHeight = parseFloat(parts[3]) || 600
-      } else {
-        const widthAttr = svgElement.getAttribute('width')
-        const heightAttr = svgElement.getAttribute('height')
-        if (widthAttr) svgWidth = parseFloat(widthAttr)
-        if (heightAttr) svgHeight = parseFloat(heightAttr)
-      }
-
-      const isLandscape = svgWidth > svgHeight
-      const orientation = isLandscape ? 'landscape' : 'portrait'
+      // Use mm units so 1 SVG unit (which is 1mm after the crop) = 1mm in the PDF.
+      // Page size matches content + small margin — preserves true physical scale.
+      const titleSpace = title ? 12 : 0 // mm reserved for title
+      const margin = 5 // mm
+      const pageWidth = svgWidth + margin * 2
+      const pageHeight = svgHeight + margin * 2 + titleSpace
+      const orientation: 'landscape' | 'portrait' = pageWidth > pageHeight ? 'landscape' : 'portrait'
 
       const pdf = new jsPDF({
-        orientation: orientation as 'landscape' | 'portrait',
-        unit: 'pt',
-        format: 'a4'
+        orientation,
+        unit: 'mm',
+        format: [pageWidth, pageHeight]
       })
 
-      const pdfWidth = pdf.internal.pageSize.getWidth()
-      const pdfHeight = pdf.internal.pageSize.getHeight()
-
-      const margin = 40
-      const availableWidth = pdfWidth - (margin * 2)
-      const availableHeight = pdfHeight - (margin * 2)
-
-      const scaleX = availableWidth / svgWidth
-      const scaleY = availableHeight / svgHeight
-      const pdfScale = Math.min(scaleX, scaleY)
-
-      const scaledWidth = svgWidth * pdfScale
-      const scaledHeight = svgHeight * pdfScale
-      const x = (pdfWidth - scaledWidth) / 2
-      const y = (pdfHeight - scaledHeight) / 2
-
       if (title) {
-        pdf.setFontSize(14)
+        pdf.setFontSize(10)
         pdf.setTextColor(30, 41, 59)
-        pdf.text(title, pdfWidth / 2, 25, { align: 'center' })
+        pdf.text(title, pageWidth / 2, margin + 5, { align: 'center' })
       }
 
       // @ts-ignore - svg2pdf.js adds this method to jsPDF
       await pdf.svg(svgElement, {
-        x: x,
-        y: title ? y + 10 : y,
-        width: scaledWidth,
-        height: scaledHeight
+        x: margin,
+        y: margin + titleSpace,
+        width: svgWidth,
+        height: svgHeight
       })
 
       const filename = getExportName('pdf')
@@ -527,58 +530,34 @@ export function ImageModal({
       const svgElement = getCleanSvg()
       if (!svgElement) return
 
-      const viewBox = svgElement.getAttribute('viewBox')
-      let svgWidth = 800
-      let svgHeight = 600
+      const size = cropToContent(svgElement)
+      const svgWidth = size?.width ?? 800
+      const svgHeight = size?.height ?? 600
 
-      if (viewBox) {
-        const parts = viewBox.split(' ')
-        svgWidth = parseFloat(parts[2]) || 800
-        svgHeight = parseFloat(parts[3]) || 600
-      } else {
-        const widthAttr = svgElement.getAttribute('width')
-        const heightAttr = svgElement.getAttribute('height')
-        if (widthAttr) svgWidth = parseFloat(widthAttr)
-        if (heightAttr) svgHeight = parseFloat(heightAttr)
-      }
-
-      const isLandscape = svgWidth > svgHeight
-      const orientation = isLandscape ? 'landscape' : 'portrait'
+      const titleSpace = title ? 12 : 0
+      const margin = 5
+      const pageWidth = svgWidth + margin * 2
+      const pageHeight = svgHeight + margin * 2 + titleSpace
+      const orientation: 'landscape' | 'portrait' = pageWidth > pageHeight ? 'landscape' : 'portrait'
 
       const pdf = new jsPDF({
-        orientation: orientation as 'landscape' | 'portrait',
-        unit: 'pt',
-        format: 'a4'
+        orientation,
+        unit: 'mm',
+        format: [pageWidth, pageHeight]
       })
 
-      const pdfWidth = pdf.internal.pageSize.getWidth()
-      const pdfHeight = pdf.internal.pageSize.getHeight()
-
-      const margin = 40
-      const availableWidth = pdfWidth - (margin * 2)
-      const availableHeight = pdfHeight - (margin * 2)
-
-      const scaleX = availableWidth / svgWidth
-      const scaleY = availableHeight / svgHeight
-      const pdfScale = Math.min(scaleX, scaleY)
-
-      const scaledWidth = svgWidth * pdfScale
-      const scaledHeight = svgHeight * pdfScale
-      const x = (pdfWidth - scaledWidth) / 2
-      const y = (pdfHeight - scaledHeight) / 2
-
       if (title) {
-        pdf.setFontSize(14)
+        pdf.setFontSize(10)
         pdf.setTextColor(30, 41, 59)
-        pdf.text(title, pdfWidth / 2, 25, { align: 'center' })
+        pdf.text(title, pageWidth / 2, margin + 5, { align: 'center' })
       }
 
       // @ts-ignore - svg2pdf.js adds this method to jsPDF
       await pdf.svg(svgElement, {
-        x: x,
-        y: title ? y + 10 : y,
-        width: scaledWidth,
-        height: scaledHeight
+        x: margin,
+        y: margin + titleSpace,
+        width: svgWidth,
+        height: svgHeight
       })
 
       pdf.autoPrint()
@@ -603,18 +582,9 @@ export function ImageModal({
       const clonedSvg = getCleanSvg()
       if (!clonedSvg) return
 
-      const viewBox = clonedSvg.getAttribute('viewBox')
-      let width = 800
-      let height = 600
-
-      if (viewBox) {
-        const parts = viewBox.split(' ')
-        width = parseFloat(parts[2]) || 800
-        height = parseFloat(parts[3]) || 600
-      } else {
-        width = parseFloat(clonedSvg.getAttribute('width') || '800')
-        height = parseFloat(clonedSvg.getAttribute('height') || '600')
-      }
+      const size = cropToContent(clonedSvg)
+      const width = size?.width ?? 800
+      const height = size?.height ?? 600
 
       clonedSvg.setAttribute('width', String(width * 2))
       clonedSvg.setAttribute('height', String(height * 2))
@@ -698,7 +668,7 @@ export function ImageModal({
             isPdfMode || cleanMode
               ? 'w-[70vw] max-w-[70vw] h-[98vh]'
               : isZoomMode
-                ? 'h-[90vh] max-w-[92vw]'
+                ? 'h-[95vh] max-w-[92vw]'
                 : 'w-auto max-w-[95vw] max-h-[95vh]'
           }`}
           style={isZoomMode && computedModalWidth ? { width: `${computedModalWidth}px` } : undefined}
@@ -710,7 +680,7 @@ export function ImageModal({
           ) : (
             <DialogHeader className="px-4 md:px-6 py-2.5 border-b border-[rgb(var(--bd-default))] flex-shrink-0 bg-[rgb(var(--bg-surface))]">
               <div className="flex items-center justify-between gap-3">
-                <DialogTitle className="flex-shrink-0">{title}</DialogTitle>
+                <DialogTitle className="flex-shrink-0 mr-auto">{title}</DialogTitle>
 
                 {/* Zoom controls in header */}
                 {isZoomMode && (
@@ -739,7 +709,7 @@ export function ImageModal({
                                   ? 'text-[rgb(var(--color-primary))] font-medium'
                                   : 'text-[rgb(var(--fg-default))]'
                               }`}
-                              onClick={() => { setZoomLevel(physicalPercentToScale(preset)); setShowZoomPresets(false) }}
+                              onClick={() => { setZoomLevel(preset / 100); setShowZoomPresets(false) }}
                             >
                               {preset}%
                             </button>
@@ -775,6 +745,14 @@ export function ImageModal({
                       </>
                     )}
                   </div>
+                )}
+
+                {/* Custom header controls (e.g. Show Dimension toggle) — top right */}
+                {extraHeaderButtons && (
+                  <>
+                    {isZoomMode && <div className="w-px h-4 bg-[rgb(var(--bd-default))] mx-1" />}
+                    <div className="flex items-center gap-1.5 flex-shrink-0">{extraHeaderButtons}</div>
+                  </>
                 )}
 
                 <button

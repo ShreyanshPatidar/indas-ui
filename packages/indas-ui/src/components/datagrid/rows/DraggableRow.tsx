@@ -27,6 +27,10 @@ interface DraggableRowProps<TData> {
   onClearColumnSearch?: (columnId: string) => void
   SearchHighlighter?: React.ComponentType<{ text: string; searchTerm: string }>
   InlineSearchCell?: React.ComponentType<any>
+  /** Extra classes from DataGrid's getRowProps (e.g. status/margin row tint) */
+  className?: string
+  /** Inline style from DataGrid's getRowProps — merged under the drag transform */
+  rowStyle?: React.CSSProperties
 }
 
 export function DraggableRow<TData>({
@@ -49,6 +53,8 @@ export function DraggableRow<TData>({
   onClearColumnSearch,
   SearchHighlighter,
   InlineSearchCell,
+  className,
+  rowStyle,
 }: DraggableRowProps<TData>) {
   const rowId = (row.original as any).id || row.id
 
@@ -64,6 +70,7 @@ export function DraggableRow<TData>({
   })
 
   const style = {
+    ...rowStyle,
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
@@ -83,6 +90,7 @@ export function DraggableRow<TData>({
           ? 'bg-[color-mix(in_srgb,rgb(var(--color-primary))_8%,rgb(var(--bg-surface)))] shadow-sm hover:bg-[color-mix(in_srgb,rgb(var(--color-primary))_15%,rgb(var(--bg-surface)))]'
           : 'hover:bg-[color-mix(in_srgb,rgb(var(--color-primary))_5%,rgb(var(--bg-surface)))]'
         }
+        ${className ?? ''}
       `}
       onClick={onRowClick}
       onDoubleClick={onRowDoubleClick}

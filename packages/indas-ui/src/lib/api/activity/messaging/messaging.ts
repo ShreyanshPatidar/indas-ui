@@ -387,6 +387,22 @@ class MessagingAPI {
     }
   }
 
+  /** GET /api/messaging/online-users — userId strings currently connected for this company */
+  static async getOnlineUsers(
+    session: any
+  ): Promise<APIResponse<string[]>> {
+    try {
+      const response = await APIClient.get<string[]>(
+        '/api/messaging/online-users',
+        session,
+        BASE_URL
+      )
+      return { success: true, data: response.data || [] }
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Failed to fetch online users' }
+    }
+  }
+
   // ─── Search & Contacts ──────────────────────────────────────────────────────
 
   /** GET /api/messaging/search?q=hello&limit=50 */

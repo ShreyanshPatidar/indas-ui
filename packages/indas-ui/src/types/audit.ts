@@ -27,6 +27,7 @@ export enum AuditAction {
   IMPORT = 'Import',
   PRINT = 'Print',
   DUPLICATE = 'Duplicate',
+  SAVE_AS = 'Save As',
   APPROVE = 'Approve',
   REJECT = 'Reject',
   ESCALATE = 'Escalate',

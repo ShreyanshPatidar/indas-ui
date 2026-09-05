@@ -195,16 +195,16 @@ export async function toggleStarConversationAPI(
   }
 }
 
-/**
- * Fetch the dynamic Categories & Combinations list for the Synthia help screen.
- * Returns the categories configured for the user's company, with each category's
- * default processes and the materials allowed per process.
- */
 export async function getHelpCombinationsAPI(
-  sessionData: any
+  sessionData: any,
+  opts?: { contentType?: string; contentId?: number }
 ): Promise<APIResponse<HelpCombinationCategory[]>> {
   try {
-    const response = await APIClient.get('/api/synthia/help/combinations', sessionData)
+    const params: string[] = []
+    if (opts?.contentType) params.push(`contentType=${encodeURIComponent(opts.contentType)}`)
+    if (opts?.contentId != null) params.push(`contentId=${opts.contentId}`)
+    const qs = params.length > 0 ? `?${params.join('&')}` : ''
+    const response = await APIClient.get(`/api/synthia/help/combinations${qs}`, sessionData)
     if (response.success && response.data && typeof response.data === 'object') {
       const obj = response.data as { categories?: HelpCombinationCategory[] }
       return { ...response, data: Array.isArray(obj.categories) ? obj.categories : [] }
@@ -259,6 +259,25 @@ export async function deleteConversationAPI(
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to delete conversation'
+    }
+  }
+}
+
+export async function duplicateConversationAPI(
+  conversationId: number,
+  sessionData: any
+): Promise<APIResponse<{ ConversationID: number; Title: string }>> {
+  try {
+    const response = await APIClient.post<{ ConversationID: number; Title: string }>(
+      `/api/synthia/duplicate-conversation/${conversationId}`,
+      {},
+      sessionData
+    )
+    return response
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to duplicate conversation'
     }
   }
 }

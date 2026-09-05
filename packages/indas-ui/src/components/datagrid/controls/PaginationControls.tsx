@@ -42,15 +42,17 @@ export function PaginationControls({
     return null
   }
 
+  // Mobile: "Showing…" on its own line, pager centred below it so the buttons keep
+  // their touch targets and never get squeezed. sm+: single row as before.
   return (
-    <div className="flex items-center justify-between px-3 py-1 bg-[rgb(var(--bg-subtle))] border-t border-[rgb(var(--bd-default))] gap-2">
+    <div className="flex flex-wrap items-center justify-between px-2 sm:px-3 py-1 bg-[rgb(var(--bg-subtle))] border-t border-[rgb(var(--bd-default))] gap-x-2 gap-y-1">
       {/* Left: Showing X - Y of Z */}
       <div className="text-xs text-[rgb(var(--fg-muted))] flex-shrink-0">
         Showing <span className="font-medium">{formatNumber(startRow)}</span>{' - '}<span className="font-medium">{formatNumber(endRow)}</span>{' of '}<span className="font-medium">{formatNumber(totalRows)}</span>
       </div>
 
       {/* Center: Page navigation */}
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1 order-3 sm:order-2 w-full sm:w-auto justify-center">
         {/* First Page */}
         <button
           onClick={() => onPageChange(0)}
@@ -125,7 +127,7 @@ export function PaginationControls({
 
       {/* Right: Page size selector (hidden on mobile) */}
       {!isMobile && (
-        <div className="flex items-center gap-2 text-sm text-[rgb(var(--fg-default))] flex-shrink-0">
+        <div className="flex items-center gap-2 text-sm text-[rgb(var(--fg-default))] flex-shrink-0 order-2 sm:order-3">
           <span className="hidden sm:inline">Show:</span>
           <Dropdown
             value={String(pageSize)}

@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 import { getDynamicNavigation, GroupedModule, DynamicModule } from '@/lib/api'
+import { getModuleRoutePath } from '@/lib/utils'
 
 interface NavigationContextValue {
   groupedModules: GroupedModule[]
@@ -113,24 +114,70 @@ export function useNavigation() {
 }
 
 /**
+ * Whether the module at the given route path has IsIntegrationRequired = 1 in ModuleMaster.
+ * Used to gate customer-specific external integrations (e.g. legacy costing in Estimation).
+ */
+export function useModuleIntegrationRequired(path: string): boolean {
+  const { groupedModules } = useNavigation()
+  return React.useMemo(() => {
+    const norm = (p: string) => (p.length > 1 ? p.replace(/\/+$/, '') : p).toLowerCase()
+    const target = norm(path)
+
+    const matches = (mod: DynamicModule) => {
+      const modPath = norm(getModuleRoutePath(mod.ModuleName))
+      if (modPath === '#' || modPath === '/') return false
+      return modPath === target
+    }
+
+    for (const group of groupedModules) {
+      for (const mod of group.modules) {
+        if (matches(mod)) return mod.IsIntegrationRequired === 1 || mod.IsIntegrationRequired === true
+        if (mod.children) {
+          for (const child of mod.children) {
+            if (matches(child)) return child.IsIntegrationRequired === 1 || child.IsIntegrationRequired === true
+          }
+        }
+      }
+    }
+    return false
+  }, [groupedModules, path])
+}
+
+/**
  * Look up a module's ModuleDisplayName by its route path (e.g. '/synthia').
  * Walks the full navigation tree including children.
  */
 export function useModuleDisplayName(path: string, fallback: string = ''): string {
   const { groupedModules } = useNavigation()
   return React.useMemo(() => {
+    const norm = (p: string) => (p.length > 1 ? p.replace(/\/+$/, '') : p).toLowerCase()
+    const target = norm(path)
+
+    let exactName = ''
+    let prefixName = ''
+    let prefixLen = -1
+
+    const consider = (moduleName: string, displayName: string) => {
+      const modPath = norm(getModuleRoutePath(moduleName))
+      if (modPath === '#' || modPath === '/') return
+      if (target === modPath) {
+        exactName = displayName
+      } else if (target.startsWith(modPath + '/') && modPath.length > prefixLen) {
+        prefixLen = modPath.length
+        prefixName = displayName
+      }
+    }
+
     for (const group of groupedModules) {
       for (const mod of group.modules) {
-        const modPath = mod.ModuleName.startsWith('/') ? mod.ModuleName : `/${mod.ModuleName.toLowerCase().trim().replace(/\s+/g, '-')}`
-        if (modPath === path) return mod.ModuleDisplayName
+        consider(mod.ModuleName, mod.ModuleDisplayName)
         if (mod.children) {
           for (const child of mod.children) {
-            const childPath = child.ModuleName.startsWith('/') ? child.ModuleName : `/${child.ModuleName.toLowerCase().trim().replace(/\s+/g, '-')}`
-            if (childPath === path) return child.ModuleDisplayName
+            consider(child.ModuleName, child.ModuleDisplayName)
           }
         }
       }
     }
-    return fallback
+    return exactName || prefixName || fallback
   }, [groupedModules, path, fallback])
 }

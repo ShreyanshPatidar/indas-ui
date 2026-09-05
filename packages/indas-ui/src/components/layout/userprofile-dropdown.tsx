@@ -7,15 +7,18 @@ import { useRouter } from "next/navigation"
 import { LogoutModal, DeviceInfo } from "@/components/modals/logout-modal"
 import { detectDevice, getDeviceId, getDeviceName } from "@/lib/utils/device-detection"
 import { performLogoutCleanup } from "@/lib/utils/logout-cleanup"
-import { QuotationAPI } from "@/lib/api/estimation/quotepanel"
+import { useNotifications } from "@/hooks/useNotifications"
 
 export function UserDropdown() {
   const { data: session } = useSession()
+  const { getNotificationCounts } = useNotifications(session)
   const [isOpen, setIsOpen] = useState(false)
   const [showLogoutModal, setShowLogoutModal] = useState(false)
   const [sessionDuration, setSessionDuration] = useState('0h 0m')
-  const [pendingCount, setPendingCount] = useState(0)
   const router = useRouter()
+
+  // Pending tasks = notifications in the "Pending" section (category === 'Pending')
+  const pendingCount = getNotificationCounts().pending
 
   // Calculate session duration
   useEffect(() => {
@@ -45,17 +48,8 @@ export function UserDropdown() {
     return () => window.removeEventListener('storage', handleStorageChange)
   }, [])
 
-  // Fetch pending approvals when logout modal opens
-  const handleOpenLogoutModal = async () => {
+  const handleOpenLogoutModal = () => {
     setShowLogoutModal(true)
-    try {
-      const res = await QuotationAPI.getPriceApprovalQuoteLoad(session)
-      if (res.success && Array.isArray(res.data)) {
-        setPendingCount(res.data.length)
-      }
-    } catch {
-      // silently fail — pending count stays 0
-    }
   }
 
   const profileAvatarSmall = (
@@ -92,7 +86,7 @@ export function UserDropdown() {
     return {
       duration: sessionDuration,
       startTime: new Date((session?.user as any)?.loginTime || sessionStorage.getItem('loginTime') || new Date().toISOString()),
-      tasks: { overdue: pendingCount, dueSoon: 0, total: pendingCount },
+      tasks: { overdue: 0, dueSoon: pendingCount, total: pendingCount },
       activeDevices: [currentDevice],
       isInactivityWarning: false
     }
@@ -160,8 +154,7 @@ export function UserDropdown() {
               <button
                 onClick={() => {
                   setIsOpen(false)
-                  const skip = localStorage.getItem('skipLogoutConfirmation') === 'true'
-                  if (skip) { handleLogout() } else { handleOpenLogoutModal() }
+                  handleOpenLogoutModal()
                 }}
                 className="flex items-center w-full gap-2.5 px-3 py-2 text-sm text-[rgb(var(--color-error))] hover:bg-[rgb(var(--color-error)/0.08)] rounded-lg transition-colors"
               >
@@ -182,7 +175,7 @@ export function UserDropdown() {
         onExtendSession={() => setShowLogoutModal(false)}
         onViewTasks={() => {
           setShowLogoutModal(false)
-          router.push('/costing/quote-panel')
+          router.push('/activity/notifications')
         }}
       />
     </div>

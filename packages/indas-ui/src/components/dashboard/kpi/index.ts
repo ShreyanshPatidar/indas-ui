@@ -1,6 +1,6 @@
 // KPI Components
-export { Kpi } from './Kpi'
-export type { KpiProps } from './Kpi'
+export { KpiShell, ACCENT_MAP } from './kpi-shell'
+export type { KpiShellProps, KpiAccent } from './kpi-shell'
 
 export { KpiComparison } from './KpiComparison'
 export type { KpiComparisonProps, ComparisonBar } from './KpiComparison'

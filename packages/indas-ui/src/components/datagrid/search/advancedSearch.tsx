@@ -79,6 +79,18 @@ export function advancedSearch({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearchValue])
 
+  // Full search reset — also clears the DEBOUNCED value, which otherwise
+  // re-applies the old filter 300ms after an external clear.
+  const clearSearch = useCallback(() => {
+    setSearchValue('')
+    setDebouncedSearchValue('')
+    setCurrentSearchTerm('')
+    setSelectedDuringSearch([])
+    setGlobalFilter('')
+    clearNavigation()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [setGlobalFilter, clearNavigation])
+
   // Track row selection and auto-clear search when all results selected
   const handleRowSelectionChange = useCallback((rowId: string, isSelected: boolean) => {
 
@@ -125,6 +137,7 @@ export function advancedSearch({
     setSelectedDuringSearch,
     debouncedSearchValue,
     handleGlobalSearchChange,
-    handleRowSelectionChange
+    handleRowSelectionChange,
+    clearSearch
   }
 }

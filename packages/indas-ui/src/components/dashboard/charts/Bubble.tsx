@@ -82,17 +82,17 @@ export function BubbleChart({
       }
     },
     legend: showLegend ? {
-      bottom: 0,
+      top: 0,
       left: 'center',
       itemWidth: 12,
       itemHeight: 12,
       textStyle: { fontSize: 12, color: '#6c757d' }
     } : undefined,
     grid: {
-      top: 30,
-      right: 30,
-      bottom: showLegend ? 50 : 30,
-      left: 50,
+      top: showLegend ? 36 : 20,
+      right: 16,
+      bottom: 8,
+      left: 8,
       containLabel: true
     },
     xAxis: {

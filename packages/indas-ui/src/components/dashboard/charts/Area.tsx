@@ -36,6 +36,12 @@ export interface AreaChartSeries {
   key: string
   name: string
   color?: string
+  /** Render as a plain line (no area fill). Default: filled area. */
+  line?: boolean
+  /** Render as bars instead of a line/area. */
+  bar?: boolean
+  /** Plot against the secondary (right) Y-axis — use when series have different scales. */
+  secondaryAxis?: boolean
 }
 
 export interface AreaChartProps {
@@ -74,7 +80,7 @@ export function AreaChart({
       }
     },
     legend: showLegend ? {
-      bottom: 0,
+      top: 0,
       left: 'center',
       itemWidth: 12,
       itemHeight: 12,
@@ -84,32 +90,45 @@ export function AreaChart({
       }
     } : undefined,
     grid: {
-      top: 20,
-      right: 20,
-      bottom: showLegend ? 40 : 20,
-      left: 40,
+      top: showLegend ? 36 : 12,
+      right: 12,
+      bottom: 4,
+      left: 4,
       containLabel: true
     },
     xAxis: {
       type: 'category',
-      boundaryGap: false,
+      boundaryGap: series.some(s => s.bar),
       data: data.map(item => item[xKey]),
       axisLine: { lineStyle: { color: '#dee2e6' } },
       axisLabel: { color: '#6c757d', fontSize: 11 },
       axisTick: { show: false }
     },
-    yAxis: {
-      type: 'value',
-      axisLine: { show: false },
-      axisLabel: { color: '#6c757d', fontSize: 11 },
-      splitLine: {
-        show: showGrid,
-        lineStyle: { color: '#f0f0f0', type: 'dashed' }
-      }
-    },
+    yAxis: series.some(s => s.secondaryAxis)
+      ? [
+          { type: 'value', axisLine: { show: false }, axisLabel: { color: '#6c757d', fontSize: 11 }, splitLine: { show: showGrid, lineStyle: { color: '#f0f0f0', type: 'dashed' } } },
+          { type: 'value', axisLine: { show: false }, axisLabel: { color: '#6c757d', fontSize: 11 }, splitLine: { show: false } },
+        ]
+      : {
+          type: 'value',
+          axisLine: { show: false },
+          axisLabel: { color: '#6c757d', fontSize: 11 },
+          splitLine: { show: showGrid, lineStyle: { color: '#f0f0f0', type: 'dashed' } }
+        },
     series: series.map((s, index) => {
       const colors = ['#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de']
       const color = s.color || colors[index % colors.length]
+
+      if (s.bar) {
+        return {
+          name: s.name,
+          type: 'bar',
+          barMaxWidth: 36,
+          yAxisIndex: s.secondaryAxis ? 1 : 0,
+          itemStyle: { color: color, borderRadius: [4, 4, 0, 0] },
+          data: data.map(item => item[s.key])
+        }
+      }
 
       return {
         name: s.name,
@@ -118,17 +137,20 @@ export function AreaChart({
         symbol: 'circle',
         symbolSize: 6,
         showSymbol: false,
+        yAxisIndex: s.secondaryAxis ? 1 : 0,
         lineStyle: { width: 2, color: color },
-        areaStyle: {
-          color: {
-            type: 'linear',
-            x: 0, y: 0, x2: 0, y2: 1,
-            colorStops: [
-              { offset: 0, color: withAlpha(color, 0.8) },
-              { offset: 1, color: withAlpha(color, 0.06) }
-            ]
+        ...(s.line ? {} : {
+          areaStyle: {
+            color: {
+              type: 'linear',
+              x: 0, y: 0, x2: 0, y2: 1,
+              colorStops: [
+                { offset: 0, color: withAlpha(color, 0.8) },
+                { offset: 1, color: withAlpha(color, 0.06) }
+              ]
+            }
           }
-        },
+        }),
         data: data.map(item => item[s.key])
       }
     })

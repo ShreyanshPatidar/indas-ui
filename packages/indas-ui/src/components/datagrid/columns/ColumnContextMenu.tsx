@@ -26,7 +26,7 @@ import {
   ArrowUpDown,
   Move,
 } from 'lucide-react'
-import { Column } from '@tanstack/react-table'
+import { Column, Table } from '@tanstack/react-table'
 
 import { Button } from '@/components/ui'
 import { Input } from '@/components/ui'
@@ -38,6 +38,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui'
 
 interface ColumnContextMenuProps<TData> {
   column: Column<TData, unknown>
+  table?: Table<TData>
   data: TData[]
   isVisible: boolean
   position: { x: number; y: number }
@@ -59,6 +60,7 @@ interface ColumnStats {
 
 export function ColumnContextMenu<TData>({
   column,
+  table,
   data,
   isVisible,
   position,
@@ -71,9 +73,21 @@ export function ColumnContextMenu<TData>({
   const [selectedValues, setSelectedValues] = useState<Set<string>>(new Set())
 
   const columnId = column.id
-  const columnHeader = typeof column.columnDef.header === 'string' 
-    ? column.columnDef.header 
+  const columnHeader = typeof column.columnDef.header === 'string'
+    ? column.columnDef.header
     : columnId
+
+  // Hidden columns can't be right-clicked to restore, so surface them here for unhiding.
+  const NON_DATA_COLUMN_IDS = new Set(['select', 'selection', 'actions', 'expand', 'drag'])
+  const hiddenColumns = table
+    ? table.getAllColumns()
+        .filter((c: any) => c.getCanHide() && !c.getIsVisible() && !NON_DATA_COLUMN_IDS.has(c.id))
+        .map((c: any) => ({
+          id: c.id,
+          label: typeof c.columnDef.header === 'string' ? c.columnDef.header : c.id,
+          show: () => c.toggleVisibility(true),
+        }))
+    : []
 
   // Calculate column statistics
   useEffect(() => {
@@ -81,8 +95,6 @@ export function ColumnContextMenu<TData>({
       const values = data.map(row => (row as any)[columnId]).filter(val => val != null)
       const uniqueValues = [...new Set(values.map(v => String(v)))].sort()
 
-      console.log('📊 Column Stats:', { columnId, dataLength: data.length, valuesLength: values.length, uniqueCount: uniqueValues.length, sample: values.slice(0, 3) })
-      
       let dataType: ColumnStats['dataType'] = 'string'
       let min, max, avg, sum
       
@@ -238,6 +250,13 @@ export function ColumnContextMenu<TData>({
             onClose()
           }
         },
+        // Restore any hidden column without opening the advanced filter.
+        ...(hiddenColumns.length > 0 ? [{
+          id: 'show-hidden',
+          label: `Show Hidden Columns (${hiddenColumns.length})`,
+          icon: Eye,
+          custom: true,
+        }] : []),
         // Only show Pin Left/Right/Unpin for non-select columns
         ...(!isSelectColumn ? [
           {
@@ -473,6 +492,34 @@ export function ColumnContextMenu<TData>({
                     >
                       Apply Filter ({selectedValues.size})
                     </Button>
+                  </div>
+                </div>
+              )
+            }
+
+            if (item.id === 'show-hidden') {
+              return (
+                <div key={item.id} className="p-2 border-b">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm font-medium text-[rgb(var(--fg-default))]">Hidden Columns</div>
+                      <Badge variant="secondary" className="text-xs">{hiddenColumns.length}</Badge>
+                    </div>
+                    <div className="max-h-64 overflow-y-auto space-y-1">
+                      {hiddenColumns.map((col) => (
+                        <button
+                          key={col.id}
+                          onClick={() => {
+                            col.show()
+                            onClose()
+                          }}
+                          className="w-full flex items-center gap-2 px-2 py-1 text-left text-xs rounded hover:bg-[rgb(var(--bg-subtle))]"
+                        >
+                          <Eye className="h-3.5 w-3.5 text-[rgb(var(--fg-muted))] flex-shrink-0" />
+                          <span className="truncate flex-1">{col.label}</span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )

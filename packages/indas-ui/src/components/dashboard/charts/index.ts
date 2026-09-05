@@ -9,7 +9,7 @@ export { DonutChart } from './Donut'
 export type { DonutChartProps, DonutChartDataItem } from './Donut'
 
 export { GaugeChart } from './Gauge'
-export type { GaugeChartProps } from './Gauge'
+export type { GaugeChartProps, GaugeSeriesItem } from './Gauge'
 
 export { LineChart } from './Line'
 export type { LineChartProps, LineChartDataItem, LineChartSeries } from './Line'
@@ -29,9 +29,6 @@ export type { ScatterChartProps, ScatterChartDataItem, ScatterChartSeries } from
 export { ParetoChart } from './Pareto'
 export type { ParetoChartProps, ParetoChartDataItem } from './Pareto'
 
-export { HistogramChart } from './Histogram'
-export type { HistogramChartProps } from './Histogram'
-
 export { BubbleChart } from './Bubble'
 export type { BubbleChartProps, BubbleChartDataItem, BubbleChartSeries } from './Bubble'
 
@@ -47,12 +44,6 @@ export type { TreemapChartProps, TreemapDataItem } from './Treemap'
 
 export { SankeyChart } from './Sankey'
 export type { SankeyChartProps, SankeyNode, SankeyLink } from './Sankey'
-
-export { WaterfallChart } from './Waterfall'
-export type { WaterfallChartProps, WaterfallDataItem } from './Waterfall'
-
-export { BulletChart } from './Bullet'
-export type { BulletChartProps, BulletChartDataItem } from './Bullet'
 
 export { Sparkline } from './Sparkline'
 export type { SparklineProps } from './Sparkline'

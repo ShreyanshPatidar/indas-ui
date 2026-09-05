@@ -76,14 +76,14 @@ function Message({ message, onSelectItem, onEditMessage, onRegenerateAi, onFeedb
 
   const handleSaveEdit = useCallback(() => {
     const trimmed = editText.trim()
-    if (trimmed && trimmed !== message.content) {
-      onEditMessage?.(message.id, trimmed)
-      setIsEditing(false)
-      setEditText('')
-    } else {
+    if (!trimmed) {
       handleCancelEdit()
+      return
     }
-  }, [editText, message.content, message.id, onEditMessage, handleCancelEdit])
+    onEditMessage?.(message.id, trimmed)
+    setIsEditing(false)
+    setEditText('')
+  }, [editText, message.id, onEditMessage, handleCancelEdit])
 
   const handleEditKeyDown = useCallback((e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Escape') {
@@ -139,6 +139,8 @@ function Message({ message, onSelectItem, onEditMessage, onRegenerateAi, onFeedb
 
   return (
     <div
+      data-message-id={message.id}
+      data-message-role={message.role}
       className={cn(
         'flex gap-4 group animate-[popIn_0.25s_cubic-bezier(0.175,0.885,0.32,1.05)]',
         isUser && 'flex-row-reverse'
