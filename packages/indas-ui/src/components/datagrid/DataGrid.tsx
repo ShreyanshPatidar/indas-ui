@@ -107,7 +107,10 @@ import { Skeleton } from '@/components/ui/feedback/skeleton'
 import { AdvancedFilterModal } from './controls/menu/filter/AdvancedFilterModal'
 // Column Chooser Modal (now integrated into AdvancedFilterModal)
 // Data Visualization Component (Chart View)
-import { ChartView as DataVisualization } from './controls/menu/view/ChartView'
+// Chart view pulls in ECharts; load it only when the user switches to the chart view.
+const DataVisualization = React.lazy(() =>
+  import('./controls/menu/view/ChartView').then((m) => ({ default: m.ChartView }))
+) as unknown as typeof import('./controls/menu/view/ChartView').ChartView
 // Export/Import - Now handled via ActionsMenu (ExportSection/ImportSection)
 // Draggable Column Header
 import { DraggableColumnHeader } from './columns/DraggableColumnHeader'
@@ -2860,12 +2863,14 @@ export function DataGrid<TData>({
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
             >
-              {/* Data Visualization */}
-              <DataVisualization
-                data={processedData}
-                columns={columns}
-                title="Data Insights"
-              />
+              {/* Data Visualization (lazy: ECharts downloads on first use) */}
+              <React.Suspense fallback={<div className="p-6 text-sm text-[rgb(var(--fg-muted))]">Loading chart…</div>}>
+                <DataVisualization
+                  data={processedData}
+                  columns={columns}
+                  title="Data Insights"
+                />
+              </React.Suspense>
             </motion.div>
           )}
         </AnimatePresence>
