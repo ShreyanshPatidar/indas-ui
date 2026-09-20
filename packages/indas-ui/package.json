@@ -1,6 +1,6 @@
 {
   "name": "indas-ui",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Indas UI — React component library for business apps: Tailwind design tokens, Radix primitives, Lucide icons, DataGrid, dashboards and charts.",
   "license": "MIT",
   "author": "Indas Analytics Pvt Ltd",
@@ -63,6 +63,11 @@
       "types": "./dist/components/forms/index.d.ts",
       "import": "./dist/components/forms/index.js",
       "require": "./dist/cjs/components/forms/index.js"
+    },
+    "./chat": {
+      "types": "./dist/components/chat/index.d.ts",
+      "import": "./dist/components/chat/index.js",
+      "require": "./dist/cjs/components/chat/index.js"
     },
     "./providers": {
       "types": "./dist/providers.d.ts",

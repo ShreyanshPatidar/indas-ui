@@ -10,3 +10,5 @@ export type { AppShellProps, PageProps, GridProps } from './app-shell'
 
 export { FloatingActionButton } from './floating-action-button'
 export type { FABAction } from './floating-action-button'
+export { SidePanel } from './side-panel'
+export type { SidePanelProps, SidePanelCategory, SidePanelItem } from './side-panel'

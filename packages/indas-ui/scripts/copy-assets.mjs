@@ -13,6 +13,7 @@ const exts = new Set(['.css', '.json'])
 const SERVER_ONLY = /from\s+['"](next\/headers|next-auth\/next)['"]|require\(['"](next\/headers|next-auth\/next)['"]\)/
 let copied = 0
 let marked = 0
+let stripped = 0
 
 function copyAssets(dir, outRoot) {
   for (const entry of readdirSync(dir)) {
@@ -40,10 +41,35 @@ function markClient(dir) {
   }
 }
 
+/**
+ * Node cannot `require()` a stylesheet: it parses the CSS as JavaScript and throws a SyntaxError,
+ * which took down the whole CJS build the moment anything reached FileAttachment or sidebar.
+ * Bundlers resolve the ESM `import './x.css'` themselves, so the statement is only ever a problem
+ * in the CJS output — strip it there and leave dist/ untouched. The stylesheets are still copied
+ * beside the modules, so a CJS consumer that wants them can import them by path.
+ */
+function stripCssRequires(dir) {
+  for (const entry of readdirSync(dir)) {
+    const full = path.join(dir, entry)
+    if (statSync(full).isDirectory()) stripCssRequires(full)
+    else if (entry.endsWith('.js')) {
+      const content = readFileSync(full, 'utf8')
+      const next = content.replace(/^\s*require\(["'][^"']+\.css["']\);?\s*$/gm, '')
+      if (next !== content) {
+        writeFileSync(full, next)
+        stripped++
+      }
+    }
+  }
+}
+
 copyAssets(src, dist)
 if (existsSync(cjs)) {
   copyAssets(src, cjs)
   writeFileSync(path.join(cjs, 'package.json'), '{ "type": "commonjs" }\n')
+  stripCssRequires(cjs)
 }
 markClient(dist)
-console.log(`copied ${copied} asset file(s); added 'use client' to ${marked} module(s)`)
+console.log(
+  `copied ${copied} asset file(s); added 'use client' to ${marked} module(s); stripped CSS requires from ${stripped} CJS module(s)`,
+)

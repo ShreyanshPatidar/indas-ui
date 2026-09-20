@@ -8,7 +8,7 @@
 import { useState, useRef, useEffect, useCallback, KeyboardEvent } from 'react'
 import { Send, Paperclip, Mic, MicOff, X, FileIcon, Image as ImageIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { useLanguage } from '@/contexts/LanguageContext'
+import { useOptionalLanguage } from '@/contexts/LanguageContext'
 
 interface MultimodalInputProps {
   onSubmit: (text: string, files?: File[]) => void
@@ -31,7 +31,9 @@ export function MultimodalInput({
   disabled = false,
   disabledReason
 }: MultimodalInputProps) {
-  const { t } = useLanguage()
+  // Optional: the composer is exported for host apps that have no LanguageProvider, and falls
+  // back to the English source text rather than throwing.
+  const { t } = useOptionalLanguage()
   const [input, setInput] = useState('')
   const [files, setFiles] = useState<File[]>([])
   const [isListening, setIsListening] = useState(false)
