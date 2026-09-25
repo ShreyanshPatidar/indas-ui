@@ -6,9 +6,12 @@
  */
 
 import { useState, useRef, useEffect, useCallback, KeyboardEvent } from 'react'
-import { Send, Paperclip, Mic, MicOff, X, FileIcon, Image as ImageIcon } from 'lucide-react'
+import { Send, Paperclip, Mic, MicOff, X, FileIcon, FileSpreadsheet, Image as ImageIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useOptionalLanguage } from '@/contexts/LanguageContext'
+
+/** What the paperclip offers when the host does not say: images, PDFs and documents. */
+export const DEFAULT_CHAT_ACCEPT = 'image/*,application/pdf,.doc,.docx,.txt'
 
 interface MultimodalInputProps {
   onSubmit: (text: string, files?: File[]) => void
@@ -16,6 +19,15 @@ interface MultimodalInputProps {
   isLoading?: boolean
   placeholder?: string
   allowFileUpload?: boolean
+  /**
+   * File types the paperclip offers, as an `<input accept>` list. Defaults to
+   * DEFAULT_CHAT_ACCEPT; a host that reads spreadsheets adds `.xlsx,.xls,.csv`.
+   */
+  accept?: string
+  /** Allow several files at once. Default true; false keeps one attachment, replacing the last. */
+  multiple?: boolean
+  /** Screen-reader name of the paperclip. Default "Attach file". */
+  attachLabel?: string
   compact?: boolean
   disabled?: boolean
   disabledReason?: string
@@ -27,6 +39,9 @@ export function MultimodalInput({
   isLoading = false,
   placeholder = 'Send a message...',
   allowFileUpload = true,
+  accept = DEFAULT_CHAT_ACCEPT,
+  multiple = true,
+  attachLabel = 'Attach file',
   compact = false,
   disabled = false,
   disabledReason
@@ -136,7 +151,9 @@ export function MultimodalInput({
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files || [])
-    setFiles(prev => [...prev, ...selectedFiles])
+    setFiles(prev => (multiple ? [...prev, ...selectedFiles] : selectedFiles.slice(0, 1)))
+    // Cleared so picking the same file again (after removing it) still fires a change.
+    e.target.value = ''
   }
 
   const removeFile = (index: number) => {
@@ -163,6 +180,8 @@ export function MultimodalInput({
               >
                 {file.type.startsWith('image/') ? (
                   <ImageIcon className="w-4 h-4 text-[rgb(var(--fg-muted))]" />
+                ) : /\.(xlsx|xls|csv)$/i.test(file.name) ? (
+                  <FileSpreadsheet className="w-4 h-4 text-[rgb(var(--fg-muted))]" />
                 ) : (
                   <FileIcon className="w-4 h-4 text-[rgb(var(--fg-muted))]" />
                 )}
@@ -170,7 +189,9 @@ export function MultimodalInput({
                   {file.name}
                 </span>
                 <button
+                  type="button"
                   onClick={() => removeFile(index)}
+                  aria-label={`Remove ${file.name}`}
                   className="text-[rgb(var(--fg-muted))] hover:text-[rgb(var(--fg-default))] transition-colors"
                 >
                   <X className="w-3 h-3" />
@@ -190,15 +211,16 @@ export function MultimodalInput({
               <input
                 ref={fileInputRef}
                 type="file"
-                multiple
-                accept="image/*,application/pdf,.doc,.docx,.txt"
+                multiple={multiple}
+                accept={accept}
                 onChange={handleFileSelect}
                 className="hidden"
               />
               <button
                 onClick={() => fileInputRef.current?.click()}
                 className="shrink-0 !min-h-0 w-9 h-9 rounded-lg flex items-center justify-center transition-colors text-[rgb(var(--fg-muted))] hover:text-[rgb(var(--fg-default))] hover:bg-[rgb(var(--bg-subtle))]"
-                aria-label="Attach file"
+                aria-label={attachLabel}
+                title={attachLabel}
               >
                 <Paperclip className="w-4 h-4" />
               </button>

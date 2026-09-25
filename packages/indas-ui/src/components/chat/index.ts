@@ -11,7 +11,7 @@
 export { Messages } from './ai-messages'
 export type { SelectableItem } from './ai-messages'
 
-export { MultimodalInput } from './multimodal-input'
+export { MultimodalInput, DEFAULT_CHAT_ACCEPT } from './multimodal-input'
 
 export { ChatPromptNavigator } from './chat-prompt-navigator'
 
