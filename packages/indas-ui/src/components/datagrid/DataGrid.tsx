@@ -836,7 +836,7 @@ export function DataGrid<TData>({
     return rowSelection
   }, [enableViewToggle, viewMode, selectedRowIds, filteredData, rowSelection, getRowId, data])
 
-  // Helper function to format dates as "12 Oct, 2025"
+  // Helper function to format dates as "12 Oct 2025"
   const formatDateCell = (dateString: any) => {
     if (!dateString) return '-'
 
@@ -847,7 +847,7 @@ export function DataGrid<TData>({
       const day = date.getDate()
       const month = date.toLocaleDateString('en-US', { month: 'short' })
       const year = date.getFullYear()
-      return `${day} ${month}, ${year}`
+      return `${day} ${month} ${year}`
     } catch {
       return dateString
     }

@@ -75,7 +75,7 @@ export function DateTimePicker({
   }
 
   const formatDisplayValue = (date: Date) => {
-    const day = date.getDate().toString().padStart(2, '0')
+    const day = date.getDate()
     const month = MONTHS[date.getMonth()].slice(0, 3)
     const year = date.getFullYear()
 
@@ -91,7 +91,7 @@ export function DateTimePicker({
       timeStr = `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`
     }
 
-    return `${day} ${month}, ${year} ${timeStr}`
+    return `${day} ${month} ${year} ${timeStr}`
   }
 
   const handleDateClick = (date: Date) => {

@@ -165,20 +165,14 @@ export function DatePicker({
     return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0)
   }
 
-  const formatDate = (date: Date) => {
-    const day = date.getDate().toString().padStart(2, '0')
-    const month = MONTHS[date.getMonth()].slice(0, 3)
-    const year = date.getFullYear()
-    return `${day} ${month}, ${year}`
-  }
+  // "1 Sep 2026": built by hand rather than with toLocaleDateString, whose en-GB and en-IN
+  // locales spell September "Sept". parseDate reads it back with or without a comma.
+  const formatDateNoYear = (date: Date) => `${date.getDate()} ${MONTHS[date.getMonth()].slice(0, 3)}`
+  const formatDate = (date: Date) => `${formatDateNoYear(date)} ${date.getFullYear()}`
 
   const formatDateShort = (date?: Date) => {
     if (!date) return '--'
-    return date.toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric'
-    })
+    return formatDate(date)
   }
 
   const formatDisplayValue = () => {
@@ -988,13 +982,13 @@ export function DatePicker({
                 className
               )}
               title={selectedRange.from || selectedRange.to
-                ? `Date filter: ${selectedRange.from ? new Date(selectedRange.from).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : ''}${selectedRange.to ? ` – ${new Date(selectedRange.to).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}` : ''}`
+                ? `Date filter: ${selectedRange.from ? formatDate(new Date(selectedRange.from)) : ''}${selectedRange.to ? ` – ${formatDate(new Date(selectedRange.to))}` : ''}`
                 : 'Select date range'}
             >
               <CalendarDays className="h-3.5 w-3.5 flex-shrink-0" />
               <span className="hidden sm:inline text-xs">
                 {selectedRange.from || selectedRange.to
-                  ? `${selectedRange.from ? new Date(selectedRange.from).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : ''}${selectedRange.to ? ` – ${new Date(selectedRange.to).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}` : ''}`
+                  ? `${selectedRange.from ? formatDateNoYear(new Date(selectedRange.from)) : ''}${selectedRange.to ? ` – ${formatDateNoYear(new Date(selectedRange.to))}` : ''}`
                   : 'Date'}
               </span>
               {(selectedRange.from || selectedRange.to) && (
