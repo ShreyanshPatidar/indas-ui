@@ -3,6 +3,7 @@
 import ReactECharts from 'echarts-for-react'
 import { cn } from '@/lib/utils'
 import { getChartTheme, getTooltipConfig, getLegendConfig, getAxisConfig, getGridConfig } from './theme'
+import { formatCompactNumber, formatNumber } from '@/lib/number-format'
 
 export interface LineChartDataItem {
   [key: string]: string | number
@@ -33,6 +34,10 @@ export interface LineChartProps {
   yMin?: number
   /** Y-axis maximum value */
   yMax?: number
+  /** How a value reads in the tooltip. Default: the full number, Indian grouping (20,00,000). */
+  valueFormatter?: (value: number) => string
+  /** How a value reads on the value axis. Default: compact (12,500 · 20 L · 1.4 Cr). */
+  axisFormatter?: (value: number) => string
   className?: string
 }
 
@@ -50,6 +55,8 @@ export function LineChart({
   showLabels = false,
   yMin,
   yMax,
+  valueFormatter,
+  axisFormatter,
   className
 }: LineChartProps) {
   const theme = getChartTheme()
@@ -58,7 +65,8 @@ export function LineChart({
   const option = {
     tooltip: {
       trigger: 'axis',
-      ...getTooltipConfig()
+      ...getTooltipConfig(),
+      valueFormatter: (v: unknown) => (typeof v === 'number' ? (valueFormatter ?? formatNumber)(v) : String(v ?? '')),
     },
     legend: showLegend ? getLegendConfig('top') : undefined,
     grid: getGridConfig(showLegend),
@@ -73,7 +81,7 @@ export function LineChart({
       min: yMin,
       max: yMax,
       axisLine: { show: false },
-      axisLabel: axisConfig.axisLabel,
+      axisLabel: { ...axisConfig.axisLabel, formatter: (v: number) => (axisFormatter ?? formatCompactNumber)(v) },
       splitLine: {
         show: showGrid,
         ...axisConfig.splitLine

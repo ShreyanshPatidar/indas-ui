@@ -2,6 +2,7 @@
 
 import ReactECharts from 'echarts-for-react'
 import { cn } from '@/lib/utils'
+import { formatCompactNumber, formatNumber } from '@/lib/number-format'
 
 // Convert any color (hex, rgb(), rgba(), space-separated rgb()) to rgba() with given alpha (0–1).
 // Hex+alpha-suffix concat (e.g. color + 'cc') breaks for non-hex inputs and crashes canvas gradients.
@@ -52,6 +53,10 @@ export interface AreaChartProps {
   showLegend?: boolean
   showGrid?: boolean
   smooth?: boolean
+  /** How a value reads in the tooltip. Default: the full number, Indian grouping (20,00,000). */
+  valueFormatter?: (value: number) => string
+  /** How a value reads on the value axis. Default: compact (12,500 · 20 L · 1.4 Cr). */
+  axisFormatter?: (value: number) => string
   className?: string
 }
 
@@ -66,11 +71,14 @@ export function AreaChart({
   showLegend = true,
   showGrid = true,
   smooth = true,
+  valueFormatter,
+  axisFormatter,
   className
 }: AreaChartProps) {
   const option = {
     tooltip: {
       trigger: 'axis',
+      valueFormatter: (v: unknown) => (typeof v === 'number' ? (valueFormatter ?? formatNumber)(v) : String(v ?? '')),
       backgroundColor: 'rgba(255, 255, 255, 0.95)',
       borderColor: '#e9ecef',
       borderWidth: 1,
@@ -106,13 +114,13 @@ export function AreaChart({
     },
     yAxis: series.some(s => s.secondaryAxis)
       ? [
-          { type: 'value', axisLine: { show: false }, axisLabel: { color: '#6c757d', fontSize: 11 }, splitLine: { show: showGrid, lineStyle: { color: '#f0f0f0', type: 'dashed' } } },
-          { type: 'value', axisLine: { show: false }, axisLabel: { color: '#6c757d', fontSize: 11 }, splitLine: { show: false } },
+          { type: 'value', axisLine: { show: false }, axisLabel: { color: '#6c757d', fontSize: 11, formatter: (v: number) => (axisFormatter ?? formatCompactNumber)(v) }, splitLine: { show: showGrid, lineStyle: { color: '#f0f0f0', type: 'dashed' } } },
+          { type: 'value', axisLine: { show: false }, axisLabel: { color: '#6c757d', fontSize: 11, formatter: (v: number) => (axisFormatter ?? formatCompactNumber)(v) }, splitLine: { show: false } },
         ]
       : {
           type: 'value',
           axisLine: { show: false },
-          axisLabel: { color: '#6c757d', fontSize: 11 },
+          axisLabel: { color: '#6c757d', fontSize: 11, formatter: (v: number) => (axisFormatter ?? formatCompactNumber)(v) },
           splitLine: { show: showGrid, lineStyle: { color: '#f0f0f0', type: 'dashed' } }
         },
     series: series.map((s, index) => {

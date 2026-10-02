@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
+import { formatNumber } from '@/lib/number-format'
 
 export interface FunnelChartDataItem {
   name: string
@@ -86,11 +87,11 @@ export function FunnelChart({ data, height = 300, sort = 'descending', className
                   transform: isHover ? 'translateY(-1px)' : 'none',
                   boxShadow: isHover ? `0 4px 14px ${color}55` : `0 1px 2px rgba(0,0,0,0.06)`,
                 }}
-                title={`${item.name}: ${item.value.toLocaleString()} (${pct.toFixed(1)}%)`}
+                title={`${item.name}: ${formatNumber(item.value)} (${pct.toFixed(1)}%)`}
               >
                 <span className="text-sm font-semibold text-white truncate">{item.name}</span>
                 <span className="text-xs font-medium text-white/90 tabular-nums shrink-0">
-                  {item.value.toLocaleString()}
+                  {formatNumber(item.value)}
                 </span>
               </div>
             </div>

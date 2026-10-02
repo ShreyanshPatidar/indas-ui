@@ -2,6 +2,7 @@
 
 import ReactECharts from 'echarts-for-react'
 import { cn } from '@/lib/utils'
+import { formatCompactNumber, formatNumber } from '@/lib/number-format'
 
 export interface BarChartDataItem {
   [key: string]: string | number
@@ -26,6 +27,10 @@ export interface BarChartProps {
    * Renders a KPI-vs-target bullet (track + actual fill + target marker + achievement %).
    */
   targetKey?: string
+  /** How a value reads in the tooltip. Default: the full number, Indian grouping (20,00,000). */
+  valueFormatter?: (value: number) => string
+  /** How a value reads on the value axis. Default: compact (12,500 · 20 L · 1.4 Cr). */
+  axisFormatter?: (value: number) => string
   className?: string
 }
 
@@ -41,6 +46,8 @@ export function BarChart({
   showGrid = true,
   horizontal = false,
   targetKey,
+  valueFormatter,
+  axisFormatter,
   className
 }: BarChartProps) {
   // Bullet mode: horizontal KPI-vs-target rows (CSS-rendered, not ECharts).
@@ -83,12 +90,12 @@ export function BarChart({
                 <div
                   className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-4 rounded-full ring-2 ring-[rgb(var(--bg-surface))]"
                   style={{ left: `${targetPct}%`, backgroundColor: '#475569' }}
-                  title={`Target: ${target.toLocaleString()}`}
+                  title={`Target: ${formatNumber(target)}`}
                 />
               </div>
               <div className="flex items-baseline justify-between gap-2 text-[0.65rem] text-[rgb(var(--fg-muted))] tabular-nums">
-                <span>{actual.toLocaleString()}</span>
-                <span>{`Target ${target.toLocaleString()}`}</span>
+                <span>{formatNumber(actual)}</span>
+                <span>{`Target ${formatNumber(target)}`}</span>
               </div>
             </div>
           )
@@ -102,6 +109,7 @@ export function BarChart({
   const option = {
     tooltip: {
       trigger: 'item',
+      valueFormatter: (v: unknown) => (typeof v === 'number' ? (valueFormatter ?? formatNumber)(v) : String(v ?? '')),
       backgroundColor: 'rgba(255, 255, 255, 0.98)',
       borderColor: '#e9ecef',
       borderWidth: 1,
@@ -134,7 +142,7 @@ export function BarChart({
       type: horizontal ? 'value' : 'category',
       data: horizontal ? undefined : categoryData,
       axisLine: { lineStyle: { color: '#dee2e6' } },
-      axisLabel: { color: '#6c757d', fontSize: 11 },
+      axisLabel: horizontal ? { color: '#6c757d', fontSize: 11, hideOverlap: true, alignMaxLabel: 'right', formatter: (v: number) => (axisFormatter ?? formatCompactNumber)(v) } : { color: '#6c757d', fontSize: 11 },
       axisTick: { show: false },
       splitLine: horizontal && showGrid ? {
         lineStyle: { color: '#f0f0f0', type: 'dashed' }
@@ -144,7 +152,7 @@ export function BarChart({
       type: horizontal ? 'category' : 'value',
       data: horizontal ? categoryData : undefined,
       axisLine: { show: false },
-      axisLabel: { color: '#6c757d', fontSize: 11 },
+      axisLabel: horizontal ? { color: '#6c757d', fontSize: 11 } : { color: '#6c757d', fontSize: 11, formatter: (v: number) => (axisFormatter ?? formatCompactNumber)(v) },
       splitLine: !horizontal && showGrid ? {
         lineStyle: { color: '#f0f0f0', type: 'dashed' }
       } : { show: false }

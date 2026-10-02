@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui'
 import { Button } from '@/components/ui'
 import { Dropdown } from '@/components'
 import { Badge } from '@/components/ui'
+import { formatNumber } from '@/lib/number-format'
 
 interface DataVisualizationProps<TData> {
   data: TData[]
@@ -448,7 +449,7 @@ export function DataVisualization<TData>({
           <Card>
             <CardContent className="p-4">
               <div className="text-2xl font-bold text-blue-600">
-                {summaryStats.sum.toLocaleString()}
+                {formatNumber(summaryStats.sum)}
               </div>
               <div className="text-xs text-gray-600">Total</div>
             </CardContent>
@@ -464,7 +465,7 @@ export function DataVisualization<TData>({
           <Card>
             <CardContent className="p-4">
               <div className="text-2xl font-bold text-orange-600">
-                {summaryStats.min.toLocaleString()}
+                {formatNumber(summaryStats.min)}
               </div>
               <div className="text-xs text-gray-600">Minimum</div>
             </CardContent>
@@ -472,7 +473,7 @@ export function DataVisualization<TData>({
           <Card>
             <CardContent className="p-4">
               <div className="text-2xl font-bold text-purple-600">
-                {summaryStats.max.toLocaleString()}
+                {formatNumber(summaryStats.max)}
               </div>
               <div className="text-xs text-gray-600">Maximum</div>
             </CardContent>

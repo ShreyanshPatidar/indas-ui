@@ -484,9 +484,15 @@ export function SidePanel({
 
                                                             {/* Context Menu Button */}
                                                             {itemContextMenu && (
+                                                                // Named for screen readers, and shown on keyboard focus as well as hover:
+                                                                // it was an unlabelled button nobody tabbing could see.
                                                                 <button
+                                                                    type="button"
                                                                     onClick={(e) => handleMenuToggle(e, item.id)}
-                                                                    className="absolute right-1.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-md text-[rgb(var(--fg-muted))]/50 flex items-center justify-center hover:text-[rgb(var(--fg-default))] hover:bg-[rgb(var(--bg-subtle))] transition-all opacity-0 group-hover:opacity-100"
+                                                                    aria-label={`More actions for ${item.label}`}
+                                                                    aria-haspopup="menu"
+                                                                    aria-expanded={menuOpen === item.id}
+                                                                    className="absolute right-1.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-md text-[rgb(var(--fg-muted))]/50 flex items-center justify-center hover:text-[rgb(var(--fg-default))] hover:bg-[rgb(var(--bg-subtle))] transition-all opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
                                                                 >
                                                                     <MoreVertical className="w-3.5 h-3.5" />
                                                                 </button>

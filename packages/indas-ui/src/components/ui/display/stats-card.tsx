@@ -2,6 +2,7 @@ import * as React from "react"
 import { LucideIcon, TrendingUp, TrendingDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Card } from "./card"
+import { formatNumber } from '@/lib/number-format'
 
 export interface StatsCardProps {
   title: string
@@ -51,7 +52,7 @@ export function StatsCard({
         <div className="flex-1 min-w-0">
           <div className="flex items-baseline flex-wrap gap-2">
             <p className="text-2xl font-semibold text-fg-default truncate">
-              {typeof value === 'number' ? value.toLocaleString() : value}
+              {typeof value === 'number' ? formatNumber(value) : value}
             </p>
 
             {trend && (

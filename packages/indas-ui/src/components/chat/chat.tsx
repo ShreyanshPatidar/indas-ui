@@ -21,6 +21,7 @@ import type { SelectableItem } from '@/components/chat/ai-messages'
 import { ChatPromptNavigator } from '@/components/chat/chat-prompt-navigator'
 import { DatePicker, type DateRange } from '@/components/forms/date-picker'
 import { getLocalDateString } from '@/lib/utils'
+import { formatNumber } from '@/lib/number-format'
 
 interface MessagesComponentProps {
   messages: Message[]
@@ -1539,7 +1540,7 @@ export function Chat({
               if (totals.total === 0) return null
               return (
                 <span className="text-[0.65rem] text-[rgb(var(--fg-muted))] font-mono">
-                  Prompt: {totals.prompt.toLocaleString()} · Response: {totals.completion.toLocaleString()} · Total: {totals.total.toLocaleString()} tokens · {messages.filter(m => m.tokens).length} calls
+                  Prompt: {formatNumber(totals.prompt)} · Response: {formatNumber(totals.completion)} · Total: {formatNumber(totals.total)} tokens · {messages.filter(m => m.tokens).length} calls
                 </span>
               )
             })()}

@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui'
 import { SelectionCheckbox } from '@/components/datagrid/cells/SelectionCell'
 import { Skeleton } from '@/components/ui/feedback/skeleton'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { formatNumber } from '@/lib/number-format'
 
 export type CardSize = 'compact' | 'normal' | 'expanded'
 
@@ -182,7 +183,7 @@ export function CardView<TData>({
         </Badge>
       )
     }
-    if (typeof value === 'number') return value.toLocaleString()
+    if (typeof value === 'number') return formatNumber(value)
     return value?.toString() || '—'
   }, [t])
 

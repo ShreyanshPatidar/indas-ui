@@ -2,6 +2,7 @@
 
 import ReactECharts from 'echarts-for-react'
 import { cn } from '@/lib/utils'
+import { formatNumber } from '@/lib/number-format'
 
 export interface SankeyNode {
   /** Node name (must be unique) */
@@ -89,9 +90,9 @@ export function SankeyChart({
       textStyle: { color: '#344767', fontSize: 12 },
       formatter: (params: any) => {
         if (params.dataType === 'edge') {
-          return `<strong>${params.data.source}</strong> → <strong>${params.data.target}</strong><br/>Value: ${params.data.value?.toLocaleString()}`
+          return `<strong>${params.data.source}</strong> → <strong>${params.data.target}</strong><br/>Value: ${formatNumber(params.data.value)}`
         }
-        return `<strong>${params.name}</strong><br/>Value: ${params.value?.toLocaleString() || '-'}`
+        return `<strong>${params.name}</strong><br/>Value: ${formatNumber(params.value) || '-'}`
       }
     },
     series: [{
@@ -127,7 +128,7 @@ export function SankeyChart({
         color: '#344767',
         fontSize: 11,
         fontWeight: 500,
-        formatter: (p: any) => `${p.name} (${p.value?.toLocaleString() ?? '-'})`
+        formatter: (p: any) => `${p.name} (${formatNumber(p.value) || '-'})`
       },
       data: nodesWithColors,
       links: links.map(link => ({

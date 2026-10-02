@@ -3,6 +3,7 @@
 import * as React from 'react'
 import { cn } from '@/lib/utils'
 import { KpiCardSkeleton } from './kpi-shell'
+import { formatNumber } from '@/lib/number-format'
 
 export interface BreakdownItem {
   /** Label for this item */
@@ -79,7 +80,7 @@ export function KpiBreakdown({
         <p className="text-sm text-[rgb(var(--fg-muted))]">{title}</p>
         {total !== undefined && (
           <p className="text-lg font-bold text-[rgb(var(--fg-default))]">
-            {typeof total === 'number' ? total.toLocaleString() : total}
+            {typeof total === 'number' ? formatNumber(total) : total}
           </p>
         )}
       </div>
@@ -103,7 +104,7 @@ export function KpiBreakdown({
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium">
-                  {typeof item.value === 'number' ? item.value.toLocaleString() : item.value}
+                  {typeof item.value === 'number' ? formatNumber(item.value) : item.value}
                 </span>
                 {showPercentage && (
                   <span className="text-xs text-[rgb(var(--fg-muted))]">({percentage}%)</span>

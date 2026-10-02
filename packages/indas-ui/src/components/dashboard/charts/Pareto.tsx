@@ -2,6 +2,7 @@
 
 import ReactECharts from 'echarts-for-react'
 import { cn } from '@/lib/utils'
+import { formatNumber } from '@/lib/number-format'
 
 export interface ParetoChartDataItem {
   name: string
@@ -57,7 +58,7 @@ export function ParetoChart({
         const bar = params.find((p: any) => p.seriesType === 'bar')
         const line = params.find((p: any) => p.seriesType === 'line')
         return `${bar?.name}<br/>
-          Value: ${bar?.value?.toLocaleString()}<br/>
+          Value: ${formatNumber(bar?.value)}<br/>
           Cumulative: ${line?.value}%`
       }
     },

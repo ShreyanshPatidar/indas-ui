@@ -35,6 +35,7 @@ import { Dropdown } from '@/components'
 import { Separator } from '@/components/ui'
 import { Badge } from '@/components/ui'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui'
+import { formatNumber } from '@/lib/number-format'
 
 interface ColumnContextMenuProps<TData> {
   column: Column<TData, unknown>
@@ -531,13 +532,13 @@ export function ColumnContextMenu<TData>({
                   <div className="text-sm font-medium text-[rgb(var(--fg-default))]">Column Statistics</div>
                   <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-xs">
                     <span className="text-[rgb(var(--fg-muted))]">Total:</span>
-                    <span className="font-medium text-right">{columnStats.totalCount.toLocaleString()}</span>
+                    <span className="font-medium text-right">{formatNumber(columnStats.totalCount)}</span>
 
                     <span className="text-[rgb(var(--fg-muted))]">Unique:</span>
-                    <span className="font-medium text-right">{columnStats.uniqueCount.toLocaleString()}</span>
+                    <span className="font-medium text-right">{formatNumber(columnStats.uniqueCount)}</span>
 
                     <span className="text-[rgb(var(--fg-muted))]">Null:</span>
-                    <span className="font-medium text-right">{columnStats.nullCount.toLocaleString()}</span>
+                    <span className="font-medium text-right">{formatNumber(columnStats.nullCount)}</span>
 
                     <span className="text-[rgb(var(--fg-muted))]">Type:</span>
                     <div className="text-right">
@@ -558,7 +559,7 @@ export function ColumnContextMenu<TData>({
                         <span className="font-medium text-right">{columnStats.avg?.toFixed(2)}</span>
 
                         <span className="text-[rgb(var(--fg-muted))]">Sum:</span>
-                        <span className="font-medium text-right">{columnStats.sum?.toLocaleString()}</span>
+                        <span className="font-medium text-right">{formatNumber(columnStats.sum)}</span>
                       </>
                     )}
                   </div>

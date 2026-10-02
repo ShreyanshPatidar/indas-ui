@@ -5,6 +5,7 @@ import ReactECharts from 'echarts-for-react'
 import * as echarts from 'echarts/core'
 import { cn } from '@/lib/utils'
 import { INDIA_GEOJSON } from './india-map'
+import { formatNumber } from '@/lib/number-format'
 
 export interface GeoMapDataItem {
   /** Location name */
@@ -100,7 +101,7 @@ export function GeoMap({
       formatter: (params: any) => {
         if (params.seriesType === 'effectScatter' || params.seriesType === 'scatter') {
           const value = params.value?.[2]
-          return `<strong>${params.name}</strong>${value ? `<br/>Production: ${value.toLocaleString()} units` : ''}`
+          return `<strong>${params.name}</strong>${value ? `<br/>Production: ${formatNumber(value)} units` : ''}`
         }
         return `<strong>${params.name}</strong>`
       }

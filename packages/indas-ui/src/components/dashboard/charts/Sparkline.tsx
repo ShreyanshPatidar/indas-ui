@@ -2,6 +2,7 @@
 
 import ReactECharts from 'echarts-for-react'
 import { cn } from '@/lib/utils'
+import { formatNumber } from '@/lib/number-format'
 
 // Convert any color (hex, rgb(), rgba(), space-separated rgb()) to rgba() with given alpha (0–1).
 // Hex+alpha-suffix concat (e.g. color + '40') breaks for non-hex inputs and crashes canvas gradients.
@@ -155,7 +156,7 @@ export function Sparkline({
       formatter: (params: any) => {
         const p = Array.isArray(params) ? params[0] : params
         const cat = hasLabels && p.axisValue ? `${p.axisValue}<br/>` : ''
-        return `${cat}<strong>${valuePrefix}${Number(p.value).toLocaleString()}${valueSuffix}</strong>`
+        return `${cat}<strong>${valuePrefix}${formatNumber(Number(p.value))}${valueSuffix}</strong>`
       }
     } : undefined,
     grid: {

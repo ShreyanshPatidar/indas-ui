@@ -12,6 +12,7 @@ import type { Message as MessageType } from '@/lib/api/ai/types'
 import { User, Copy, Check, Download, Share2, Pencil, Bot, RotateCcw, ThumbsUp, ThumbsDown } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { formatNumber } from '@/lib/number-format'
 
 export interface SelectableItem {
   id: string
@@ -398,7 +399,7 @@ function Message({ message, onSelectItem, onEditMessage, onRegenerateAi, onFeedb
             )}
             {!isUser && message.tokens && process.env.NEXT_PUBLIC_SHOW_TOKENS === 'true' && (
               <span className="text-[0.65rem] text-[rgb(var(--fg-muted))]/70 font-mono select-none ml-1">
-                P: {message.tokens.prompt.toLocaleString()}  R: {message.tokens.completion.toLocaleString()}  T: {message.tokens.total.toLocaleString()}
+                P: {formatNumber(message.tokens.prompt)}  R: {formatNumber(message.tokens.completion)}  T: {formatNumber(message.tokens.total)}
               </span>
             )}
           </div>
@@ -529,7 +530,7 @@ export function Messages({ messages, isLoading = false, onExport, onShare, onSel
             if (totals.total === 0) return <div />
             return (
               <span className="text-[0.65rem] text-[rgb(var(--fg-muted))] font-mono">
-                P:{totals.prompt.toLocaleString()} · C:{totals.completion.toLocaleString()} · T:{totals.total.toLocaleString()} · {messages.filter(m => m.tokens).length} calls
+                P:{formatNumber(totals.prompt)} · C:{formatNumber(totals.completion)} · T:{formatNumber(totals.total)} · {messages.filter(m => m.tokens).length} calls
               </span>
             )
           })() : <div />}

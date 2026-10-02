@@ -57,3 +57,6 @@ export type { FlowMapProps, FlowMapLine, FlowMapMarker } from './FlowMap'
 // Chart Wrapper
 export { ChartCard } from './DashboardCard'
 export type { ChartCardProps } from './DashboardCard'
+
+// Number formatting: Indian grouping by default; setNumberLocale() switches it for a whole app
+export { formatNumber, formatCompactNumber, setNumberLocale, getNumberLocale } from '@/lib/number-format'

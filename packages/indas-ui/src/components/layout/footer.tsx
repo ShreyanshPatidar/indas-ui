@@ -2,6 +2,7 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 import { useTranslation } from "@/hooks/useTranslation";
 import { LucideIcon } from "lucide-react"
+import { formatNumber } from '@/lib/number-format'
 
 export interface FooterKPI {
   id: string
@@ -119,7 +120,7 @@ export function Footer({
                   </span>
                   <span className="font-medium text-[rgb(var(--fg-default))]">
                     {typeof kpi.value === 'number'
-                      ? kpi.value.toLocaleString()
+                      ? formatNumber(kpi.value)
                       : kpi.value
                     }
                   </span>

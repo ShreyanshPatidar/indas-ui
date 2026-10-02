@@ -1,3 +1,4 @@
+import { formatNumber as formatGrouped } from '@/lib/number-format'
 /**
  * Grid utility functions and helpers
  */
@@ -109,10 +110,10 @@ export function getRowId<TData>(
 }
 
 /**
- * Format large numbers with commas
+ * Format large numbers with grouping, in the library's number locale (Indian by default)
  */
 export function formatNumber(num: number): string {
-  return num.toLocaleString()
+  return formatGrouped(num)
 }
 
 /**

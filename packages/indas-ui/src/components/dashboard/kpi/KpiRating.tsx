@@ -3,6 +3,7 @@
 import * as React from 'react'
 import { TrendingUp, TrendingDown, Info } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { formatNumber } from '@/lib/number-format'
 
 export interface RatingBreakdown {
   /** Star rating (1-5) */
@@ -128,7 +129,7 @@ export function KpiRating({
                           />
                         </div>
                         <span className="text-[10px] text-[rgb(var(--fg-muted))] w-10 text-right">
-                          {item.count.toLocaleString()}
+                          {formatNumber(item.count)}
                         </span>
                         <span className="text-[10px] text-[rgb(var(--fg-muted))] w-6 text-right">
                           {item.percentage}%
@@ -170,7 +171,7 @@ export function KpiRating({
           </div>
           {reviewCount !== undefined && (
             <p className="text-xs text-[rgb(var(--fg-muted))] mt-1">
-              {reviewCount.toLocaleString()} reviews
+              {formatNumber(reviewCount)} reviews
             </p>
           )}
         </div>

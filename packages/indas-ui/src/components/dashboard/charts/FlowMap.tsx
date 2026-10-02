@@ -6,6 +6,7 @@ import * as echarts from 'echarts/core'
 import { cn } from '@/lib/utils'
 import { INDIA_GEOJSON } from './india-map'
 import { getChartTheme } from './theme'
+import { formatNumber } from '@/lib/number-format'
 
 export interface FlowMapMarker {
   name: string
@@ -223,7 +224,7 @@ export function FlowMap({
         }
         if (params.seriesType === 'effectScatter' || params.seriesType === 'scatter') {
           const value = params.value?.[2]
-          return `<strong>${params.name}</strong>${value ? `<br/>Value: ${value.toLocaleString()}` : ''}`
+          return `<strong>${params.name}</strong>${value ? `<br/>Value: ${formatNumber(value)}` : ''}`
         }
         return `<strong>${params.name}</strong>`
       }

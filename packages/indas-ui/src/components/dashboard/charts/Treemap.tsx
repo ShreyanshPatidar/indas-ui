@@ -2,6 +2,7 @@
 
 import ReactECharts from 'echarts-for-react'
 import { cn } from '@/lib/utils'
+import { formatNumber } from '@/lib/number-format'
 
 export interface TreemapDataItem {
   /** Node name */
@@ -59,7 +60,7 @@ export function TreemapChart({
           .map((node: any) => node.name)
           .filter((name: string) => name)
           .join(' → ')
-        return `<strong>${path || params.name}</strong><br/>Value: ${params.value?.toLocaleString() || '-'}`
+        return `<strong>${path || params.name}</strong><br/>Value: ${formatNumber(params.value) || '-'}`
       }
     },
     series: [{

@@ -3,6 +3,7 @@
 import * as React from 'react'
 import { cn } from '@/lib/utils'
 import { KpiCardSkeleton } from './kpi-shell'
+import { formatNumber } from '@/lib/number-format'
 
 export interface ComparisonBar {
   /** Label for this bar */
@@ -113,7 +114,7 @@ export function KpiComparison({
               />
             </div>
             <span className="text-xs font-medium w-12 text-right">
-              {typeof bar.value === 'number' ? bar.value.toLocaleString() : bar.value}
+              {typeof bar.value === 'number' ? formatNumber(bar.value) : bar.value}
             </span>
           </div>
         ))}

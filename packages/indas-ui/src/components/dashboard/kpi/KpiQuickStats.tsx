@@ -4,6 +4,7 @@ import * as React from 'react'
 import { LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { KpiCardSkeleton } from './kpi-shell'
+import { formatNumber } from '@/lib/number-format'
 
 export interface QuickStat {
   /** Label for this stat */
@@ -84,7 +85,7 @@ export function KpiQuickStats({
               <Icon className={cn('w-4 h-4', getIconColorClass(stat.iconColor))} />
               <div>
                 <p className="text-lg font-bold text-[rgb(var(--fg-default))]">
-                  {typeof stat.value === 'number' ? stat.value.toLocaleString() : stat.value}
+                  {typeof stat.value === 'number' ? formatNumber(stat.value) : stat.value}
                 </p>
                 <p className="text-xs text-[rgb(var(--fg-muted))]">{stat.label}</p>
               </div>
