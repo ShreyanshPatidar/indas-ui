@@ -11,6 +11,15 @@ const cjs = path.join(dist, 'cjs')
 const exts = new Set(['.css', '.json'])
 // Server-only modules must not carry the client directive (next/headers, getServerSession).
 const SERVER_ONLY = /from\s+['"](next\/headers|next-auth\/next)['"]|require\(['"](next\/headers|next-auth\/next)['"]\)/
+// A barrel (an index or entry file that only re-exports) stays unmarked: each module it re-exports
+// carries its own directive, and Next.js refuses `export *` inside a client boundary, which broke
+// any server component importing a barrel (the docs layout imports the root entry).
+const isBarrel = (content) =>
+  content
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/\/\/.*$/gm, '')
+    .replace(/export\s+(type\s+)?(\*(\s+as\s+\w+)?|\{[^}]*\})\s+from\s+['"][^'"]+['"];?/g, '')
+    .trim() === ''
 let copied = 0
 let marked = 0
 let stripped = 0
@@ -34,7 +43,7 @@ function markClient(dir) {
     if (statSync(full).isDirectory()) markClient(full)
     else if (entry.endsWith('.js')) {
       const content = readFileSync(full, 'utf8')
-      if (/^['"]use client['"]/.test(content) || SERVER_ONLY.test(content)) continue
+      if (/^['"]use client['"]/.test(content) || SERVER_ONLY.test(content) || isBarrel(content)) continue
       writeFileSync(full, `'use client';\n${content}`)
       marked++
     }

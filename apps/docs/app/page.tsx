@@ -1,17 +1,20 @@
 import Link from 'next/link'
 import { ArrowRight, Package, Layers, Zap } from 'lucide-react'
 import { REGISTRY } from '../lib/components-registry'
+import { HomeStats } from '../components/home-stats'
+import pkg from 'indas-ui/package.json'
 
 export default function Home() {
   const totalCount = REGISTRY.reduce((sum, c) => sum + c.components.length, 0)
 
   return (
     <div>
-      {/* Hero */}
-      <div className="mb-14">
+      {/* Hero, with a live KpiQuickStats card beside it on wide screens */}
+      <div className="mb-14 grid items-center gap-8 lg:grid-cols-[1fr_18rem]">
+        <div>
         <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-[rgb(var(--color-primary))]/10 text-[rgb(var(--color-primary))] text-[11px] font-medium tracking-wide mb-5">
           <span className="h-1.5 w-1.5 rounded-full bg-[rgb(var(--color-primary))] animate-pulse" />
-          v0.0.1 · MIT licensed
+          v{pkg.version} · MIT licensed
         </div>
         <h1 className="text-5xl font-bold tracking-tight mb-4 text-[rgb(var(--fg-default))] leading-[1.05]">
           The ERP component library<br />for serious teams.
@@ -38,6 +41,8 @@ export default function Home() {
             GitHub
           </a>
         </div>
+        </div>
+        <HomeStats components={totalCount} categories={REGISTRY.length} />
       </div>
 
       {/* Feature strip */}

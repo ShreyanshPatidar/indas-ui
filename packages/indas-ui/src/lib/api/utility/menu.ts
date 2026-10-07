@@ -3,7 +3,6 @@
 
 import { buildApiUrl, createApiHeaders } from '@/config/api'
 import APIClient from '../core/client'
-import { getSession } from 'next-auth/react'
 
 export interface DynamicModule {
   ModuleHeadName: string
@@ -27,13 +26,14 @@ export interface GroupedModule {
 
 /**
  * Fetch dynamic menu modules from external API
- * Now uses APIClient for proper authentication with company credentials
+ * Now uses APIClient for proper authentication with company credentials.
+ *
+ * The caller passes the session (from useSessionAdapter, which AuthSessionProvider fills from
+ * next-auth) rather than this module calling next-auth's getSession: importing next-auth here made
+ * every app installing indas-ui install next-auth too, since nearly every entry reaches this file.
  */
-export async function fetchDynamicMenuModules(companyId: number, userId: number): Promise<DynamicModule[]> {
+export async function fetchDynamicMenuModules(companyId: number, userId: number, session?: unknown): Promise<DynamicModule[]> {
   try {
-    // Get session to pass to APIClient for company credentials
-    const session = await getSession()
-
     if (!session) {
       return []
     }
@@ -153,10 +153,10 @@ export function groupAndSortModules(modules: DynamicModule[]): GroupedModule[] {
 /**
  * Get dynamic navigation structure for sidebar
  */
-export async function getDynamicNavigation(companyId?: number, userId?: number): Promise<GroupedModule[]> {
+export async function getDynamicNavigation(companyId?: number, userId?: number, session?: unknown): Promise<GroupedModule[]> {
   if (!companyId || !userId) {
     return []
   }
-  const modules = await fetchDynamicMenuModules(companyId, userId)
+  const modules = await fetchDynamicMenuModules(companyId, userId, session)
   return groupAndSortModules(modules)
 }

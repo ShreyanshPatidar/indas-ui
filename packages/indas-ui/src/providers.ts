@@ -9,7 +9,8 @@ export { PageTitleProvider, usePageTitle } from './contexts/PageTitleContext'
 export { CurrencyProvider, useCurrency } from './contexts/CurrencyContext'
 export { SessionAdapterProvider, useSessionAdapter } from './contexts/SessionAdapterContext'
 export type { SessionUser, SessionStatus, SessionAdapterValue, SessionAdapterProviderProps } from './contexts/SessionAdapterContext'
-export { AuthSessionProvider } from './components/providers/session-provider'
+// AuthSessionProvider is in 'indas-ui/auth': it is the one part built on next-auth, which apps
+// install only when they use it.
 export { APIProvider, useAPI } from './components/providers/api-provider'
 export { QueryProvider } from './components/providers/query-provider'
 export { cn } from './lib/utils'

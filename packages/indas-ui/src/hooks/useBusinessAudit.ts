@@ -14,12 +14,12 @@
  */
 
 import { useState, useCallback } from 'react'
-import { useSession } from 'next-auth/react'
+import { useOptionalSessionAdapter } from '@/contexts/SessionAdapterContext'
 import { BusinessAuditAPI } from '@/lib/api/activity/audit'
 import type { AuditModule, AuditAction } from '@/types/audit'
 
 export function useBusinessAudit() {
-  const { data: session } = useSession()
+  const session = useOptionalSessionAdapter()?.data ?? null
   const [isLogging, setIsLogging] = useState(false)
 
   const logAction = useCallback(

@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import { useSession } from 'next-auth/react'
+import { useOptionalSessionAdapter } from '@/contexts/SessionAdapterContext'
 import { NotificationsAPI } from '@/lib/api/activity'
 import type { NotificationResponse } from '@/lib/api/activity'
 import { fromBackendNotification } from '@/lib/api/activity/notifications/types'
@@ -45,7 +45,7 @@ const NotificationContext = createContext<NotificationContextValue | undefined>(
  * app. Consumers read shared state via `useNotifications()` instead of each mounting their own.
  */
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
-  const { data: session } = useSession()
+  const session = useOptionalSessionAdapter()?.data ?? null
 
   const [notifications, setNotifications] = useState<NotificationResponse[]>([])
   const [notificationsLoading, setNotificationsLoading] = useState(false)

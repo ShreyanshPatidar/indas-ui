@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { MessageSquare, Send, RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useLanguage } from '@/contexts/LanguageContext'
-import { useSession } from 'next-auth/react'
+import { useOptionalSessionAdapter } from '@/contexts/SessionAdapterContext'
 import { useMessaging } from '@/contexts/MessagingContext'
 import { parseParticipants } from '@/lib/api/activity/messaging/messaging'
 import { getAvatarColor, getInitials, formatRelativeTime } from './conversation-list'
@@ -17,7 +17,7 @@ interface MessagingPanelContentProps {
 
 export function MessagingPanelContent({ onClose }: MessagingPanelContentProps) {
   const { t } = useLanguage()
-  const { data: session } = useSession()
+  const session = useOptionalSessionAdapter()?.data ?? null
   const { state, actions } = useMessaging()
   const router = useRouter()
 

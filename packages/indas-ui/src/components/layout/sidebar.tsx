@@ -14,6 +14,7 @@ import '../../styles/sidebar-scrollbar.css'
 import { createPortal } from 'react-dom'
 import { SidebarContextMenu, SidebarGroupContextMenu } from './SidebarContextMenu'
 import { useSidebarPreferences } from '@/contexts/SidebarPreferencesContext'
+import { useOptionalSessionAdapter } from '@/contexts/SessionAdapterContext'
 
 // Route mapping imported from shared utility: getModuleRoutePath
 
@@ -144,6 +145,14 @@ export function DynamicSidebar({
   const [expandedSubModules, setExpandedSubModules] = React.useState<string[]>([])
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
+  // The menu API needs the signed-in session (company credentials). Read from the session adapter,
+  // not next-auth, so the library does not require next-auth; held in a ref so a fresh session
+  // object does not refetch the menu, only the session arriving or leaving does.
+  const sessionAdapter = useOptionalSessionAdapter()
+  const sessionRef = React.useRef(sessionAdapter?.data ?? null)
+  sessionRef.current = sessionAdapter?.data ?? null
+  const hasSession = Boolean(sessionAdapter?.data)
+  const sessionStatus = sessionAdapter?.status ?? 'unauthenticated'
   const [needsScroll, setNeedsScroll] = React.useState(false)
   const navRef = React.useRef<HTMLElement>(null)
   const [hoveredGroup, setHoveredGroup] = React.useState<string | null>(null)
@@ -189,6 +198,11 @@ export function DynamicSidebar({
     if (!companyId || !userId) {
       return
     }
+    // No session yet: wait for it (this runs again when it arrives); none at all: no menu.
+    if (!hasSession) {
+      if (sessionStatus !== 'loading') setLoading(false)
+      return
+    }
 
     let isCancelled = false
 
@@ -217,7 +231,7 @@ export function DynamicSidebar({
       try {
         setLoading(true)
         setError(null)
-        const navigation = await getDynamicNavigation(companyId, userId)
+        const navigation = await getDynamicNavigation(companyId, userId, sessionRef.current)
 
         if (!isCancelled) {
           setGroupedModules(navigation)
@@ -246,7 +260,7 @@ export function DynamicSidebar({
         clearTimeout(hoverTimeoutRef.current)
       }
     }
-  }, [companyId, userId])
+  }, [companyId, userId, hasSession, sessionStatus])
 
   // Auto-open parent items based on current path (optimized)
   React.useEffect(() => {

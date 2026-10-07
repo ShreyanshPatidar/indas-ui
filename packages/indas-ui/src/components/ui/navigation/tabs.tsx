@@ -162,6 +162,9 @@ export function Tabs({
             <Dropdown
               key={tab.id}
               options={tab.dropdownOptions!}
+              // Periods are listed in time order (Apr, May, Jun… / Week 1, 2, 3…); sorted by label,
+              // the months came out Apr, Aug, Dec, Feb.
+              preserveOrder
               value={selected}
               onValueChange={(sel) => {
                 const arr = Array.isArray(sel) ? sel.map(String) : [String(sel)]

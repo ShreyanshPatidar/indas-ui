@@ -50,6 +50,14 @@ export function SessionAdapterProvider({ user, status, signOut, children }: Sess
   return <SessionAdapterContext.Provider value={value}>{children}</SessionAdapterContext.Provider>
 }
 
+/**
+ * The session when a provider is present, null when not: for components that also render in apps
+ * without one, such as the dynamic sidebar, which simply loads no menu then.
+ */
+export function useOptionalSessionAdapter(): SessionAdapterValue | null {
+  return useContext(SessionAdapterContext)
+}
+
 /** Drop-in replacement for next-auth's `useSession()` inside library components. */
 export function useSessionAdapter(): SessionAdapterValue {
   const ctx = useContext(SessionAdapterContext)

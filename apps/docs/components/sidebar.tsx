@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation'
 import { useState, useMemo } from 'react'
 import { Search } from 'lucide-react'
 import { REGISTRY } from '../lib/components-registry'
+import pkg from 'indas-ui/package.json'
 
 export function Sidebar() {
   const pathname = usePathname()
@@ -34,7 +35,7 @@ export function Sidebar() {
               indas-ui
             </div>
             <div className="text-[10px] text-[rgb(var(--fg-muted))] font-medium tracking-wide">
-              v0.0.1 · {totalCount} components
+              v{pkg.version} · {totalCount} components
             </div>
           </div>
         </Link>

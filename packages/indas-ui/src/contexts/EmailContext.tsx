@@ -1,7 +1,7 @@
 'use client'
 
 import React, { createContext, useContext, useReducer, useEffect, useCallback, useMemo } from 'react'
-import { useSession } from 'next-auth/react'
+import { useOptionalSessionAdapter } from '@/contexts/SessionAdapterContext'
 import { createEmailAPI, type EmailAPI, DEFAULT_FOLDERS, DEFAULT_CATEGORIES } from '@/lib/api/activity/email'
 import type {
   Email,
@@ -345,12 +345,13 @@ const EmailContext = createContext<EmailContextValue | undefined>(undefined)
 
 // Email Provider Component
 export function EmailProvider({ children }: { children: React.ReactNode }) {
-  const { data: session } = useSession()
+  const session = useOptionalSessionAdapter()?.data ?? null
   const [state, dispatch] = useReducer(emailReducer, initialState)
   // Memoize on stable identity — useSession() returns a new object each render, so an
   // unmemoized api would churn every useCallback([api]) and trigger repeated fetches.
   const sessionIdentity = `${(session?.user as any)?.CompanyID ?? ''}:${(session?.user as any)?.UserID ?? ''}`
-  const api = useMemo(() => createEmailAPI(session), [sessionIdentity]) // eslint-disable-line react-hooks/exhaustive-deps
+  // The adapter carries the next-auth session as AuthSessionProvider received it, so it has the shape the email API reads.
+  const api = useMemo(() => createEmailAPI(session as unknown as Parameters<typeof createEmailAPI>[0]), [sessionIdentity]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Initialize email system when session is available
   // NOTE: Initialization is now manual - call actions.fetchEmails() when needed

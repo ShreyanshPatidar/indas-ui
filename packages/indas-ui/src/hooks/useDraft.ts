@@ -19,7 +19,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react'
-import { useSession } from 'next-auth/react'
+import { useOptionalSessionAdapter } from '@/contexts/SessionAdapterContext'
 import { DraftAPI } from '@/lib/api/draft'
 import type { Draft, DraftMetadata } from '@/types/draft'
 
@@ -62,7 +62,7 @@ export function useDraft(
   module: string,
   currentState: any
 ): UseDraftReturn {
-  const { data: session } = useSession()
+  const session = useOptionalSessionAdapter()?.data ?? null
 
   // State
   const [drafts, setDrafts] = useState<DraftMetadata[]>([])

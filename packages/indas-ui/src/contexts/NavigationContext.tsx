@@ -3,6 +3,7 @@
 import * as React from 'react'
 import { getDynamicNavigation, GroupedModule, DynamicModule } from '@/lib/api'
 import { getModuleRoutePath } from '@/lib/utils'
+import { useOptionalSessionAdapter } from '@/contexts/SessionAdapterContext'
 
 interface NavigationContextValue {
   groupedModules: GroupedModule[]
@@ -39,10 +40,23 @@ export function NavigationProvider({
   const [groupedModules, setGroupedModules] = React.useState<GroupedModule[]>([])
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
+  // The menu API needs the signed-in session (company credentials). Read from the session adapter,
+  // not next-auth, so the library does not require next-auth; held in a ref so a fresh session
+  // object does not refetch the menu, only the session arriving or leaving does.
+  const sessionAdapter = useOptionalSessionAdapter()
+  const sessionRef = React.useRef(sessionAdapter?.data ?? null)
+  sessionRef.current = sessionAdapter?.data ?? null
+  const hasSession = Boolean(sessionAdapter?.data)
+  const sessionStatus = sessionAdapter?.status ?? 'unauthenticated'
 
   const fetchNavigation = React.useCallback(async () => {
     if (!companyId || !userId) {
       setLoading(false)
+      return
+    }
+    // No session yet: wait for it (this runs again when it arrives); none at all: no menu.
+    if (!hasSession) {
+      if (sessionStatus !== 'loading') setLoading(false)
       return
     }
 
@@ -65,7 +79,7 @@ export function NavigationProvider({
       }
 
       setLoading(true)
-      const navigation = await getDynamicNavigation(companyId, userId)
+      const navigation = await getDynamicNavigation(companyId, userId, sessionRef.current)
 
       setGroupedModules(navigation)
       localStorage.setItem(cacheKey, JSON.stringify(navigation))
@@ -76,7 +90,7 @@ export function NavigationProvider({
     } finally {
       setLoading(false)
     }
-  }, [companyId, userId])
+  }, [companyId, userId, hasSession, sessionStatus])
 
   React.useEffect(() => {
     fetchNavigation()

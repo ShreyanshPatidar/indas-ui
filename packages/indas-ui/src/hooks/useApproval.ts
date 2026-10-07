@@ -20,7 +20,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react'
-import { useSession } from 'next-auth/react'
+import { useOptionalSessionAdapter } from '@/contexts/SessionAdapterContext'
 import { ApprovalAPI } from '@/lib/api/approval'
 import type { ApprovalWorkflow, ApprovalChain } from '@/types/approval'
 
@@ -81,7 +81,7 @@ export interface UseApprovalReturn {
  * useApproval Hook
  */
 export function useApproval(): UseApprovalReturn {
-  const { data: session } = useSession()
+  const session = useOptionalSessionAdapter()?.data ?? null
 
   // State
   const [pendingApprovals, setPendingApprovals] = useState<ApprovalWorkflow[]>([])

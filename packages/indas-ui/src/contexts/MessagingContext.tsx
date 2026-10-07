@@ -3,7 +3,7 @@
 import { createContext, useContext, useReducer, useCallback, useEffect, useRef, useMemo } from 'react'
 import { HubConnectionBuilder, HubConnectionState, LogLevel } from '@microsoft/signalr'
 import type { HubConnection } from '@microsoft/signalr'
-import { useSession } from 'next-auth/react'
+import { useOptionalSessionAdapter } from '@/contexts/SessionAdapterContext'
 import { MessagingAPI } from '@/lib/api/activity/messaging/messaging'
 import type {
   ChatRoom,
@@ -362,7 +362,7 @@ const MessagingContext = createContext<MessagingContextValue | undefined>(undefi
 // ─── Provider ───────────────────────────────────────────────────────────────
 
 export function MessagingProvider({ children }: { children: React.ReactNode }) {
-  const { data: session } = useSession()
+  const session = useOptionalSessionAdapter()?.data ?? null
   const [state, dispatch] = useReducer(messagingReducer, initialState)
   const stateRef = useRef(state)
   stateRef.current = state

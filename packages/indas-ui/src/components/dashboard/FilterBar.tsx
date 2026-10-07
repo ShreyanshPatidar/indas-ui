@@ -207,6 +207,8 @@ export interface FilterBarProps {
   title: string
   /** Dynamic context label (shown as subtitle) */
   contextLabel?: string
+  /** One line under the title saying what the page shows. */
+  description?: React.ReactNode
   /** Secondary toggle (e.g., Job/Value) */
   secondaryToggle?: {
     options: ToggleOption[]
@@ -256,6 +258,8 @@ export interface FilterBarProps {
   onInsightsClick?: () => void
   /** Fiscal-year start year (e.g. 2026 for FY 2026-2027). Drives fiscal Week/Month/Quarter/Year options. */
   fiscalStartYear?: number
+  /** Offer "All Time" at the end of the Year list (needs `fiscalStartYear`). */
+  allTime?: boolean
   /** Additional content */
   children?: React.ReactNode
   className?: string
@@ -349,7 +353,7 @@ const fmtFiscalDay = (d: Date) => `${String(d.getDate()).padStart(2, '0')} ${SHO
 // Fiscal-year-aware dropdown options. FY runs 1 Apr (fyStart) → 31 Mar (fyStart+1).
 // Weeks are W1..W52/53 counting 7-day spans from 1 Apr; months ordered Apr→Mar;
 // quarters Q1 Apr-Jun … Q4 Jan-Mar; year shown as "YYYY-YYYY".
-function buildTimeOptions(fyStart: number) {
+function buildTimeOptions(fyStart: number, allTime = false) {
   const fyOpen = new Date(fyStart, 3, 1)
   const fyClose = new Date(fyStart + 1, 2, 31)
   // Monday-aligned weeks clamped to the FY: W1 = 1 Apr → first Sunday (partial),
@@ -377,7 +381,9 @@ function buildTimeOptions(fyStart: number) {
     { value: 'Q3', label: `Q3 (Oct – Dec ${fyStart})` },
     { value: 'Q4', label: `Q4 (Jan – Mar ${fyStart + 1})` },
   ]
-  const years = [{ value: `${fyStart}`, label: `${fyStart}-${fyStart + 1}` }]
+  // This financial year and the two before it, newest first; "All Time" last where the host offers it.
+  const years = [0, 1, 2].map(n => ({ value: `${fyStart - n}`, label: `FY ${fyStart - n}-${String(fyStart - n + 1).slice(2)}` }))
+  if (allTime) years.push({ value: 'all', label: 'All Time' })
   return [
     { value: 'Day', label: 'Day', dropdownOptions: DAY_OPTIONS, quickOptions: DAY_QUICK },
     { value: 'Week', label: 'Week', dropdownOptions: weeks, quickOptions: WEEK_QUICK },
@@ -677,6 +683,7 @@ function ForecastControl({
 export function FilterBar({
   title,
   contextLabel,
+  description,
   secondaryToggle,
   timeFilter = 'Week',
   onTimeFilterChange,
@@ -707,15 +714,35 @@ export function FilterBar({
   children,
   className,
   layout = 'default',
-  fiscalStartYear
+  fiscalStartYear,
+  allTime = false,
 }: FilterBarProps) {
   const [popoverOpen, setPopoverOpen] = useState(false)
   const popoverRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
 
+  // The divider between the secondary toggle and the time tabs only makes sense while they share a
+  // line. When the row wraps (narrow screens, long toggle labels), it would be left hanging at the
+  // end of the first line, so it hides.
+  const toggleRef = useRef<HTMLDivElement>(null)
+  const timeTabsRef = useRef<HTMLDivElement>(null)
+  const [tabsWrapped, setTabsWrapped] = useState(false)
+  useEffect(() => {
+    const a = toggleRef.current
+    const b = timeTabsRef.current
+    if (!a || !b || typeof ResizeObserver === 'undefined') return
+    const check = () => setTabsWrapped(a.offsetTop !== b.offsetTop)
+    const ro = new ResizeObserver(check)
+    ro.observe(a)
+    ro.observe(b)
+    if (a.parentElement) ro.observe(a.parentElement)
+    check()
+    return () => ro.disconnect()
+  }, [secondaryToggle, hideTimeFilter])
+
   const timeOptions = useMemo(
-    () => (fiscalStartYear ? buildTimeOptions(fiscalStartYear) : TIME_FILTER_OPTIONS),
-    [fiscalStartYear]
+    () => (fiscalStartYear ? buildTimeOptions(fiscalStartYear, allTime) : TIME_FILTER_OPTIONS),
+    [fiscalStartYear, allTime]
   )
 
   // Handle click outside. Ignore clicks landing inside a portalled dropdown/select
@@ -824,6 +851,7 @@ export function FilterBar({
               {contextLabel && (
                 <span className="text-xs text-[rgb(var(--fg-muted))]">{contextLabel}</span>
               )}
+              {description && <p className="mt-0.5 text-xs text-[rgb(var(--fg-muted))]">{description}</p>}
             </div>
 
             {/* Right side: Filter + Apply + Reports */}
@@ -959,10 +987,13 @@ export function FilterBar({
     >
       {/* Mobile: Title row + Controls row stacked. Desktop: single row */}
 
-      {/* Row 1 (always): Left (Title) | Right (icon buttons) */}
-      <div className="flex items-center gap-3">
-        {/* Left: Title + period badge — takes all remaining space */}
-        <div className="flex-1 min-w-0 flex items-center gap-2.5">
+      {/* Row 1 (always): Left (Title) | Right (icon buttons). It wraps: between the phone layout and a
+          wide screen the toggles and tabs need more room than one line has, and a row that cannot
+          wrap pushes the whole page sideways. */}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        {/* Left: Title + period badge. Sized to its content (flex-auto, not flex-1), so the controls
+            move to the next line before the title is cut short; it truncates only when alone on a line. */}
+        <div className="flex-auto min-w-0 flex items-center gap-2.5">
           <h1 className="text-base sm:text-xl font-bold text-[rgb(var(--fg-default))] leading-tight truncate">{title}</h1>
           {contextLabel && (
             <span className="hidden sm:inline-flex items-center gap-1.5 shrink-0 h-6 px-2.5 rounded-full border border-[rgb(var(--bd-default))] bg-[rgb(var(--bg-subtle))] text-xs font-medium text-[rgb(var(--fg-muted))]">
@@ -973,11 +1004,11 @@ export function FilterBar({
         </div>
 
         {/* Right: Secondary toggle + time filter hidden on mobile, icon buttons always visible */}
-        <div className="flex items-center gap-3">
+        <div className="ml-auto flex flex-wrap items-center justify-end gap-x-3 gap-y-2">
           {/* Secondary Toggle — desktop only */}
           {secondaryToggle && (
             <>
-              <div className="hidden sm:block">
+              <div ref={toggleRef} className="hidden sm:block">
                 <Tabs
                   tabs={secondaryToggle.options.map(opt => ({ id: opt.value, label: opt.label }))}
                   activeTab={secondaryToggle.value}
@@ -985,13 +1016,13 @@ export function FilterBar({
                   size="sm"
                 />
               </div>
-              <div className="hidden sm:block h-4 w-px bg-[rgb(var(--bd-default))] self-center" />
+              <div className={cn('hidden h-4 w-px bg-[rgb(var(--bd-default))] self-center', !tabsWrapped && 'sm:block')} />
             </>
           )}
 
           {/* Time Filter — desktop only (shown in row 2 on mobile) */}
           {!hideTimeFilter && (
-            <div className="hidden sm:block">
+            <div ref={timeTabsRef} className="hidden sm:block">
               <Tabs
                 tabs={timeOptions.map(opt => ({ id: opt.value, label: opt.label, dropdownOptions: opt.dropdownOptions, quickOptions: opt.quickOptions }))}
                 activeTab={timeFilter}
@@ -1153,9 +1184,10 @@ export function FilterBar({
         </span>
       )}
 
-      {/* Row 2 — mobile only: time filter tabs + secondary toggle */}
+      {/* Row 2 — mobile only: the secondary toggle and the time tabs, a line each. Sharing one line,
+          the time tabs were pushed off the screen and Quarter and Year could not be seen. */}
       {(!hideTimeFilter || secondaryToggle) && (
-        <div className="sm:hidden mt-2 flex items-center gap-2 overflow-x-auto">
+        <div className="sm:hidden mt-2 flex flex-col items-start gap-2">
           {secondaryToggle && (
             <Tabs
               tabs={secondaryToggle.options.map(opt => ({ id: opt.value, label: opt.label }))}
@@ -1194,6 +1226,7 @@ export function FilterBar({
           )}
         </div>
       )}
+      {description && <p className="mt-1 text-sm text-[rgb(var(--fg-muted))]">{description}</p>}
     </header>
   )
 }

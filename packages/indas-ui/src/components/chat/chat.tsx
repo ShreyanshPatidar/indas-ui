@@ -6,7 +6,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef, ReactNode, ComponentType } from 'react'
-import { useSession } from 'next-auth/react'
+import { useOptionalSessionAdapter } from '@/contexts/SessionAdapterContext'
 import { useRouter } from 'next/navigation'
 import { Menu, X, Plus, Maximize2, Download, Share2, Volume2, VolumeX, Bot, History, PanelLeftOpen, Star, Pencil, Trash2, ChevronDown, Search, Calendar, Copy } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -135,7 +135,7 @@ export function Chat({
   headerActions,
   onMessagesChange
 }: ChatProps) {
-  const { data: session } = useSession()
+  const session = useOptionalSessionAdapter()?.data ?? null
   const router = useRouter()
   const alerts = useGlobalAlert()
   const { t } = useLanguage()
