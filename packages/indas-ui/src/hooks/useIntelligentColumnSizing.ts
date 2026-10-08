@@ -39,6 +39,9 @@ const CALCULATION_DEFAULTS = {
  * Automatically calculates optimal column widths based on content
  * MERGED: Best features from useAutoIntelligentSizing + useIntelligentColumnSizing
  */
+/** What the cell renderer shows for an empty cell; not content to size a column by. */
+const PLACEHOLDERS = new Set(['', '-', '–', '—', 'N/A', 'n/a'])
+
 export function useIntelligentColumnSizing<TData>(
   data: TData[],
   columns: ColumnDef<TData>[],
@@ -48,7 +51,11 @@ export function useIntelligentColumnSizing<TData>(
 
   // Smart content analyzer - detects data type and calculates optimal width
   const analyzeContent = useCallback((columnId: string, sampleData: TData[]) => {
-    const values = sampleData.map(row => (row as any)[columnId]).filter(v => v !== null && v !== undefined)
+    // Blanks are not entries: the cell renderer centres a placeholder, and counted as zero-width
+    // text they dragged a mostly-empty column (a purpose, a payment mode) down to the average.
+    const values = sampleData
+      .map(row => (row as any)[columnId])
+      .filter(v => v !== null && v !== undefined && !(typeof v === 'string' && PLACEHOLDERS.has(v.trim())))
 
     if (values.length === 0) {
       return {
@@ -175,10 +182,9 @@ export function useIntelligentColumnSizing<TData>(
       // Optimal width calculation with intelligent rules
       let optimalWidth: number
 
-      // Calculate base width from content
-      const baseContentWidth = variance > avgContentWidth * 0.5
-        ? avgContentWidth + contentBuffer
-        : maxContentWidth + contentBuffer
+      // Size to the longest entry, not the average: a column mixing "Cash" with "Bank / RTGS / NEFT"
+      // was sized to the middle and cut the long ones short. finalMaxWidth still caps outliers.
+      const baseContentWidth = maxContentWidth + contentBuffer
 
       // Rule 1: If header is much wider than content (ratio > 1.8), use compromise
       if (headerToContentRatio > 1.8) {
