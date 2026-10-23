@@ -73,14 +73,17 @@ npm run build:docs         # build docs (includes library build first)
 
 ## Publishing
 
-Tagged GitHub releases auto-publish `packages/indas-ui` to npm via Actions.
-Add an `NPM_TOKEN` secret to the repo for the workflow.
+Only CI publishes, so npm never holds a version git does not. A `v*` tag on main publishes
+`packages/indas-ui` through npm Trusted Publishing (no token) and makes the GitHub release.
+`npm publish` anywhere else refuses to run.
 
-Manual:
 ```bash
 cd packages/indas-ui
-npm version patch
-npm publish
+npm version patch --no-git-tag-version   # bump packages/indas-ui/package.json
+cd ../..
+git commit -am "indas-ui <version>: what changed"
+git tag v<version>
+git push origin main --tags
 ```
 
 ## License
