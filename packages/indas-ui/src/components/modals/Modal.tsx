@@ -135,6 +135,13 @@ function Modal({ open, onOpenChange, ...props }: DialogPrimitive.DialogProps) {
     childOpenCountRef.current += delta
   }, [])
 
+  // The sentinel outlives one run of the effect below: React Strict Mode runs it, cleans it up and
+  // runs it again at once in development. Retracting in that cleanup meant a `history.back()` that
+  // landed after the replay had pushed a new sentinel, popped that one, and read as a back press:
+  // every modal on a phone closed itself a moment after opening. So the cleanup only marks it for
+  // retraction, a replay in the same tick takes it back, and the retraction happens a microtask later.
+  const sentinelRef = React.useRef<{ id: number; retracting: boolean } | null>(null)
+
   React.useEffect(() => {
     if (!open) return
 
@@ -145,8 +152,16 @@ function Modal({ open, onOpenChange, ...props }: DialogPrimitive.DialogProps) {
     // Push a sentinel tagged with THIS modal's identity, so we can tell our own
     // dismissal apart from a nested child retracting its entry. Without the id
     // the parent closes too when a child modal applies or cancels.
-    const id = ++modalSentinelSeq
-    window.history.pushState({ __modal: true, __modalId: id }, '')
+    let sentinel = sentinelRef.current
+    if (sentinel?.retracting) {
+      sentinel.retracting = false
+    } else {
+      sentinel = { id: ++modalSentinelSeq, retracting: false }
+      sentinelRef.current = sentinel
+      window.history.pushState({ __modal: true, __modalId: sentinel.id }, '')
+    }
+    const mine = sentinel
+    const id = mine.id
     let selfPopped = false
 
     const onPopState = () => {
@@ -170,11 +185,19 @@ function Modal({ open, onOpenChange, ...props }: DialogPrimitive.DialogProps) {
       // Closing normally (Apply / Cancel / X) — retract our own sentinel so the
       // history stack doesn't grow. If the back button already popped it,
       // calling back() again would navigate the real page away.
-      if (selfPopped) return
-      const state = window.history.state
-      if (state && state.__modal && state.__modalId === id) {
-        window.history.back()
+      if (selfPopped) {
+        sentinelRef.current = null
+        return
       }
+      mine.retracting = true
+      queueMicrotask(() => {
+        if (!mine.retracting) return
+        if (sentinelRef.current === mine) sentinelRef.current = null
+        const state = window.history.state
+        if (state && state.__modal && state.__modalId === id) {
+          window.history.back()
+        }
+      })
     }
   }, [open])
 
