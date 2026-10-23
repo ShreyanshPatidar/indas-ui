@@ -28,7 +28,12 @@ const modalSizes = {
  * @param breakpoint - Pixel width threshold (default 768)
  */
 export function useIsMobile(breakpoint: number = 768): boolean {
-  const [isMobile, setIsMobile] = React.useState(false)
+  return useMobileQuery(breakpoint) ?? false
+}
+
+/** As useIsMobile, but null until the width has been read (the first render, and on the server). */
+function useMobileQuery(breakpoint: number): boolean | null {
+  const [isMobile, setIsMobile] = React.useState<boolean | null>(null)
 
   React.useEffect(() => {
     const mq = window.matchMedia(`(max-width: ${breakpoint}px)`)
@@ -263,7 +268,21 @@ const ModalContent = React.forwardRef<
   }
 >(({ className, children, hideCloseButton, disableOutsideClick, size, style, 'aria-describedby': ariaDescribedBy, ...props }, ref) => {
   const stableRef = useStableRef(ref)
-  const isMobile = useIsMobile()
+  // The page and the dialog are different trees, so switching between them remounts everything
+  // inside: a form half filled in was wiped when a tablet turned, or a window was dragged, across
+  // the breakpoint. So the layout follows the screen only while closed; open, it keeps the one it
+  // opened with, and catches up once closed. The content exists only while open, so its ref says.
+  const live = useMobileQuery(768)
+  const [open, setOpen] = React.useState(false)
+  const [held, setHeld] = React.useState<boolean | null>(null)
+  // The first reading always counts: before it the width is unknown, and a modal open at page load
+  // on a phone must still become the page.
+  if (live !== null && held !== live && (held === null || !open)) setHeld(live)
+  const isMobile = held ?? false
+  const contentRef = React.useCallback((node: React.ElementRef<typeof DialogPrimitive.Content> | null) => {
+    stableRef(node)
+    setOpen(node !== null)
+  }, [stableRef])
   // Nested modals must paint above their parent. Radix portals every modal to
   // <body>, so equal z-index makes stacking fall back to DOM order and the
   // child renders behind / overlapping the parent.
@@ -283,7 +302,7 @@ const ModalContent = React.forwardRef<
       <DialogPrimitive.Portal>
         {/* No overlay on mobile — the page IS the modal */}
         <DialogPrimitive.Content
-          ref={stableRef}
+          ref={contentRef}
           aria-describedby={ariaDescribedBy}
           style={{ zIndex, ...style }}
           className={cn(
@@ -309,7 +328,7 @@ const ModalContent = React.forwardRef<
     <ModalPortal>
       <ModalOverlay style={{ zIndex: zIndex - 1 }} />
       <DialogPrimitive.Content
-        ref={stableRef}
+        ref={contentRef}
         aria-describedby={ariaDescribedBy}
         style={{ zIndex, ...style }}
         className={cn(
