@@ -5,7 +5,7 @@
  * Chat input with auto-expanding textarea, file upload, and voice input
  */
 
-import { useState, useRef, useEffect, useCallback, KeyboardEvent } from 'react'
+import { useState, useRef, useEffect, useCallback, KeyboardEvent, type ReactNode } from 'react'
 import { Send, Paperclip, Mic, MicOff, X, FileIcon, FileSpreadsheet, Image as ImageIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useOptionalLanguage } from '@/contexts/LanguageContext'
@@ -28,6 +28,11 @@ interface MultimodalInputProps {
   multiple?: boolean
   /** Screen-reader name of the paperclip. Default "Attach file". */
   attachLabel?: string
+  /**
+   * The attach button's icon. Default a paperclip; a host whose button opens more than a file
+   * picker (a menu, a scan) may pass a plus. Sized by the host, e.g. `<Plus className="w-4 h-4" />`.
+   */
+  attachIcon?: ReactNode
   compact?: boolean
   disabled?: boolean
   disabledReason?: string
@@ -42,6 +47,7 @@ export function MultimodalInput({
   accept = DEFAULT_CHAT_ACCEPT,
   multiple = true,
   attachLabel = 'Attach file',
+  attachIcon,
   compact = false,
   disabled = false,
   disabledReason
@@ -222,7 +228,7 @@ export function MultimodalInput({
                 aria-label={attachLabel}
                 title={attachLabel}
               >
-                <Paperclip className="w-4 h-4" />
+                {attachIcon ?? <Paperclip className="w-4 h-4" />}
               </button>
             </>
           )}
