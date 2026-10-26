@@ -1177,10 +1177,12 @@ export function FilterBar({
         </div>
       </div>
 
-      {/* Row 2 — mobile only: the secondary toggle and the time tabs, a line each. Sharing one line,
-          the time tabs were pushed off the screen and Quarter and Year could not be seen. */}
+      {/* Row 2 — mobile only: the secondary toggle and the time tabs on one line. Each keeps its size;
+          where the two do not fit (a 390px phone) the line scrolls sideways rather than squeezing or
+          cutting off Quarter and Year, which is what sharing a line used to do. The tabs' dropdowns
+          open in a portal, so the scrolling line does not clip them. */}
       {(!hideTimeFilter || secondaryToggle) && (
-        <div className="sm:hidden mt-2 flex flex-col items-start gap-2">
+        <div className="sm:hidden mt-2 -mx-1 flex items-center gap-2 overflow-x-auto px-1 pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&>*]:shrink-0">
           {secondaryToggle && (
             <Tabs
               tabs={secondaryToggle.options.map(opt => ({ id: opt.value, label: opt.label }))}
