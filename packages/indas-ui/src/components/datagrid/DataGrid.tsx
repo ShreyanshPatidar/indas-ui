@@ -1913,7 +1913,7 @@ export function DataGrid<TData>({
                     <>
                       {/* Unified pill: 🔍 Search... [grows] | 📅 Date | ≡ Filters | ⚙ Options | toolbarActions */}
                       <TooltipProvider delayDuration={100}>
-                      <div className="flex items-center h-8 rounded-full border border-[rgb(var(--bd-default))] bg-[rgb(var(--bg-surface))] px-3 focus-within:border-[rgb(var(--color-primary))] focus-within:ring-1 focus-within:ring-[rgb(var(--color-primary)/0.2)] transition-all">
+                      <div className="flex items-center h-8 rounded-full border border-[rgb(var(--bd-default))] bg-[rgb(var(--bg-surface))] px-3 focus-within:border-[rgb(var(--color-focus))] focus-within:ring-1 focus-within:ring-[rgb(var(--color-focus)/0.2)] transition-all">
                         {/* Search section — grows to fill */}
                         <div className="flex items-center gap-1.5 flex-1 min-w-0">
                           {speechSupported && (
@@ -2180,7 +2180,7 @@ export function DataGrid<TData>({
                                             e.stopPropagation()
                                             column.toggleVisibility(e.target.checked)
                                           }}
-                                          className="w-3 h-3 rounded border-[rgb(var(--bd-default))] text-[rgb(var(--color-primary))] focus:ring-[rgb(var(--color-primary))] cursor-pointer"
+                                          className="w-3 h-3 rounded border-[rgb(var(--bd-default))] text-[rgb(var(--color-primary))] focus:ring-[rgb(var(--color-focus))] cursor-pointer"
                                         />
                                         <span className="text-sm font-medium text-[rgb(var(--fg-default))] capitalize truncate">
                                           {column.id}
@@ -2224,7 +2224,7 @@ export function DataGrid<TData>({
                                               e.stopPropagation()
                                               column.toggleVisibility(e.target.checked)
                                             }}
-                                            className="w-3 h-3 rounded border-[rgb(var(--bd-default))] text-[rgb(var(--color-primary))] focus:ring-[rgb(var(--color-primary))] cursor-pointer"
+                                            className="w-3 h-3 rounded border-[rgb(var(--bd-default))] text-[rgb(var(--color-primary))] focus:ring-[rgb(var(--color-focus))] cursor-pointer"
                                           />
                                           <span className="text-sm text-[rgb(var(--fg-default))] capitalize truncate">
                                             {column.id}

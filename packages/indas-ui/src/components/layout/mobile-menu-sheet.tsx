@@ -194,7 +194,7 @@ export function MobileMenuSheet({ open, onClose }: MobileMenuSheetProps) {
               placeholder={t('Search modules...')}
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-8 py-2 text-sm rounded-lg border border-[rgb(var(--bd-default))] bg-[rgb(var(--bg-subtle))] text-[rgb(var(--fg-default))] placeholder:text-[rgb(var(--fg-muted))] focus:outline-none focus:border-[rgb(var(--color-primary))] transition-colors"
+              className="w-full pl-9 pr-8 py-2 text-sm rounded-lg border border-[rgb(var(--bd-default))] bg-[rgb(var(--bg-subtle))] text-[rgb(var(--fg-default))] placeholder:text-[rgb(var(--fg-muted))] focus:outline-none focus:border-[rgb(var(--color-focus))] transition-colors"
             />
             {searchQuery && (
               <button

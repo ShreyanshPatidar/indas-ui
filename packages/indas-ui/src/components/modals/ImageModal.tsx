@@ -767,7 +767,7 @@ export function ImageModal({
 
                 <button
                   onClick={handleClose}
-                  className="flex-shrink-0 rounded-sm opacity-70 ring-offset-[rgb(var(--bg-surface))] transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-primary))] focus:ring-offset-2"
+                  className="flex-shrink-0 rounded-sm opacity-70 ring-offset-[rgb(var(--bg-surface))] transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-focus))] focus:ring-offset-2"
                 >
                   <X className="h-4 w-4 text-[rgb(var(--color-icon))]" />
                   <span className="sr-only">Close</span>

@@ -608,7 +608,7 @@ export function TopHeader({ className, sidebarCollapsed = true, onToggleSidebar,
                             placeholder="Search..."
                             value={notificationSearchQuery}
                             onChange={(e) => setNotificationSearchQuery(e.target.value)}
-                            className="w-full pl-9 pr-3 py-1.5 text-sm rounded-lg border border-[rgb(var(--bd-default))] bg-[rgb(var(--bg-subtle))] text-[rgb(var(--fg-default))] placeholder:text-[rgb(var(--fg-muted))] focus:outline-none focus:border-[rgb(var(--color-primary))] focus:bg-[rgb(var(--bg-surface))] transition-colors"
+                            className="w-full pl-9 pr-3 py-1.5 text-sm rounded-lg border border-[rgb(var(--bd-default))] bg-[rgb(var(--bg-subtle))] text-[rgb(var(--fg-default))] placeholder:text-[rgb(var(--fg-muted))] focus:outline-none focus:border-[rgb(var(--color-focus))] focus:bg-[rgb(var(--bg-surface))] transition-colors"
                           />
                         </div>
                         <button

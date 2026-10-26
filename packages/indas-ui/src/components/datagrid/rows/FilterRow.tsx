@@ -220,7 +220,7 @@ function FilterCell<TData>({
             className={cn(
               'w-full h-6 pl-6 pr-5 text-xs',
               'bg-[rgb(var(--bg-surface))] rounded',
-              'focus:outline-none focus:ring-1 focus:ring-[rgb(var(--color-primary))] focus:border-[rgb(var(--color-primary))]',
+              'focus:outline-none focus:ring-1 focus:ring-[rgb(var(--color-focus))] focus:border-[rgb(var(--color-focus))]',
               'placeholder:text-[rgb(var(--fg-muted))]',
               'text-[rgb(var(--fg-default))]',
               // Highlight active filter

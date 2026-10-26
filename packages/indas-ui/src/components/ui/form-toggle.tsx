@@ -138,7 +138,7 @@ export function FormToggle({
                   onToggle(false)
                 }
               }}
-              className="rounded-sm opacity-70 ring-offset-[rgb(var(--bg-surface))] transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-primary))] focus:ring-offset-2"
+              className="rounded-sm opacity-70 ring-offset-[rgb(var(--bg-surface))] transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-focus))] focus:ring-offset-2"
               title="Close form"
             >
               <X className="h-5 w-5 text-[rgb(var(--color-icon))]" />

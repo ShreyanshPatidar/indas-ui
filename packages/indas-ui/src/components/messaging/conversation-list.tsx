@@ -224,7 +224,7 @@ export function ConversationList({
             value={searchText}
             onChange={e => setSearchText(e.target.value)}
             placeholder={t('Search conversations...')}
-            className="w-full h-8 pl-8 pr-8 rounded-lg bg-[rgb(var(--bg-subtle))] text-sm text-[rgb(var(--fg-default))] placeholder:text-[rgb(var(--fg-muted))] border border-[rgb(var(--bd-default))] focus:outline-none focus:ring-1 focus:ring-[rgb(var(--color-primary))]"
+            className="w-full h-8 pl-8 pr-8 rounded-lg bg-[rgb(var(--bg-subtle))] text-sm text-[rgb(var(--fg-default))] placeholder:text-[rgb(var(--fg-muted))] border border-[rgb(var(--bd-default))] focus:outline-none focus:ring-1 focus:ring-[rgb(var(--color-focus))]"
           />
           {searchText && (
             <button

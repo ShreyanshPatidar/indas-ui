@@ -375,7 +375,7 @@ const ModalContent = React.forwardRef<
       >
         {children}
         {!hideCloseButton && (
-          <DialogPrimitive.Close className="absolute right-2 top-2 sm:right-4 sm:top-4 rounded-sm opacity-70 ring-offset-[rgb(var(--bg-surface))] transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-primary))] focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-[rgb(var(--bg-hover))] data-[state=open]:text-[rgb(var(--fg-muted))]">
+          <DialogPrimitive.Close className="absolute right-2 top-2 sm:right-4 sm:top-4 rounded-sm opacity-70 ring-offset-[rgb(var(--bg-surface))] transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-focus))] focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-[rgb(var(--bg-hover))] data-[state=open]:text-[rgb(var(--fg-muted))]">
             <X className="h-4 w-4 sm:h-5 sm:w-5 text-[rgb(var(--color-icon))]" />
             <span className="sr-only">Close</span>
           </DialogPrimitive.Close>

@@ -436,7 +436,7 @@ function Stepper({
         className={cn(
           'flex-1 h-7 w-full min-w-0 rounded-md border border-[rgb(var(--bd-default))] bg-transparent',
           'text-center text-xs font-semibold text-[rgb(var(--fg-default))]',
-          'focus:outline-none focus:border-[rgb(var(--color-primary))]'
+          'focus:outline-none focus:border-[rgb(var(--color-focus))]'
         )}
       />
       <button onClick={() => onChange(value + 1)} disabled={value >= max} className={buttonClasses}>
@@ -996,7 +996,8 @@ export function FilterBar({
         <div className="flex-auto min-w-0 flex items-center gap-2.5">
           <h1 className="text-base sm:text-xl font-bold text-[rgb(var(--fg-default))] leading-tight truncate">{title}</h1>
           {contextLabel && (
-            <span className="hidden sm:inline-flex items-center gap-1.5 shrink-0 h-6 px-2.5 rounded-full border border-[rgb(var(--bd-default))] bg-[rgb(var(--bg-subtle))] text-xs font-medium text-[rgb(var(--fg-muted))]">
+            /* Beside the title at every width: on a phone it sat on a line of its own under the title. */
+            <span className="inline-flex items-center gap-1.5 shrink-0 h-6 px-2.5 rounded-full border border-[rgb(var(--bd-default))] bg-[rgb(var(--bg-subtle))] text-xs font-medium text-[rgb(var(--fg-muted))]">
               <CalendarDays className="w-3.5 h-3.5" />
               {contextLabel}
             </span>
@@ -1175,14 +1176,6 @@ export function FilterBar({
         )}
         </div>
       </div>
-
-      {/* Mobile period badge */}
-      {contextLabel && (
-        <span className="sm:hidden mt-2 inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full border border-[rgb(var(--bd-default))] bg-[rgb(var(--bg-subtle))] text-xs font-medium text-[rgb(var(--fg-muted))]">
-          <CalendarDays className="w-3.5 h-3.5" />
-          {contextLabel}
-        </span>
-      )}
 
       {/* Row 2 — mobile only: the secondary toggle and the time tabs, a line each. Sharing one line,
           the time tabs were pushed off the screen and Quarter and Year could not be seen. */}

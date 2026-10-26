@@ -208,7 +208,7 @@ export function MultimodalInput({
         )}
 
         <div className={cn(
-          "relative flex items-center gap-1 bg-[rgb(var(--bg-app))]/60 backdrop-blur-xl border border-[rgb(var(--bd-default))] shadow-lg transition-all duration-250 focus-within:border-[rgb(var(--color-primary))] focus-within:shadow-[0_0_0_4px_rgb(var(--color-primary)/0.12),0_20px_25px_-5px_rgba(0,0,0,0.15)] focus-within:-translate-y-px",
+          "relative flex items-center gap-1 bg-[rgb(var(--bg-app))]/60 backdrop-blur-xl border border-[rgb(var(--bd-default))] shadow-lg transition-all duration-250 focus-within:border-[rgb(var(--color-focus))] focus-within:shadow-[0_0_0_4px_rgb(var(--color-focus)/0.12),0_20px_25px_-5px_rgba(0,0,0,0.15)] focus-within:-translate-y-px",
           compact ? "rounded-xl p-1.5" : "rounded-2xl p-2.5"
         )}>
           {/* File Upload Button */}

@@ -186,7 +186,7 @@ export function DateTimePicker({
               onChange(value === 0 ? max : value - 1)
             }
           }}
-          className="w-14 text-center text-lg font-semibold border border-[rgb(var(--bd-default))] rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-primary))] focus:border-transparent transition-all hover:border-[rgb(var(--color-primary))]"
+          className="w-14 text-center text-lg font-semibold border border-[rgb(var(--bd-default))] rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-focus))] focus:border-transparent transition-all hover:border-[rgb(var(--color-primary))]"
           aria-label={label}
         />
         <span className="text-[10px] text-[rgb(var(--fg-muted))] mt-0.5">{label}</span>

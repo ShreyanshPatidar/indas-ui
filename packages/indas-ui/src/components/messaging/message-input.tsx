@@ -244,7 +244,7 @@ export function MessageInput({
           disabled={disabled || uploading || isListening}
           placeholder={isListening ? t('Listening...') : (placeholder || t('Type a message...'))}
           rows={1}
-          className="flex-1 min-h-[2.25rem] max-h-[7.5rem] px-3 py-2 rounded-xl bg-[rgb(var(--bg-subtle))] text-sm text-[rgb(var(--fg-default))] placeholder:text-[rgb(var(--fg-muted))] border border-[rgb(var(--bd-default))] resize-none focus:outline-none focus:ring-1 focus:ring-[rgb(var(--color-primary))] disabled:opacity-50"
+          className="flex-1 min-h-[2.25rem] max-h-[7.5rem] px-3 py-2 rounded-xl bg-[rgb(var(--bg-subtle))] text-sm text-[rgb(var(--fg-default))] placeholder:text-[rgb(var(--fg-muted))] border border-[rgb(var(--bd-default))] resize-none focus:outline-none focus:ring-1 focus:ring-[rgb(var(--color-focus))] disabled:opacity-50"
         />
 
         {/* Voice input button */}

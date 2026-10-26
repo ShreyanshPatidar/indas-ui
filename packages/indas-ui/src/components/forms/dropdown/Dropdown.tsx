@@ -187,7 +187,7 @@ export const dropdownSharedStyles = {
   // Trigger (button) styles
   trigger: {
     base: "flex items-center justify-between rounded-md border bg-bg-surface cursor-pointer transition-all duration-200",
-    focus: "focus-within:outline-none focus-within:border-[rgb(var(--color-primary))]",
+    focus: "focus-within:outline-none focus-within:border-[rgb(var(--color-focus))]",
     error: "border-[rgb(var(--color-error))] focus-within:border-[rgb(var(--color-error))]",
     normal: "border-[rgb(var(--bd-default))] hover:border-[rgb(var(--bd-hover))]",
     disabled: "cursor-not-allowed opacity-50",

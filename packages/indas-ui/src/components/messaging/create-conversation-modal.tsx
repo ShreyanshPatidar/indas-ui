@@ -165,13 +165,13 @@ export function CreateConversationModal({
                 value={name}
                 onChange={e => setName(e.target.value)}
                 placeholder={type === 'Group' ? t('Group name') : t('Channel name')}
-                className="w-full h-9 px-3 rounded-lg bg-[rgb(var(--bg-subtle))] text-sm text-[rgb(var(--fg-default))] border border-[rgb(var(--bd-default))] focus:outline-none focus:ring-1 focus:ring-[rgb(var(--color-primary))]"
+                className="w-full h-9 px-3 rounded-lg bg-[rgb(var(--bg-subtle))] text-sm text-[rgb(var(--fg-default))] border border-[rgb(var(--bd-default))] focus:outline-none focus:ring-1 focus:ring-[rgb(var(--color-focus))]"
               />
               <input
                 value={description}
                 onChange={e => setDescription(e.target.value)}
                 placeholder={t('Description (optional)')}
-                className="w-full h-9 px-3 rounded-lg bg-[rgb(var(--bg-subtle))] text-sm text-[rgb(var(--fg-default))] border border-[rgb(var(--bd-default))] focus:outline-none focus:ring-1 focus:ring-[rgb(var(--color-primary))]"
+                className="w-full h-9 px-3 rounded-lg bg-[rgb(var(--bg-subtle))] text-sm text-[rgb(var(--fg-default))] border border-[rgb(var(--bd-default))] focus:outline-none focus:ring-1 focus:ring-[rgb(var(--color-focus))]"
               />
               {type === 'Channel' && (
                 <label className="flex items-center gap-2 cursor-pointer">
@@ -218,7 +218,7 @@ export function CreateConversationModal({
                 autoComplete="off"
                 data-1p-ignore
                 data-lpignore="true"
-                className="w-full h-9 pl-8 pr-3 rounded-lg bg-[rgb(var(--bg-subtle))] text-sm text-[rgb(var(--fg-default))] border border-[rgb(var(--bd-default))] focus:outline-none focus:ring-1 focus:ring-[rgb(var(--color-primary))]"
+                className="w-full h-9 pl-8 pr-3 rounded-lg bg-[rgb(var(--bg-subtle))] text-sm text-[rgb(var(--fg-default))] border border-[rgb(var(--bd-default))] focus:outline-none focus:ring-1 focus:ring-[rgb(var(--color-focus))]"
               />
             </div>
           </div>

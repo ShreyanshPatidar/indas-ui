@@ -22,6 +22,9 @@
 
     /* Primary Color System (Main brand/accent) - Default #003366 */
     --color-primary: 0 51 102;               /* Primary brand color #003366 */
+    /* What a focused field or button is outlined in. The brand colour unless the app says
+       otherwise: an app that keeps its brand colour for primary actions sets a neutral here. */
+    --color-focus: var(--color-primary);
     --color-primary-hover: 0 40 82;          /* Primary hover state - darker #003366 */
     --color-primary-subtle: 250 251 252;     /* Very light primary backgrounds (0.02 opacity equivalent) */
     --color-primary-muted: 102 153 204;      /* Muted primary */

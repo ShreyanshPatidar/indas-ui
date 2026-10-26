@@ -230,7 +230,7 @@ export function DraftModal({
                 border border-[rgb(var(--bd-default))]
                 text-[rgb(var(--fg-default))]
                 placeholder:text-[rgb(var(--fg-muted))]
-                focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-primary))]
+                focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-focus))]
               "
             />
           </div>

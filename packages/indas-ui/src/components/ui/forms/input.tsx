@@ -99,7 +99,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           className={cn(
             "flex h-10 w-full border px-3 py-2 text-xs",
             "bg-[rgb(var(--bg-surface))] text-[rgb(var(--fg-default))] placeholder:text-[rgb(var(--fg-subtle))]",
-            "focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-primary))]/10",
+            "focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-focus))]/10",
             "disabled:cursor-not-allowed disabled:opacity-50",
             "transition-all duration-200",
             type === "number" && "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none",
@@ -116,7 +116,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
               ? "border-[rgb(var(--color-danger))] focus:border-[rgb(var(--color-danger))]"
               : isEdited
                 ? "border-[rgb(var(--color-warning))] focus:border-[rgb(var(--color-warning))] focus:ring-[rgb(var(--color-warning))]/20 focus:z-10"
-                : "border-[rgb(var(--bd-default))] focus:border-[rgb(var(--color-primary))] focus:z-10",
+                : "border-[rgb(var(--bd-default))] focus:border-[rgb(var(--color-focus))] focus:z-10",
             className
           )}
           ref={ref}
@@ -156,7 +156,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             className={cn(
               "flex h-10 w-full rounded-md border px-3 py-2 text-xs",
               "bg-[rgb(var(--bg-surface))] text-[rgb(var(--fg-default))] placeholder:text-[rgb(var(--fg-subtle))]",
-              "focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-primary))]/10",
+              "focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-focus))]/10",
               "disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-[rgb(var(--bg-subtle))]",
               "transition-all duration-200",
               type === "number" && "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none",
@@ -169,7 +169,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
                 ? "border-[rgb(var(--color-danger))] focus:border-[rgb(var(--color-danger))]"
                 : isEdited
                   ? "border-[rgb(var(--color-warning))] focus:border-[rgb(var(--color-warning))] focus:ring-[rgb(var(--color-warning))]/20"
-                  : "border-[rgb(var(--bd-default))] focus:border-[rgb(var(--color-primary))]",
+                  : "border-[rgb(var(--bd-default))] focus:border-[rgb(var(--color-focus))]",
               className
             )}
             ref={ref}

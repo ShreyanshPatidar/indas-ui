@@ -244,7 +244,7 @@ export function RemarkTrail({ remarks, onAdd, canAdd = true, loading = false, on
                         onChange={(e) => setEditText(e.target.value)}
                         onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); commitEdit() } if (e.key === 'Escape') setEditingSeq(null) }}
                         autoFocus
-                        className="flex-1 text-xs rounded border border-[rgb(var(--bd-default))] bg-[rgb(var(--bg-surface))] px-2 py-1 text-[rgb(var(--fg-default))] focus:outline-none focus:ring-1 focus:ring-[rgb(var(--color-primary))]"
+                        className="flex-1 text-xs rounded border border-[rgb(var(--bd-default))] bg-[rgb(var(--bg-surface))] px-2 py-1 text-[rgb(var(--fg-default))] focus:outline-none focus:ring-1 focus:ring-[rgb(var(--color-focus))]"
                       />
                       <button type="button" onClick={commitEdit} title={t('Save')} className="p-1 rounded bg-[rgb(var(--color-primary))] text-white hover:opacity-90"><Check className="h-3 w-3" /></button>
                       <button type="button" onClick={() => setEditingSeq(null)} title={t('Cancel')} className="p-1 rounded text-[rgb(var(--fg-muted))] hover:bg-[rgb(var(--bg-hover))]"><X className="h-3 w-3" /></button>
@@ -312,7 +312,7 @@ export function RemarkTrail({ remarks, onAdd, canAdd = true, loading = false, on
               onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleAdd() } }}
               disabled={!canAdd || saving}
               placeholder={t('Add a note...')}
-              className="flex-1 text-xs rounded border border-[rgb(var(--bd-default))] bg-[rgb(var(--bg-surface))] px-2 py-1 text-[rgb(var(--fg-default))] focus:outline-none focus:ring-1 focus:ring-[rgb(var(--color-primary))] disabled:opacity-60"
+              className="flex-1 text-xs rounded border border-[rgb(var(--bd-default))] bg-[rgb(var(--bg-surface))] px-2 py-1 text-[rgb(var(--fg-default))] focus:outline-none focus:ring-1 focus:ring-[rgb(var(--color-focus))] disabled:opacity-60"
             />
             <button
               onClick={handleAdd}
@@ -517,7 +517,7 @@ export function RemarkInput({
               ? 'border-[rgb(var(--color-error))] placeholder:text-[rgb(var(--fg-subtle))]'
               : 'border-[rgb(var(--bd-default))] placeholder:text-[rgb(var(--fg-subtle))]',
             'transition-[height,box-shadow,border-color] duration-150 ease-out',
-            'focus:outline-none focus:border-[rgb(var(--color-primary))] focus:ring-2 focus:ring-[rgb(var(--color-primary))]/30',
+            'focus:outline-none focus:border-[rgb(var(--color-focus))] focus:ring-2 focus:ring-[rgb(var(--color-focus))]/30',
             'resize-y overflow-auto min-h-[2.25rem] disabled:opacity-60',
             inputClassName
           )}

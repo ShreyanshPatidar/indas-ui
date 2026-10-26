@@ -1721,7 +1721,7 @@ export function FileAttachment({
                   placeholder="Search by subject, sender, or content..."
                   value={emailSearchQuery}
                   onChange={(e) => setEmailSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-8 py-1.5 rounded-md border border-[rgb(var(--bd-default))] bg-[rgb(var(--bg-default))] text-xs text-[rgb(var(--fg-default))] placeholder:text-[rgb(var(--fg-muted))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-primary))] focus:border-transparent"
+                  className="w-full pl-9 pr-8 py-1.5 rounded-md border border-[rgb(var(--bd-default))] bg-[rgb(var(--bg-default))] text-xs text-[rgb(var(--fg-default))] placeholder:text-[rgb(var(--fg-muted))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-focus))] focus:border-transparent"
                 />
                 {emailSearchQuery && (
                   <button
