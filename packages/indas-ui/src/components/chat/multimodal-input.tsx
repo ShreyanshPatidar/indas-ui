@@ -33,6 +33,8 @@ interface MultimodalInputProps {
    * picker (a menu, a scan) may pass a plus. Sized by the host, e.g. `<Plus className="w-4 h-4" />`.
    */
   attachIcon?: ReactNode
+  /** The language the mic listens in, as a BCP 47 tag: 'en-IN' (default), 'hi-IN' for Hindi. */
+  speechLang?: string
   compact?: boolean
   disabled?: boolean
   disabledReason?: string
@@ -48,6 +50,7 @@ export function MultimodalInput({
   multiple = true,
   attachLabel = 'Attach file',
   attachIcon,
+  speechLang = 'en-IN',
   compact = false,
   disabled = false,
   disabledReason
@@ -85,7 +88,7 @@ export function MultimodalInput({
     const recognition = new SpeechRecognition()
     recognition.continuous = false
     recognition.interimResults = false
-    recognition.lang = 'en-IN'
+    recognition.lang = speechLang
 
     recognition.onresult = (event: any) => {
       const transcript = event.results[0]?.[0]?.transcript
@@ -115,7 +118,7 @@ export function MultimodalInput({
       setIsListening(false)
       recognitionRef.current = null
     }
-  }, [isListening])
+  }, [isListening, speechLang])
 
   // Cleanup on unmount
   useEffect(() => {
