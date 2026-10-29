@@ -86,17 +86,19 @@ export function MultimodalInput({
 
     // Fresh instance every click — reusing a stopped instance throws InvalidStateError
     const recognition = new SpeechRecognition()
-    recognition.continuous = false
-    recognition.interimResults = false
+    // Listens until the mic is tapped again, not just to the first pause, and writes the words
+    // into the box as they are heard, so the speaker sees it working.
+    recognition.continuous = true
+    recognition.interimResults = true
     recognition.lang = speechLang
 
+    // What was typed before the mic opened; every result rewrites the rest after it.
+    const before = textareaRef.current?.value.trim() ?? ''
     recognition.onresult = (event: any) => {
-      const transcript = event.results[0]?.[0]?.transcript
-      if (transcript) {
-        setInput(prev => prev + (prev ? ' ' : '') + transcript.trim())
-      }
-      setIsListening(false)
-      recognitionRef.current = null
+      let heard = ''
+      for (let i = 0; i < event.results.length; i++) heard += event.results[i][0]?.transcript ?? ''
+      heard = heard.trim()
+      setInput(before && heard ? `${before} ${heard}` : before || heard)
     }
 
     recognition.onerror = (event: any) => {
@@ -210,7 +212,29 @@ export function MultimodalInput({
           </div>
         )}
 
+        {/* While the mic is open: a strip that says so, moving, and how to stop. */}
+        {isListening && (
+          <div role="status" aria-live="polite" className="mb-2 flex items-center gap-2 px-1 text-xs text-[rgb(var(--color-primary))]">
+            <span className="relative flex w-2 h-2" aria-hidden>
+              <span className="absolute inline-flex w-full h-full rounded-full bg-[rgb(var(--color-primary))] opacity-75 motion-safe:animate-ping" />
+              <span className="relative inline-flex w-2 h-2 rounded-full bg-[rgb(var(--color-primary))]" />
+            </span>
+            <span className="font-medium">{t('Listening')}</span>
+            <span className="flex items-center gap-0.5 h-3" aria-hidden>
+              {[0.5, 1, 0.7, 0.9, 0.6].map((h, i) => (
+                <span
+                  key={i}
+                  className="w-0.5 rounded-full bg-[rgb(var(--color-primary))] motion-safe:animate-pulse"
+                  style={{ height: `${h * 100}%`, animationDelay: `${i * 0.15}s` }}
+                />
+              ))}
+            </span>
+            <span className="text-[rgb(var(--fg-muted))]">{t('tap the mic to stop')}</span>
+          </div>
+        )}
+
         <div className={cn(
+          isListening && "!border-[rgb(var(--color-primary))]",
           "relative flex items-center gap-1 bg-[rgb(var(--bg-app))]/60 backdrop-blur-xl border border-[rgb(var(--bd-default))] shadow-lg transition-all duration-250 focus-within:border-[rgb(var(--color-focus))] focus-within:shadow-[0_0_0_4px_rgb(var(--color-focus)/0.12),0_20px_25px_-5px_rgba(0,0,0,0.15)] focus-within:-translate-y-px",
           compact ? "rounded-xl p-1.5" : "rounded-2xl p-2.5"
         )}>
@@ -267,7 +291,7 @@ export function MultimodalInput({
               className={cn(
                 'shrink-0 !min-h-0 w-9 h-9 rounded-lg flex items-center justify-center transition-colors',
                 isListening
-                  ? 'text-red-500 bg-red-500/10 animate-pulse'
+                  ? 'text-[rgb(var(--color-primary))] bg-[rgb(var(--color-primary))]/15'
                   : 'text-[rgb(var(--fg-muted))] hover:text-[rgb(var(--fg-default))] hover:bg-[rgb(var(--bg-subtle))]'
               )}
               aria-label={isListening ? t('Stop listening') : t('Voice input')}
