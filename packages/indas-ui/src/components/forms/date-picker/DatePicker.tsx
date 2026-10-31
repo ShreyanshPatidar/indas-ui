@@ -57,6 +57,11 @@ export interface DatePickerProps {
 // DatePicker Component (Single/Range dates without time)
 // ============================================
 
+/** The 1st of the month `months` away from `date`. */
+const addMonths = (date: Date, months: number) => new Date(date.getFullYear(), date.getMonth() + months, 1)
+
+const shortDate = (date: Date) => date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+
 export function DatePicker({
   id,
   'aria-label': ariaLabel,
@@ -79,12 +84,13 @@ export function DatePicker({
   presets
 }: DatePickerProps) {
   const [isOpen, setIsOpen] = React.useState(false)
-  const [currentMonth, setCurrentMonth] = React.useState(new Date())
-  const [secondMonth, setSecondMonth] = React.useState(() => {
-    const next = new Date()
-    next.setMonth(next.getMonth() + 1)
-    return next
+  // Months are kept on the 1st: from the 31st, "next month" through setMonth is 31 Nov, which rolls
+  // over to December and skips November.
+  const [currentMonth, setCurrentMonth] = React.useState(() => {
+    const from = mode === 'range' && value && typeof value === 'object' && 'from' in value ? (value as DateRange).from : undefined
+    return addMonths(from ?? new Date(), 0)
   })
+  const [secondMonth, setSecondMonth] = React.useState(() => addMonths(currentMonth, 1))
   const [selectedRange, setSelectedRange] = React.useState<DateRange>(() => {
     if (mode === 'range' && value && typeof value === 'object' && 'from' in value) {
       return { from: (value as DateRange).from, to: (value as DateRange).to }
@@ -715,30 +721,23 @@ export function DatePicker({
   )
 
   const navigateMonth = (direction: 'prev' | 'next') => {
-    const newMonth = new Date(currentMonth)
-    newMonth.setMonth(newMonth.getMonth() + (direction === 'next' ? 1 : -1))
+    const newMonth = addMonths(currentMonth, direction === 'next' ? 1 : -1)
     setCurrentMonth(newMonth)
 
     // Sync second month for range mode
     if (mode === 'range') {
-      const newSecondMonth = new Date(newMonth)
-      newSecondMonth.setMonth(newSecondMonth.getMonth() + 1)
-      setSecondMonth(newSecondMonth)
+      setSecondMonth(addMonths(newMonth, 1))
     }
   }
 
   // Navigate first calendar independently
   const navigateFirstCalendar = (direction: 'prev' | 'next') => {
-    const newMonth = new Date(currentMonth)
-    newMonth.setMonth(newMonth.getMonth() + (direction === 'next' ? 1 : -1))
-    setCurrentMonth(newMonth)
+    setCurrentMonth(addMonths(currentMonth, direction === 'next' ? 1 : -1))
   }
 
   // Navigate second calendar independently
   const navigateSecondCalendar = (direction: 'prev' | 'next') => {
-    const newMonth = new Date(secondMonth)
-    newMonth.setMonth(newMonth.getMonth() + (direction === 'next' ? 1 : -1))
-    setSecondMonth(newMonth)
+    setSecondMonth(addMonths(secondMonth, direction === 'next' ? 1 : -1))
   }
 
   const handleTodayClick = () => {
@@ -778,7 +777,7 @@ export function DatePicker({
       days.push(
         <div
           key={`empty-${i}`}
-          className="h-7 w-7"
+          className="h-9 w-full sm:h-7 sm:w-7"
         />
       )
     }
@@ -787,6 +786,9 @@ export function DatePicker({
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(monthToRender.getFullYear(), monthToRender.getMonth(), day)
       const isSelected = isDateSelected(date)
+      const rangeValue = mode === 'range' && value && typeof value === 'object' && 'from' in value ? (value as DateRange) : null
+      // The two ends of a range stand out; the days between them are tinted.
+      const isRangeEnd = !rangeValue || date.toDateString() === rangeValue.from?.toDateString() || date.toDateString() === rangeValue.to?.toDateString()
       const isInRange = isDateInRange(date)
       const isDisabled = isDateDisabled(date)
       const isToday = date.toDateString() === new Date().toDateString()
@@ -798,11 +800,12 @@ export function DatePicker({
           onMouseEnter={() => mode === 'range' && !isDisabled && setHoveredDate(date)}
           onMouseLeave={() => mode === 'range' && setHoveredDate(null)}
           className={cn(
-            'h-7 w-7 rounded text-[11px] font-medium transition-all duration-200 ease-out',
+            'h-9 w-full sm:h-7 sm:w-7 rounded text-xs sm:text-[11px] font-medium transition-all duration-200 ease-out',
             'text-[rgb(var(--fg-default))]', // Default text color for all dates
             !isSelected && !isDisabled && 'hover:bg-[rgb(var(--bg-hover))] hover:text-[rgb(var(--fg-default))] hover:shadow-sm',
-            isSelected && 'bg-[rgb(var(--color-primary))] !text-white shadow-md hover:brightness-110',
-            isInRange && !isSelected && 'bg-[rgb(var(--bg-subtle))] text-[rgb(var(--fg-default))]',
+            isSelected && isRangeEnd && 'bg-[rgb(var(--color-primary))] !text-white shadow-md hover:brightness-110',
+            isSelected && !isRangeEnd && 'bg-[rgb(var(--color-primary)/0.2)] hover:brightness-110',
+            isInRange && !isSelected && 'bg-[rgb(var(--color-primary)/0.2)] text-[rgb(var(--fg-default))]',
             isToday && !isSelected && 'text-[rgb(var(--color-primary))] font-bold border border-[rgb(var(--color-primary))]',
             isFocused && !isSelected && 'ring-2 ring-[rgb(var(--color-primary))] ring-offset-1',
             isDisabled && 'text-[rgb(var(--fg-disabled))] cursor-not-allowed hover:bg-transparent hover:text-[rgb(var(--fg-disabled))] hover:shadow-none'
@@ -859,7 +862,7 @@ export function DatePicker({
           {WEEKDAYS.map(day => (
             <div
               key={day}
-              className="h-6 w-6 flex items-center justify-center font-semibold text-[rgb(var(--fg-muted))] bg-[rgb(var(--bg-subtle))] rounded text-[10px]"
+              className="h-6 w-full sm:w-6 flex items-center justify-center font-semibold text-[rgb(var(--fg-muted))] bg-[rgb(var(--bg-subtle))] rounded text-[10px]"
             >
               {day.charAt(0)}
             </div>
@@ -895,10 +898,18 @@ export function DatePicker({
         >
           {/* Header */}
           <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 min-w-0">
               {mode === 'single' && (
                 <Button variant="ghost" size="sm" onClick={handleTodayClick} className="text-xs px-2 py-1 h-6 font-medium text-[rgb(var(--color-primary))] hover:bg-[rgb(var(--bg-hover))]">Today</Button>
               )}
+              {mode === 'range' && (() => {
+                const { from, to } = (value as DateRange) || {}
+                return (
+                  <p data-testid="range-summary" aria-live="polite" className="text-xs font-medium text-[rgb(var(--fg-default))] truncate">
+                    {!from ? 'Pick the start date' : to ? `${shortDate(from)} to ${shortDate(to)}` : `${shortDate(from)} · Pick the end date`}
+                  </p>
+                )
+              })()}
             </div>
             {mode === 'single' && (
               <div className="flex items-center gap-2">
@@ -910,7 +921,7 @@ export function DatePicker({
               </div>
             )}
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" onClick={() => { if (mode === 'range') { setSelectedRange({}); onChange?.({ from: undefined, to: undefined }) } else { onChange?.(convertDate(undefined)) }; setSelectedTime(''); setSelectedPeriod(''); setInputValue('') }} className="text-xs px-2 py-1 h-6 font-medium text-red-500 hover:bg-red-50">Clear</Button>
+              <Button variant="ghost" size="sm" onClick={() => { if (mode === 'range') { setSelectedRange({}); setRangeStart(null); onChange?.({ from: undefined, to: undefined }) } else { onChange?.(convertDate(undefined)) }; setSelectedTime(''); setSelectedPeriod(''); setInputValue('') }} className="text-xs px-2 py-1 h-6 font-medium text-red-500 hover:bg-red-50">Clear</Button>
             </div>
           </div>
 
@@ -919,8 +930,8 @@ export function DatePicker({
               <div className="flex flex-col sm:flex-row gap-3">
                 {renderSingleCalendar(currentMonth, true, true)}
                 <div className="hidden sm:block w-px bg-[rgb(var(--bd-default))] my-1" />
-                <div className="sm:hidden h-px bg-[rgb(var(--bd-default))] mx-1" />
-                {renderSingleCalendar(secondMonth, true, false)}
+                {/* One month on a phone: two stacked fill the screen and push Quick Select out of reach. */}
+                <div className="hidden sm:flex flex-1">{renderSingleCalendar(secondMonth, true, false)}</div>
               </div>
             ) : (
               <div className="flex-1">

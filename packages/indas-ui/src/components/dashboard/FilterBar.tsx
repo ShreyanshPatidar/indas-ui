@@ -260,6 +260,10 @@ export interface FilterBarProps {
   fiscalStartYear?: number
   /** Offer "All Time" at the end of the Year list (needs `fiscalStartYear`). */
   allTime?: boolean
+  /** Close the Filters panel once a date range is finished or cleared. */
+  closeOnDateRange?: boolean
+  /** A shorter period label for phones. Given, the title and controls stay on one line there. */
+  contextLabelCompact?: string
   /** Additional content */
   children?: React.ReactNode
   className?: string
@@ -536,6 +540,13 @@ function OverflowMenu({
   )
 }
 
+/**
+ * Hung off its button on a wide screen. On a phone the button is not at the screen's edge, so a panel
+ * aligned to it ran off the left side; there it spans the screen instead, and scrolls if it is tall.
+ */
+const PANEL_POSITION =
+  'absolute top-full right-0 mt-2 z-50 sm:overflow-hidden max-sm:fixed max-sm:inset-x-2 max-sm:top-14 max-sm:mt-0 max-sm:max-h-[calc(100dvh-9rem)] max-sm:overflow-y-auto'
+
 function ForecastControl({
   forecast,
   onForecastChange,
@@ -617,10 +628,11 @@ function ForecastControl({
       {open && (
         <div
           className={cn(
-            'absolute top-full right-0 mt-2 z-50 w-96 max-w-[calc(100vw-2rem)]',
+            PANEL_POSITION,
+            'sm:w-96',
             'bg-[rgb(var(--bg-surface))] rounded-xl shadow-xl border border-[rgb(var(--bd-default))]',
-            'overflow-hidden'
           )}
+          data-testid="forecast-panel"
         >
           <div className="px-3 py-2 border-b border-[rgb(var(--bd-default))] flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0">
@@ -716,6 +728,8 @@ export function FilterBar({
   layout = 'default',
   fiscalStartYear,
   allTime = false,
+  closeOnDateRange = false,
+  contextLabelCompact,
 }: FilterBarProps) {
   const [popoverOpen, setPopoverOpen] = useState(false)
   const popoverRef = useRef<HTMLDivElement>(null)
@@ -782,8 +796,9 @@ export function FilterBar({
       const range = value as DateRange
       onDateFromChange?.(range.from)
       onDateToChange?.(range.to)
+      if (closeOnDateRange && Boolean(range.from) === Boolean(range.to)) setPopoverOpen(false)
     }
-  }, [onDateFromChange, onDateToChange])
+  }, [onDateFromChange, onDateToChange, closeOnDateRange])
 
   const handleReset = () => {
     onDateFromChange?.(undefined)
@@ -881,11 +896,11 @@ export function FilterBar({
                     <div
                       ref={popoverRef}
                       className={cn(
-                        'absolute top-full right-0 mt-2 z-50',
-                        'w-[95vw] sm:w-auto',
+                        PANEL_POSITION,
+                        'sm:w-auto',
                         'bg-[rgb(var(--bg-surface))] rounded-xl shadow-xl border border-[rgb(var(--bd-default))]',
-                        'overflow-hidden'
                       )}
+                      data-testid="filter-panel"
                     >
                       {/* Popover Header */}
                       <div className="px-3 py-2 border-b border-[rgb(var(--bd-default))] flex items-center justify-between">
@@ -990,22 +1005,28 @@ export function FilterBar({
       {/* Row 1 (always): Left (Title) | Right (icon buttons). It wraps: between the phone layout and a
           wide screen the toggles and tabs need more room than one line has, and a row that cannot
           wrap pushes the whole page sideways. */}
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+      <div className={cn('flex flex-wrap items-center gap-x-3 gap-y-2', contextLabelCompact && 'max-sm:flex-nowrap')}>
         {/* Left: Title + period badge. Sized to its content (flex-auto, not flex-1), so the controls
-            move to the next line before the title is cut short; it truncates only when alone on a line. */}
-        <div className="flex-auto min-w-0 flex items-center gap-2.5">
+            move to the next line before the title is cut short; it truncates only when alone on a line.
+            With a compact label the phone keeps one line: controls on a line of their own left a gap. */}
+        <div className={cn('flex-auto min-w-0 flex items-center gap-2.5', contextLabelCompact && 'max-sm:flex-1')}>
           <h1 className="text-base sm:text-xl font-bold text-[rgb(var(--fg-default))] leading-tight truncate">{title}</h1>
           {contextLabel && (
             /* Beside the title at every width: on a phone it sat on a line of its own under the title. */
-            <span className="inline-flex items-center gap-1.5 shrink-0 h-6 px-2.5 rounded-full border border-[rgb(var(--bd-default))] bg-[rgb(var(--bg-subtle))] text-xs font-medium text-[rgb(var(--fg-muted))]">
-              <CalendarDays className="w-3.5 h-3.5" />
-              {contextLabel}
+            <span className={cn('inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full border border-[rgb(var(--bd-default))] bg-[rgb(var(--bg-subtle))] text-xs font-medium text-[rgb(var(--fg-muted))]', contextLabelCompact ? 'sm:shrink-0 min-w-0' : 'shrink-0')}>
+              <CalendarDays className={cn('w-3.5 h-3.5 shrink-0', contextLabelCompact && 'max-sm:hidden')} />
+              {contextLabelCompact ? (
+                <>
+                  <span className="sm:hidden truncate">{contextLabelCompact}</span>
+                  <span className="max-sm:hidden">{contextLabel}</span>
+                </>
+              ) : contextLabel}
             </span>
           )}
         </div>
 
         {/* Right: Secondary toggle + time filter hidden on mobile, icon buttons always visible */}
-        <div className="ml-auto flex flex-wrap items-center justify-end gap-x-3 gap-y-2">
+        <div className={cn('ml-auto flex flex-wrap items-center justify-end gap-x-3 gap-y-2', contextLabelCompact && 'max-sm:shrink-0')}>
           {/* Secondary Toggle — desktop only */}
           {secondaryToggle && (
             <>
@@ -1081,11 +1102,11 @@ export function FilterBar({
               <div
                 ref={popoverRef}
                 className={cn(
-                  'absolute top-full right-0 mt-2 z-50',
-                  'w-[95vw] sm:w-auto',
+                  PANEL_POSITION,
+                  'sm:w-auto',
                   'bg-[rgb(var(--bg-surface))] rounded-xl shadow-xl border border-[rgb(var(--bd-default))]',
-                  'overflow-hidden'
                 )}
+                data-testid="filter-panel"
               >
                 {/* Popover Header */}
                 <div className="px-3 py-2 border-b border-[rgb(var(--bd-default))] flex items-center justify-between">
