@@ -253,7 +253,6 @@ export function MultimodalInput({
                 onClick={() => fileInputRef.current?.click()}
                 className="shrink-0 !min-h-0 w-9 h-9 rounded-lg flex items-center justify-center transition-colors text-[rgb(var(--fg-muted))] hover:text-[rgb(var(--fg-default))] hover:bg-[rgb(var(--bg-subtle))]"
                 aria-label={attachLabel}
-                title={attachLabel}
               >
                 {attachIcon ?? <Paperclip className="w-4 h-4" />}
               </button>
@@ -306,7 +305,6 @@ export function MultimodalInput({
               onClick={onStop}
               className="shrink-0 !min-h-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-[180ms] ease-out shadow-sm bg-[rgb(var(--color-primary))] text-white hover:opacity-90 hover:scale-[1.04] active:scale-95 ring-1 ring-[rgb(var(--color-primary))]/20"
               aria-label="Stop generation"
-              title="Stop"
             >
               <span className="w-2.5 h-2.5 rounded-[2px] bg-white" />
             </button>
