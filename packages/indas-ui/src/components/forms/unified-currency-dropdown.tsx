@@ -3,7 +3,7 @@
 import * as React from 'react'
 import { Check, ChevronDown, RefreshCw, Calculator, AlertTriangle, TrendingUp } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { Dropdown } from '@/components'
+import { Dropdown } from '@/components/forms/dropdown'
 import { Button } from '@/components/ui'
 import { Input } from '@/components/ui'
 import { Label } from '@/components/ui'

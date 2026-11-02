@@ -29,7 +29,7 @@ import { naturalCompare } from '@/lib/utils'
 // Import new pagination and selection components
 import { PaginationControls, DEFAULT_PAGE_SIZE, DEFAULT_PAGE_SIZE_OPTIONS } from './controls/PaginationControls'
 import { SelectionCell as SelectionCheckbox } from './cells/SelectionCell'
-import { ActionsMenu } from './controls/menu'
+import { ActionsMenu } from './controls/menu/ActionsMenu'
 import { AutoResizeButton } from './controls/AutoResizeButton'
 // Virtual scrolling
 import { useVirtualizer } from '@tanstack/react-virtual'
@@ -96,7 +96,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuCheckboxItem,
 } from '@/components/ui'
-import { Dropdown } from '@/components'
+import { Dropdown } from '@/components/forms/dropdown'
 import { Badge } from '@/components/ui'
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui'

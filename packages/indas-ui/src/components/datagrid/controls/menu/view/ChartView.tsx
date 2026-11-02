@@ -13,7 +13,7 @@ import {
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui'
 import { Button } from '@/components/ui'
-import { Dropdown } from '@/components'
+import { Dropdown } from '@/components/forms/dropdown'
 import { Badge } from '@/components/ui'
 import { formatNumber } from '@/lib/number-format'
 

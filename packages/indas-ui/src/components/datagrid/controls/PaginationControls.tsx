@@ -9,7 +9,7 @@ import {
   ChevronsRight,
 } from 'lucide-react'
 import { calculatePaginationInfo, generatePageNumbers, formatNumber } from '../utils/grid-helpers'
-import { Dropdown } from '@/components'
+import { Dropdown } from '@/components/forms/dropdown'
 
 // Default pagination configuration
 export const DEFAULT_PAGE_SIZE = 100

@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect, KeyboardEvent } from 'react'
 import { Input, Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui'
-import { Dropdown } from '@/components'
+import { Dropdown } from '@/components/forms/dropdown'
 import { cn } from '@/lib/utils'
 
 export interface EditableCellProps {

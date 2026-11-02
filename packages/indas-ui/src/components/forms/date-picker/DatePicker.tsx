@@ -15,7 +15,7 @@ import {
 import { cn, getLocalDateString } from '@/lib/utils'
 import { Button } from '@/components/ui'
 import { Input } from '@/components/ui'
-import { Dropdown } from '@/components'
+import { Dropdown } from '@/components/forms/dropdown'
 import { MONTHS, WEEKDAYS, PERIOD_OPTIONS, TIME_OPTIONS, getDaysInMonth, getFirstDayOfMonth } from './shared-utils'
 
 export interface DateRange {
