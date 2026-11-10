@@ -5,6 +5,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/compon
 import { Settings2 } from 'lucide-react'
 import { ViewSection } from './view/ViewSection'
 import { ExportSection } from './export/ExportSection'
+import type { ExportDocument } from './export/export'
 import { ImportSection } from './import/ImportSection'
 import { ColumnSection } from './column/ColumnSection'
 import { FilterSection } from './filter/FilterSection'
@@ -22,6 +23,8 @@ interface ActionsMenuProps<TData> {
   enableImport?: boolean
   data: TData[]
   filename?: string
+  /** Letterhead, title and period for Print and PDF. */
+  exportDocument?: ExportDocument
   onImportComplete: (data: TData[]) => void
 
   // Column management
@@ -60,6 +63,7 @@ export function ActionsMenu<TData>({
   enableImport = true,
   data,
   filename,
+  exportDocument,
   onImportComplete,
   enableColumnVisibility = true,
   onOpenColumnChooser,
@@ -95,7 +99,7 @@ export function ActionsMenu<TData>({
         )}
 
         {/* Export */}
-        {enableExport && <ExportSection data={data} filename={filename} />}
+        {enableExport && <ExportSection data={data} filename={filename} document={exportDocument} />}
 
         {/* Import */}
         {enableImport && <ImportSection onImport={onImportComplete} />}

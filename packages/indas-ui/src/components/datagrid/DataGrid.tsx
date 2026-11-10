@@ -263,6 +263,12 @@ export interface DataGridProps<TData> {
   stickyHeader?: boolean
   className?: string
   title?: React.ReactNode
+  /**
+   * Letterhead, title and period for the toolbar's Print and PDF, so a printed list reads as a
+   * document. A column's `meta.exportHeader` names it on paper when its header is not plain text,
+   * and `meta.exportValue(row)` gives the text to print when the raw value is not what is shown.
+   */
+  exportDocument?: import('./controls/menu/export/export').ExportDocument
   description?: string
   headerActions?: React.ReactNode
   headerActionsRight?: React.ReactNode
@@ -385,6 +391,7 @@ export function DataGrid<TData>({
   stickyHeader = true,
   className = '',
   title,
+  exportDocument,
   description,
   headerActions,
   headerActionsRight,
@@ -1509,13 +1516,16 @@ export function DataGrid<TData>({
       (col) => col.id !== 'select' && col.id !== 'actions' && col.id !== 'expand'
     )
     const headerOf = (col: any): string => {
+      const named = col.columnDef?.meta?.exportHeader
+      if (typeof named === 'string' && named.trim()) return named
       const h = col.columnDef?.header
       return typeof h === 'string' && h.trim() ? h : col.id
     }
     return table.getSortedRowModel().rows.map((row) => {
       const out: Record<string, any> = {}
       exportable.forEach((col) => {
-        out[headerOf(col)] = row.getValue(col.id)
+        const shown = (col.columnDef as any)?.meta?.exportValue
+        out[headerOf(col)] = typeof shown === 'function' ? shown(row.original) : row.getValue(col.id)
       })
       return out
     })
@@ -1984,6 +1994,7 @@ export function DataGrid<TData>({
                                       enableImport={enableImport}
                                       data={exportRows as any}
                                       filename={typeof title === 'string' && title ? title : 'data-export'}
+                                      exportDocument={exportDocument}
                                       onImportComplete={(importedData) => { if (onImport) onImport(importedData) }}
                                       enableColumnVisibility={enableColumnVisibility}
                                       onOpenColumnChooser={() => { setSettingsInitialTab('columns'); setShowAdvancedFilter(true) }}

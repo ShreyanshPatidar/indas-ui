@@ -6,18 +6,19 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
 } from '@/components/ui'
-import { Download, FileSpreadsheet, FileText, File, FileJson } from 'lucide-react'
-import { exportData } from './export'
+import { Download, FileSpreadsheet, FileText, File, FileJson, Printer } from 'lucide-react'
+import { exportData, type ExportDocument } from './export'
 
 interface ExportSectionProps<TData> {
   data: TData[]
   filename?: string
+  document?: ExportDocument
 }
 
-export function ExportSection<TData>({ data, filename = 'data-export' }: ExportSectionProps<TData>) {
-  const handleExport = async (format: 'excel' | 'csv' | 'pdf' | 'json') => {
+export function ExportSection<TData>({ data, filename = 'data-export', document: meta }: ExportSectionProps<TData>) {
+  const handleExport = async (format: 'excel' | 'csv' | 'pdf' | 'json' | 'print') => {
     try {
-      await exportData(data, format, filename)
+      await exportData(data, format, filename, meta)
     } catch (error) {
       console.error('❌ [DataGrid Export] Export failed:', error)
     }
@@ -25,6 +26,10 @@ export function ExportSection<TData>({ data, filename = 'data-export' }: ExportS
 
   return (
     <>
+      <DropdownMenuItem onClick={() => handleExport('print')}>
+        <Printer className="mr-2 h-4 w-4" />
+        <span>Print</span>
+      </DropdownMenuItem>
       <DropdownMenuSub>
         <DropdownMenuSubTrigger>
           <Download className="mr-2 h-4 w-4" />
