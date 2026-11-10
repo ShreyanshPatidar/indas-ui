@@ -65,6 +65,11 @@ function primaryRgb(): [number, number, number] {
   return [60, 60, 60]
 }
 
+/** When the sheet was made, in the reader's own way of writing dates ("10 Nov 2026, 11:06 pm"). */
+function printedAt(): string {
+  return new Date().toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
+}
+
 function escapeHtml(s: string): string {
   return s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!)
 }
@@ -171,7 +176,7 @@ export async function exportToPDF<TData>(data: TData[], filename: string = 'data
     doc.setFontSize(8)
     doc.setTextColor(110)
     if (meta?.subtitle) doc.text(meta.subtitle, 40, (y += 12))
-    doc.text(`${rows.length} row${rows.length === 1 ? '' : 's'} · Printed ${new Date().toLocaleString()}`, pageWidth - 40, y, { align: 'right' })
+    doc.text(`${rows.length} row${rows.length === 1 ? '' : 's'} · Printed ${printedAt()}`, pageWidth - 40, y, { align: 'right' })
     doc.setTextColor(0)
     const startY = y + 14
     const rightCols = headers.map((_, i) => rows.length > 0 && rows.every(r => !r[i] || looksNumeric(r[i])))
@@ -230,8 +235,13 @@ export async function exportToPDF<TData>(data: TData[], filename: string = 'data
 export async function printTable<TData>(data: TData[], filename: string = 'data-export', meta?: ExportDocument) {
   const { headers, rows } = buildExportRows(data)
   const right = headers.map((_, i) => rows.length > 0 && rows.every(r => !r[i] || looksNumeric(r[i])))
+  // Short columns (a date, a kind, an amount) stay on one line; only long text wraps.
+  const short = headers.map((_, i) => rows.every(r => (r[i] ?? '').length <= 14))
   const landscape = headers.length > 5
-  const cell = (tag: 'td' | 'th', v: string, i: number) => `<${tag}${right[i] ? ' class="n"' : ''}>${escapeHtml(v)}</${tag}>`
+  const cell = (tag: 'td' | 'th', v: string, i: number) => {
+    const cls = [right[i] ? 'n' : '', short[i] && tag === 'td' ? 'nw' : ''].filter(Boolean).join(' ')
+    return `<${tag}${cls ? ` class="${cls}"` : ''}>${escapeHtml(v)}</${tag}>`
+  }
   const [first, ...rest] = meta?.letterhead ?? []
   // Paper is white whatever theme the screen is in, so the sheet has its own ink-on-paper greys
   // rather than the theme's tokens (in dark mode those are light text, invisible on paper).
@@ -252,11 +262,12 @@ tr { break-inside: avoid; }
 th { text-align: left; font-size: 7.5pt; text-transform: uppercase; letter-spacing: .03em; color: #444; border-bottom: 1px solid #1a1a1a; padding: 5px 6px; }
 td { padding: 4px 6px; border-bottom: 1px solid #e3e3e3; vertical-align: top; }
 .n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.nw { white-space: nowrap; }
 tbody tr:nth-child(even) td { background: #f7f7f7; }
 .empty { padding: 24px; color: #777; }
 </style></head><body>
 <div class="head"><div>${first ? `<div class="org">${escapeHtml(first)}</div>` : ''}${rest.map(l => `<div class="lines">${escapeHtml(l)}</div>`).join('')}</div>
-<div><div class="title">${escapeHtml(titleOf(filename, meta))}</div>${meta?.subtitle ? `<div class="sub">${escapeHtml(meta.subtitle)}</div>` : ''}<div class="sub">${rows.length} row${rows.length === 1 ? '' : 's'} · Printed ${escapeHtml(new Date().toLocaleString())}</div></div></div>
+<div><div class="title">${escapeHtml(titleOf(filename, meta))}</div>${meta?.subtitle ? `<div class="sub">${escapeHtml(meta.subtitle)}</div>` : ''}<div class="sub">${rows.length} row${rows.length === 1 ? '' : 's'} · Printed ${escapeHtml(printedAt())}</div></div></div>
 ${headers.length ? `<table><thead><tr>${headers.map((h, i) => cell('th', h, i)).join('')}</tr></thead><tbody>${rows.map(r => `<tr>${r.map((v, i) => cell('td', v, i)).join('')}</tr>`).join('')}</tbody></table>` : '<div class="empty">Nothing to print.</div>'}
 </body></html>`
   const frame = document.createElement('iframe')
