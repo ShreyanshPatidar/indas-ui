@@ -53,6 +53,27 @@ import { Button, Input, Card, CardHeader, CardTitle, CardContent } from 'indas-u
 </Card>
 ```
 
+### Not React? Use the look on its own
+
+The components are React (they work in any React app: Next.js, Vite, Remix, Astro islands). The
+look, every colour in light and dark and each brand theme, comes from `tokens.css`, published in
+three more forms for other stacks:
+
+- **Vue, Svelte, Angular, plain HTML with Tailwind:** import `indas-ui/tokens.css`, set the theme
+  class on `<html>`, and add the preset:
+  ```js
+  // tailwind.config.js
+  module.exports = { presets: [require('indas-ui/tailwind-preset')], content: ['./src/**/*.{vue,svelte,html,ts}'] }
+  ```
+  Then `bg-bg-surface`, `text-fg-default`, `border-bd-default`, `bg-color-primary` and the rest
+  read the same tokens the React components use.
+- **Any language (design tools, native apps, scripts):** `indas-ui/tokens.json` holds `light`,
+  `dark` and each brand theme's values (colours as `"R G B"`).
+- **Flutter:** copy `node_modules/indas-ui/dist/tokens/indas_tokens.dart` into the app; it has
+  `IndasLight` and `IndasDark` with one `Color` per token, for building `ThemeData`.
+
+All three are generated from `tokens.css` on every build, so they never drift from it.
+
 ## Components
 
 Button, Input, Card, Checkbox, Switch, Textarea, Label
