@@ -1,9 +1,9 @@
 {
   "name": "indas-ui",
-  "version": "0.1.18",
+  "version": "0.1.19",
   "description": "Indas UI — React component library for business apps: Tailwind design tokens, Radix primitives, Lucide icons, DataGrid, dashboards and charts.",
   "license": "MIT",
-  "author": "Indas Analytics Pvt Ltd",
+  "author": "Shreyansh Patidar",
   "contributors": [
     "Shreyansh Patidar",
     "Abhinav"
