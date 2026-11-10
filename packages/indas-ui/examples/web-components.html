@@ -1,0 +1,30 @@
+<!doctype html>
+<html class="theme-default light"><head><meta charset="utf-8"><title>Plain HTML test</title>
+<link rel="stylesheet" href="/dist/web-components/indas-ui.css">
+<script type="module" src="/dist/web-components/indas-ui.js"></script>
+<style>body{font-family:system-ui;margin:24px;background:#f6f6f6} h1{font-size:28px} .row{display:flex;gap:12px;align-items:center;margin:12px 0}</style>
+</head><body>
+<h1>A page with no React and no Tailwind</h1>
+<div class="row">
+  <indas-button variant="primary">Save</indas-button>
+  <indas-button variant="outline">Cancel</indas-button>
+  <indas-button variant="destructive" disabled>Delete</indas-button>
+  <indas-badge variant="success">Paid</indas-badge>
+  <indas-badge variant="warning">Due</indas-badge>
+</div>
+<div style="max-width:420px">
+  <indas-card title="New party" description="Plain HTML inside a card">
+    <p>Any HTML written inside the tag shows here.</p>
+    <indas-input label="Name" placeholder="Ramesh Traders"></indas-input>
+  </indas-card>
+</div>
+<div style="margin-top:16px">
+  <indas-data-grid id="grid" title="Orders"></indas-data-grid>
+</div>
+<script type="module">
+  const g = document.getElementById('grid');
+  g.columns = [{ key: 'date', header: 'Date' }, { key: 'party', header: 'Party' }, { key: 'amount', header: 'Amount' }];
+  g.data = Array.from({ length: 12 }, (_, i) => ({ date: `2026-11-${String(i + 1).padStart(2, '0')}`, party: ['Ramesh', 'PKC Trading', 'Mohan'][i % 3], amount: 1000 * (i + 1) }));
+  document.querySelector('indas-button').addEventListener('click', () => { document.title = 'clicked'; });
+</script>
+</body></html>

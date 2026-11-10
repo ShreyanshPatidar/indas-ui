@@ -74,6 +74,34 @@ three more forms for other stacks:
 
 All three are generated from `tokens.css` on every build, so they never drift from it.
 
+### Components without React: web components
+
+The components themselves also ship as standard HTML tags, for Vue, Angular, Svelte, plain HTML,
+or pages served by PHP, Python, .NET or Java. React is bundled inside; the page needs neither React
+nor Tailwind:
+
+```html
+<html class="theme-default light">
+<link rel="stylesheet" href="https://unpkg.com/indas-ui/dist/web-components/indas-ui.css">
+<script type="module" src="https://unpkg.com/indas-ui/dist/web-components/indas-ui.js"></script>
+
+<indas-button variant="primary">Save</indas-button>
+<indas-badge variant="success">Paid</indas-badge>
+<indas-input label="Name" placeholder="Ramesh Traders"></indas-input>
+<indas-card title="New party">Any HTML here</indas-card>
+<indas-data-grid id="grid" title="Orders"></indas-data-grid>
+<script type="module">
+  const grid = document.getElementById('grid')
+  grid.columns = [{ key: 'date', header: 'Date' }, { key: 'amount', header: 'Amount' }]
+  grid.data = rows   // sorting, search, filters, export, Print and PDF included
+</script>
+```
+
+Text and flags go in attributes; anything that is not text (rows, columns) is set as a JavaScript
+property. Events are the ordinary ones (`click`, `input`, `change`). About 140 KB gzipped; the Excel
+and PDF libraries load only when someone exports. A working page is in
+`packages/indas-ui/examples/web-components.html`.
+
 ## Components
 
 Button, Input, Card, Checkbox, Switch, Textarea, Label

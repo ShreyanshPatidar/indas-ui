@@ -12,5 +12,5 @@
     "moduleResolution": "Bundler"
   },
   "include": ["src"],
-  "exclude": ["node_modules", "dist", "**/*.stories.tsx", "**/*.test.ts", "**/*.test.tsx", "**/*.selfcheck.mjs"]
+  "exclude": ["node_modules", "dist", "**/*.stories.tsx", "**/*.test.ts", "**/*.test.tsx", "**/*.selfcheck.mjs", "src/web-components"]
 }
