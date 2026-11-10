@@ -256,6 +256,11 @@ export interface FilterBarProps {
   showInsights?: boolean
   insightsActive?: boolean
   onInsightsClick?: () => void
+  /**
+   * The menu item's words, e.g. "Stavani insights": each app names its own assistant. Shown as
+   * given (already in the app's language); "Insights", translated, when left out.
+   */
+  insightsLabel?: string
   /** Fiscal-year start year (e.g. 2026 for FY 2026-2027). Drives fiscal Week/Month/Quarter/Year options. */
   fiscalStartYear?: number
   /** Offer "All Time" at the end of the Year list (needs `fiscalStartYear`). */
@@ -454,6 +459,7 @@ function OverflowMenu({
   showInsights,
   insightsActive,
   onInsightsClick,
+  insightsLabel,
   reports,
   onReportSelect,
   onShare,
@@ -462,6 +468,7 @@ function OverflowMenu({
   showInsights?: boolean
   insightsActive?: boolean
   onInsightsClick?: () => void
+  insightsLabel?: string
   reports: ReportOption[]
   onReportSelect?: (reportValue: string) => void
   onShare?: () => void
@@ -486,7 +493,7 @@ function OverflowMenu({
         {showInsights && (
           <DropdownMenuItem onClick={onInsightsClick}>
             <Lightbulb className={cn('w-4 h-4 mr-2', insightsActive && 'text-[rgb(var(--color-warning))]')} />
-            {t('Sahay Insights')}
+            {insightsLabel ?? t('Insights')}
           </DropdownMenuItem>
         )}
 
@@ -723,6 +730,7 @@ export function FilterBar({
   showInsights = false,
   insightsActive = false,
   onInsightsClick,
+  insightsLabel,
   children,
   className,
   layout = 'default',
@@ -1171,6 +1179,7 @@ export function FilterBar({
             showInsights={showInsights}
             insightsActive={insightsActive}
             onInsightsClick={onInsightsClick}
+            insightsLabel={insightsLabel}
             reports={reports}
             onReportSelect={onReportSelect}
             onShare={onShare}
