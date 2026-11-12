@@ -3,7 +3,6 @@
 import * as React from 'react'
 import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
-import { motion, AnimatePresence } from 'framer-motion'
 import { Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -227,7 +226,8 @@ export function LoadingOverlay({
 }
 
 // ── NavigationProgress (route change overlay with progress bar) ────────
-// Uses pure CSS animations — no library imports, renders instantly on refresh
+// Pure CSS: no animation library. Until 0.1.24 the fade and the bar used framer-motion, which put
+// 39 KB (gzipped) on every page of any app that showed even a small spinner from this file.
 
 export function NavigationProgress() {
   const [isLoading, setIsLoading] = useState(false)
@@ -258,13 +258,10 @@ export function NavigationProgress() {
   }, [pathname])
 
   return (
-    <AnimatePresence>
+    <>
       {isLoading && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[100] pointer-events-none bg-black/20 backdrop-blur-sm flex items-center justify-center"
+        <div
+          className="fixed inset-0 z-[100] pointer-events-none bg-black/20 backdrop-blur-sm flex items-center justify-center animate-in fade-in duration-200"
         >
           <div className="bg-[rgb(var(--bg-surface))] px-12 py-10 rounded-2xl shadow-2xl border border-[rgb(var(--bd-default))]">
             <div className="flex flex-col items-center gap-5">
@@ -292,18 +289,16 @@ export function NavigationProgress() {
               {/* Progress Bar */}
               <div className="w-48">
                 <div className="h-0.5 bg-[rgb(var(--bg-subtle))] rounded-full overflow-hidden">
-                  <motion.div
-                    className="h-full rounded-full bg-[rgb(var(--color-primary))]"
-                    initial={{ width: '0%' }}
-                    animate={{ width: `${progress}%` }}
-                    transition={{ duration: 0.3, ease: 'easeOut' }}
+                  <div
+                    className="h-full rounded-full bg-[rgb(var(--color-primary))] transition-[width] duration-300 ease-out"
+                    style={{ width: `${progress}%` }}
                   />
                 </div>
               </div>
             </div>
           </div>
-        </motion.div>
+        </div>
       )}
-    </AnimatePresence>
+    </>
   )
 }

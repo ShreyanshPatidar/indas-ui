@@ -2,7 +2,6 @@
 
 import * as React from 'react'
 import * as Popover from '@radix-ui/react-popover'
-import { motion, AnimatePresence } from 'framer-motion'
 import {
   Calendar,
   ChevronLeft,
@@ -914,9 +913,9 @@ export function DatePicker({
             {mode === 'single' && (
               <div className="flex items-center gap-2">
                 <Button variant="ghost" size="sm" onClick={() => navigateMonth('prev')} className="h-6 w-6 p-0"><ChevronLeft className="h-3 w-3" /></Button>
-                <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => setShowMonthYearScroller(!showMonthYearScroller)} className="text-sm px-2 py-0.5 font-bold text-[rgb(var(--fg-default))] hover:text-[rgb(var(--color-primary))] rounded-lg hover:bg-[rgb(var(--bg-hover))] whitespace-nowrap">
+                <button onClick={() => setShowMonthYearScroller(!showMonthYearScroller)} className="transition-transform hover:scale-105 active:scale-95 text-sm px-2 py-0.5 font-bold text-[rgb(var(--fg-default))] hover:text-[rgb(var(--color-primary))] rounded-lg hover:bg-[rgb(var(--bg-hover))] whitespace-nowrap">
                   {MONTHS[currentMonth.getMonth()].slice(0, 3)} {currentMonth.getFullYear()}
-                </motion.button>
+                </button>
                 <Button variant="ghost" size="sm" onClick={() => navigateMonth('next')} className="h-6 w-6 p-0"><ChevronRight className="h-3 w-3" /></Button>
               </div>
             )}
@@ -944,9 +943,9 @@ export function DatePicker({
             {mode === 'range' && renderQuickSelect(false)}
           </div>
 
-          <AnimatePresence>
+          <>
             {showMonthYearScroller && (
-              <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: 0.2 }} className="absolute inset-0 bg-[rgb(var(--bg-surface))] rounded-xl z-10 p-6">
+              <div className="animate-in fade-in zoom-in-95 duration-200 absolute inset-0 bg-[rgb(var(--bg-surface))] rounded-xl z-10 p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h4 className="text-sm font-semibold text-[rgb(var(--fg-default))]">Select Date</h4>
                   <Button variant="ghost" size="sm" onClick={() => setShowMonthYearScroller(false)} className="h-6 w-6 p-0"><X className="h-3 w-3" /></Button>
@@ -958,15 +957,15 @@ export function DatePicker({
                       <div className="grid grid-cols-3 gap-2">
                         {MONTHS.map((month, monthIndex) => {
                           const isSelected = currentMonth.getFullYear() === year && currentMonth.getMonth() === monthIndex
-                          return (<motion.button key={`${year}-${monthIndex}`} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => handleMonthYearSelect(year, monthIndex)} className={cn('p-2 text-xs font-medium rounded-lg', isSelected ? 'bg-[rgb(var(--color-primary))] text-[rgb(var(--color-primary-foreground))] shadow-md' : 'hover:bg-[rgb(var(--bg-hover))] text-[rgb(var(--fg-default))]')}>{month.slice(0, 3)}</motion.button>)
+                          return (<button key={`${year}-${monthIndex}`} onClick={() => handleMonthYearSelect(year, monthIndex)} className={cn('p-2 text-xs font-medium rounded-lg transition-transform hover:scale-105 active:scale-95', isSelected ? 'bg-[rgb(var(--color-primary))] text-[rgb(var(--color-primary-foreground))] shadow-md' : 'hover:bg-[rgb(var(--bg-hover))] text-[rgb(var(--fg-default))]')}>{month.slice(0, 3)}</button>)
                         })}
                       </div>
                     </div>
                   ))}
                 </div>
-              </motion.div>
+              </div>
             )}
-          </AnimatePresence>
+          </>
         </div>
         {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
       </div>
@@ -1092,14 +1091,12 @@ export function DatePicker({
                     </Button>
 
                     {/* Unified Month/Year Selector */}
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
+                    <button
                       onClick={() => setShowMonthYearScroller(!showMonthYearScroller)}
-                      className="text-sm px-2 py-0.5 font-bold text-[rgb(var(--fg-default))] hover:text-[rgb(var(--color-primary))] transition-colors duration-200 rounded-lg hover:bg-[rgb(var(--bg-hover))] whitespace-nowrap"
+                      className="text-sm px-2 py-0.5 font-bold text-[rgb(var(--fg-default))] hover:text-[rgb(var(--color-primary))] transition-[color,background-color,transform] hover:scale-105 active:scale-95 duration-200 rounded-lg hover:bg-[rgb(var(--bg-hover))] whitespace-nowrap"
                     >
                       {MONTHS[currentMonth.getMonth()].slice(0, 3)} {currentMonth.getFullYear()}
-                    </motion.button>
+                    </button>
 
                     <Button
                       variant="ghost"
@@ -1300,14 +1297,9 @@ export function DatePicker({
 
 
               {/* Unified Month/Year Scroller (OTIF-style) */}
-              <AnimatePresence>
+              <>
                 {showMonthYearScroller && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
-                    transition={{ duration: 0.2 }}
-                    className="absolute inset-0 bg-[rgb(var(--bg-surface))] rounded-xl z-10 p-6"
+                  <div className="animate-in fade-in zoom-in-95 duration-200 absolute inset-0 bg-[rgb(var(--bg-surface))] rounded-xl z-10 p-6"
                   >
                     <div className="flex items-center justify-between mb-4">
                       <h4 className="text-sm font-semibold text-[rgb(var(--fg-default))]">Select Date</h4>
@@ -1332,29 +1324,27 @@ export function DatePicker({
                             {MONTHS.map((month, monthIndex) => {
                               const isSelected = currentMonth.getFullYear() === year && currentMonth.getMonth() === monthIndex
                               return (
-                                <motion.button
+                                <button
                                   key={`${year}-${monthIndex}`}
-                                  whileHover={{ scale: 1.05 }}
-                                  whileTap={{ scale: 0.95 }}
                                   onClick={() => handleMonthYearSelect(year, monthIndex)}
                                   className={cn(
-                                    'p-2 text-xs font-medium rounded-lg transition-all duration-200',
+                                    'p-2 text-xs font-medium rounded-lg transition-all duration-200 hover:scale-105 active:scale-95',
                                     isSelected
                                       ? 'bg-[rgb(var(--color-primary))] text-[rgb(var(--color-primary-foreground))] shadow-md'
                                       : 'hover:bg-[rgb(var(--bg-hover))] text-[rgb(var(--fg-default))]'
                                   )}
                                 >
                                   {month.slice(0, 3)}
-                                </motion.button>
+                                </button>
                               )
                             })}
                           </div>
                         </div>
                       ))}
                     </div>
-                  </motion.div>
+                  </div>
                 )}
-              </AnimatePresence>
+              </>
           </Popover.Content>
         </Popover.Portal>
       </Popover.Root>

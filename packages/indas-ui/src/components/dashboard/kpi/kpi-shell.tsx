@@ -1,7 +1,6 @@
 'use client'
 
 import type { ReactNode } from 'react'
-import { motion } from 'framer-motion'
 import { LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -163,9 +162,10 @@ export function KpiShell({
 
   if (isInteractive) {
     return (
-      <motion.button type="button" onClick={onClick} whileTap={{ scale: 0.98 }} className={base}>
+      // The press is CSS (active:scale): framer-motion here put 39 KB on every dashboard (0.1.24).
+      <button type="button" onClick={onClick} className={cn(base, 'active:scale-[0.98]')}>
         {inner}
-      </motion.button>
+      </button>
     )
   }
 
